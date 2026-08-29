@@ -38,6 +38,7 @@
 
 #include "AISEvents.h"
 #include "AISCommands.h"
+#include "AISIntents.h"
 #include "Log.h"
 #include "Game.h"
 #include "Lua.h"
@@ -97,6 +98,7 @@ std::set<ICoreUnit::Id> destroyed;  // in current frame, between Update events
 
 CCircuitAI::CCircuitAI(OOAICallback* clb)
 		: eventHandler(&CCircuitAI::HandleGameEvent)
+		, intentHandler(&CCircuitAI::HandleGameIntent)
 		, economy(nullptr)
 		, metalRes(nullptr)
 		, energyRes(nullptr)
@@ -151,9 +153,15 @@ int CCircuitAI::HandleEvent(int topic, const void* data)
 	return (this->*eventHandler)(topic, data);
 }
 
+int CCircuitAI::HandleIntent(int topic, const void* data)
+{
+	return (this->*intentHandler)(topic, data);
+}
+
 void CCircuitAI::NotifyGameEnd()
 {
 	eventHandler = &CCircuitAI::HandleEndEvent;
+	intentHandler = &CCircuitAI::HandleEndIntent;
 }
 
 void CCircuitAI::NotifyResign()
@@ -162,6 +170,7 @@ void CCircuitAI::NotifyResign()
 	metalRes = callback->GetResourceByName(RES_NAME_METAL);
 	energyRes = callback->GetResourceByName(RES_NAME_ENERGY);
 	eventHandler = &CCircuitAI::HandleResignEvent;
+	intentHandler = &CCircuitAI::HandleEndIntent;
 }
 
 void CCircuitAI::Resign(int newTeamId)
@@ -517,6 +526,38 @@ int CCircuitAI::HandleResignEvent(int topic, const void* data)
 	return 0;
 }
 
+int CCircuitAI::HandleGameIntent(int topic, const void* data)
+{
+	int ret = ERROR_INTENT;
+
+	switch (topic) {
+		case INTENT_FLOAT: {
+			TRACY_TOPIC("INTENT_FLOAT", IntentFloat);
+
+			ret = this->Intent((struct SFloatIntent*)data);
+		} break;
+		case INTENT_ARRAY_FLOAT: {
+			TRACY_TOPIC("INTENT_ARRAY_FLOAT", IntentArrayFloat);
+
+			ret = this->Intent((struct SArrayFloatIntent*)data);
+		} break;
+		case INTENT_DICT_FLOAT: {
+			TRACY_TOPIC("INTENT_DICT_FLOAT", IntentDictFloat);
+
+			ret = this->Intent((struct SDictFloatIntent*)data);
+		} break;
+		default: break;
+	}
+
+	return ret;
+}
+
+int CCircuitAI::HandleEndIntent(int topic, const void* data)
+{
+	// Ignore all intent requests
+	return 0;
+}
+
 std::string CCircuitAI::ValidateMod()
 {
 	const int minEngineVer = 105;
@@ -549,7 +590,7 @@ void CCircuitAI::CheatPreload()
 	}
 }
 
-int CCircuitAI::Init(int skirmishAIId, const struct SSkirmishAICallback* sAICallback)
+int CCircuitAI::Init(int skirmishAIId, const SSkirmishAICallback* sAICallback)
 {
 	LOG(version);
 	this->skirmishAIId = skirmishAIId;
@@ -1428,6 +1469,24 @@ int CCircuitAI::LuaMessage(const char* inData)
 {
 	script->LuaMessage(inData);
 	return 0;  // signaling: OK
+}
+
+int CCircuitAI::Intent(const SFloatIntent* intent)
+{
+	script->Intent(intent);
+	return 0;
+}
+
+int CCircuitAI::Intent(const SArrayFloatIntent* intent)
+{
+	script->Intent(intent);
+	return 0;
+}
+
+int CCircuitAI::Intent(const SDictFloatIntent* intent)
+{
+	script->Intent(intent);
+	return 0;
 }
 
 bool CCircuitAI::InitSide()

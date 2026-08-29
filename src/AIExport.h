@@ -35,5 +35,6 @@ struct SSkirmishAICallback;
 EXPORT(int) init(int skirmishAIId, const struct SSkirmishAICallback* innerCallback);
 EXPORT(int) release(int skirmishAIId);
 EXPORT(int) handleEvent(int skirmishAIId, int topic, const void* data);
+EXPORT(int) handleIntent(int skirmishAIId, int topic, const void* data);
 
 #endif // _AIEXPORT_H

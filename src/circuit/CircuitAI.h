@@ -20,30 +20,37 @@
 #include <vector>
 
 struct SSkirmishAICallback;
+struct SFloatIntent;
+struct SArrayFloatIntent;
+struct SDictFloatIntent;
 
 namespace circuit {
 
-#define ERROR_UNKNOWN			200
-#define ERROR_INIT				(ERROR_UNKNOWN + EVENT_INIT)
-#define ERROR_RELEASE			(ERROR_UNKNOWN + EVENT_RELEASE)
-#define ERROR_UPDATE			(ERROR_UNKNOWN + EVENT_UPDATE)
-#define ERROR_UNIT_CREATED		(ERROR_UNKNOWN + EVENT_UNIT_CREATED)
-#define ERROR_UNIT_FINISHED		(ERROR_UNKNOWN + EVENT_UNIT_FINISHED)
-#define ERROR_UNIT_IDLE			(ERROR_UNKNOWN + EVENT_UNIT_IDLE)
-#define ERROR_UNIT_MOVE_FAILED	(ERROR_UNKNOWN + EVENT_UNIT_MOVE_FAILED)
-#define ERROR_UNIT_DAMAGED		(ERROR_UNKNOWN + EVENT_UNIT_DAMAGED)
-#define ERROR_UNIT_DESTROYED	(ERROR_UNKNOWN + EVENT_UNIT_DESTROYED)
-#define ERROR_UNIT_GIVEN		(ERROR_UNKNOWN + EVENT_UNIT_GIVEN)
-#define ERROR_UNIT_CAPTURED		(ERROR_UNKNOWN + EVENT_UNIT_CAPTURED)
-#define ERROR_ENEMY_ENTER_LOS	(ERROR_UNKNOWN + EVENT_ENEMY_ENTER_LOS)
-#define ERROR_ENEMY_LEAVE_LOS	(ERROR_UNKNOWN + EVENT_ENEMY_LEAVE_LOS)
-#define ERROR_ENEMY_ENTER_RADAR	(ERROR_UNKNOWN + EVENT_ENEMY_ENTER_RADAR)
-#define ERROR_ENEMY_LEAVE_RADAR	(ERROR_UNKNOWN + EVENT_ENEMY_LEAVE_RADAR)
-#define ERROR_ENEMY_DAMAGED		(ERROR_UNKNOWN + EVENT_ENEMY_DAMAGED)
-#define ERROR_ENEMY_DESTROYED	(ERROR_UNKNOWN + EVENT_ENEMY_DESTROYED)
-#define ERROR_LOAD				(ERROR_UNKNOWN + EVENT_LOAD)
-#define ERROR_SAVE				(ERROR_UNKNOWN + EVENT_SAVE)
-#define ERROR_ENEMY_CREATED		(ERROR_UNKNOWN + EVENT_ENEMY_CREATED)
+#define ERROR_UNKNOWN				200
+#define ERROR_INIT					(ERROR_UNKNOWN + EVENT_INIT)
+#define ERROR_RELEASE				(ERROR_UNKNOWN + EVENT_RELEASE)
+#define ERROR_UPDATE				(ERROR_UNKNOWN + EVENT_UPDATE)
+#define ERROR_UNIT_CREATED			(ERROR_UNKNOWN + EVENT_UNIT_CREATED)
+#define ERROR_UNIT_FINISHED			(ERROR_UNKNOWN + EVENT_UNIT_FINISHED)
+#define ERROR_UNIT_IDLE				(ERROR_UNKNOWN + EVENT_UNIT_IDLE)
+#define ERROR_UNIT_MOVE_FAILED		(ERROR_UNKNOWN + EVENT_UNIT_MOVE_FAILED)
+#define ERROR_UNIT_DAMAGED			(ERROR_UNKNOWN + EVENT_UNIT_DAMAGED)
+#define ERROR_UNIT_DESTROYED		(ERROR_UNKNOWN + EVENT_UNIT_DESTROYED)
+#define ERROR_UNIT_GIVEN			(ERROR_UNKNOWN + EVENT_UNIT_GIVEN)
+#define ERROR_UNIT_CAPTURED			(ERROR_UNKNOWN + EVENT_UNIT_CAPTURED)
+#define ERROR_ENEMY_ENTER_LOS		(ERROR_UNKNOWN + EVENT_ENEMY_ENTER_LOS)
+#define ERROR_ENEMY_LEAVE_LOS		(ERROR_UNKNOWN + EVENT_ENEMY_LEAVE_LOS)
+#define ERROR_ENEMY_ENTER_RADAR		(ERROR_UNKNOWN + EVENT_ENEMY_ENTER_RADAR)
+#define ERROR_ENEMY_LEAVE_RADAR		(ERROR_UNKNOWN + EVENT_ENEMY_LEAVE_RADAR)
+#define ERROR_ENEMY_DAMAGED			(ERROR_UNKNOWN + EVENT_ENEMY_DAMAGED)
+#define ERROR_ENEMY_DESTROYED		(ERROR_UNKNOWN + EVENT_ENEMY_DESTROYED)
+#define ERROR_LOAD					(ERROR_UNKNOWN + EVENT_LOAD)
+#define ERROR_SAVE					(ERROR_UNKNOWN + EVENT_SAVE)
+#define ERROR_ENEMY_CREATED			(ERROR_UNKNOWN + EVENT_ENEMY_CREATED)
+#define ERROR_INTENT				300
+#define ERROR_INTENT_FLOAT			(ERROR_INTENT + INTENT_FLOAT)
+#define ERROR_INTENT_ARRAY_FLOAT	(ERROR_INTENT + INTENT_ARRAY_FLOAT)
+#define ERROR_INTENT_DICT_FLOAT		(ERROR_INTENT + INTENT_DICT_FLOAT)
 #define LOG(fmt, ...)	GetLog()->DoLog(utils::string_format(std::string(fmt), ##__VA_ARGS__).c_str())
 
 class CGameAttribute;
@@ -91,6 +98,7 @@ public:
 // >>> AI Event handler ---- BEGIN
 public:
 	int HandleEvent(int topic, const void* data);
+	int HandleIntent(int topic, const void* data);
 	void NotifyGameEnd();
 	void NotifyResign();
 	void Resign(int newTeamId);
@@ -100,7 +108,10 @@ private:
 	int HandleGameEvent(int topic, const void* data);
 	int HandleEndEvent(int topic, const void* data);
 	int HandleResignEvent(int topic, const void* data);
+	int HandleGameIntent(int topic, const void* data);
+	int HandleEndIntent(int topic, const void* data);
 	EventHandlerPtr eventHandler;
+	EventHandlerPtr intentHandler;
 
 	int ownerTeamId;
 	springai::Economy* economy;
@@ -111,7 +122,7 @@ private:
 private:
 	std::string ValidateMod();
 	void CheatPreload();
-	int Init(int skirmishAIId, const struct SSkirmishAICallback* sAICallback);
+	int Init(int skirmishAIId, const SSkirmishAICallback* sAICallback);
 	int Release(int reason);
 	int Update(int frame);
 	int Message(int playerId, const char* message);
@@ -134,6 +145,9 @@ private:
 	int Load(std::istream& is);
 	int Save(std::ostream& os);
 	int LuaMessage(const char* inData);
+	int Intent(const SFloatIntent* intent);
+	int Intent(const SArrayFloatIntent* intent);
+	int Intent(const SDictFloatIntent* intent);
 
 	bool InitSide();
 public:

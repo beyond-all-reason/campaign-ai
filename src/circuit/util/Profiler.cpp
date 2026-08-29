@@ -50,6 +50,10 @@ decltype(CProfiler::nameEventUpdateResign) CProfiler::nameEventUpdateResign;
 decltype(CProfiler::nameThreatUpdate) CProfiler::nameThreatUpdate;
 decltype(CProfiler::nameInflUpdate) CProfiler::nameInflUpdate;
 
+decltype(CProfiler::nameIntentFloat) CProfiler::nameIntentFloat;
+decltype(CProfiler::nameIntentArrayFloat) CProfiler::nameIntentArrayFloat;
+decltype(CProfiler::nameIntentDictFloat) CProfiler::nameIntentDictFloat;
+
 void CProfiler::InitNames(int skirmishAIId)
 {
 	++numInit;
@@ -92,6 +96,10 @@ void CProfiler::InitNames(int skirmishAIId)
 
 		nameThreatUpdate.resize(numAIs);
 		nameInflUpdate.resize(numAIs);
+
+		nameIntentFloat.resize(numAIs);
+		nameIntentArrayFloat.resize(numAIs);
+		nameIntentDictFloat.resize(numAIs);
 	}
 	snprintf(nameEventInit[skirmishAIId].data(), nameEventInit[skirmishAIId].size(), strEventInit.data(), (char)skirmishAIId);
 	snprintf(nameEventRelease[skirmishAIId].data(), nameEventRelease[skirmishAIId].size(), strEventRelease.data(), (char)skirmishAIId);
@@ -130,6 +138,10 @@ void CProfiler::InitNames(int skirmishAIId)
 
 	snprintf(nameThreatUpdate[skirmishAIId].data(), nameThreatUpdate[skirmishAIId].size(), strThreatUpdate.data(), (char)skirmishAIId);
 	snprintf(nameInflUpdate[skirmishAIId].data(), nameInflUpdate[skirmishAIId].size(), strInflUpdate.data(), (char)skirmishAIId);
+
+	snprintf(nameIntentFloat[skirmishAIId].data(), nameIntentFloat[skirmishAIId].size(), strIntentFloat.data(), (char)skirmishAIId);
+	snprintf(nameIntentArrayFloat[skirmishAIId].data(), nameIntentArrayFloat[skirmishAIId].size(), strIntentArrayFloat.data(), (char)skirmishAIId);
+	snprintf(nameIntentDictFloat[skirmishAIId].data(), nameIntentDictFloat[skirmishAIId].size(), strIntentDictFloat.data(), (char)skirmishAIId);
 }
 
 void CProfiler::ReleaseNames(int skirmishAIId)
@@ -174,6 +186,10 @@ void CProfiler::ReleaseNames(int skirmishAIId)
 
 	decltype(nameThreatUpdate)().swap(nameThreatUpdate);
 	decltype(nameInflUpdate)().swap(nameInflUpdate);
+
+	decltype(nameIntentFloat)().swap(nameIntentFloat);
+	decltype(nameIntentArrayFloat)().swap(nameIntentArrayFloat);
+	decltype(nameIntentDictFloat)().swap(nameIntentDictFloat);
 }
 
 } /* namespace circuit */

@@ -75,6 +75,75 @@ void AiUnitDestroyed(CCircuitUnit@ unit)
 	// Duplicates module's AiUnitRemoved, but for any unit.
 }
 
+// Has to be same as Lua's defines
+enum EIntents {
+	AI_BASE_DEFINE = 1,
+	AI_WAVE_DEFINE = 2,
+	AI_REGION_DEFINE = 3,
+}
+void AiIntent(const SFloatIntent& in intent)
+{
+	switch (intent.topic) {
+	case AI_BASE_DEFINE: {
+		AiLog("SFloatIntent: BASE, BaseID: " + intent.objId + ", Value: " + intent.value);
+	} break;
+	case AI_WAVE_DEFINE: {
+		AiLog("SFloatIntent: WAVE, WaveID: " + intent.objId + ", Value: " + intent.value);
+	} break;
+	case AI_REGION_DEFINE: {
+		AiLog("SFloatIntent: REGION, RegionID: " + intent.objId + ", Value: " + intent.value);
+	} break;
+	default: break;
+	}
+}
+
+void AiIntent(const SArrayFloatIntent& in intent)
+{
+	switch (intent.topic) {
+	case AI_BASE_DEFINE: {
+		AiLog("SArrayFloatIntent: BASE, BaseID: " + intent.objId + ", Size: " + intent.size + ", Value[0]: " + intent[0]);
+	} break;
+	case AI_WAVE_DEFINE: {
+		AiLog("SArrayFloatIntent: WAVE, WaveID: " + intent.objId + ", Size: " + intent.size + ", Value[0]: " + intent[0]);
+		CCircuitDef@ cdef = ai.GetCircuitDef("corlab");
+		array<float>@ weights = aiFactoryMgr.GetTierWeights(cdef, Unit::SurfType::LAND, 0);
+		if (intent.size != weights.length())
+			return;
+		for (uint i = 0; i < weights.length(); ++i)
+			weights[i] = intent[i];
+		string s;
+		for (uint i = 0; i < weights.length(); ++i) {
+			s += weights[i] + " | ";
+		}
+		AiLog(s);
+		aiFactoryMgr.SetTierWeights(cdef, Unit::SurfType::LAND, 0, weights);
+		aiFactoryMgr.SetTierWeights(cdef, Unit::SurfType::LAND, 1, weights);
+		aiFactoryMgr.SetTierWeights(cdef, Unit::SurfType::LAND, 2, weights);
+		aiFactoryMgr.SetTierWeights(cdef, Unit::SurfType::LAND, 3, weights);
+	} break;
+	case AI_REGION_DEFINE: {
+		AiLog("SArrayFloatIntent: REGION, RegionID: " + intent.objId + ", Size: " + intent.size + ", Value[0]: " + intent[0]);
+	} break;
+	default: break;
+	}
+}
+
+void AiIntent(const SDictFloatIntent& in intent)
+{
+	switch (intent.topic) {
+	case AI_BASE_DEFINE: {
+		AiLog("SDictFloatIntent: BASE, BaseID: " + intent.objId + ", Size: " + intent.size + ", Key[0]: " + intent.GetKey(0) + ", Value[0]: " + intent.GetValue(0));
+	} break;
+	case AI_WAVE_DEFINE: {
+		AiLog("SDictFloatIntent: WAVE, WaveID: " + intent.objId + ", Size: " + intent.size + ", Key[0]: " + intent.GetKey(0) + ", Value[0]: " + intent.GetValue(0));
+	} break;
+	case AI_REGION_DEFINE: {
+		AiLog("SDictFloatIntent: REGION, RegionID: " + intent.objId + ", Size: " + intent.size + ", Key[0]: " + intent.GetKey(0) + ", Value[0]: " + intent.GetValue(0));
+	} break;
+	default: break;
+	}
+}
+
 }  // namespace Main
 
 

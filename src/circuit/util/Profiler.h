@@ -147,6 +147,10 @@ public:
 	NAME_ARRAY(ThreatUpdate, "%02i Threat::Update");
 	NAME_ARRAY(InflUpdate, "%02i Influence::Update");
 
+	NAME_ARRAY(IntentFloat, "%02i INTENT_FLOAT");
+	NAME_ARRAY(IntentArrayFloat, "%02i INTENT_ARRAY_FLOAT");
+	NAME_ARRAY(IntentDictFloat, "%02i INTENT_DICT_FLOAT");
+
 	#undef NAME_ARRAY
 
 private:

@@ -31,6 +31,7 @@
 
 #include "spring/SpringMap.h"
 
+#include "AISIntents.h"
 #include "Log.h"
 #include "Drawer.h"
 #include "Game.h"
@@ -180,6 +181,21 @@ static void ConstructCopySInitInfo(CInitScript::SInitInfo* mem, const CInitScrip
 static void DestructSInitInfo(CInitScript::SInitInfo *mem)
 {
 	mem->~SInitInfo();
+}
+
+static float SArrayFloatIntent_opIndex(SArrayFloatIntent* intent, unsigned int index)
+{
+	return intent->data[index];
+}
+
+static int SDictFloatIntent_GetKey(SDictFloatIntent* intent, unsigned int index)
+{
+	return intent->keys[index];
+}
+
+static float SDictFloatIntent_GetValue(SDictFloatIntent* intent, unsigned int index)
+{
+	return intent->values[index];
 }
 
 static CCircuitDef* CCircuitAI_GetCircuitDef(CCircuitAI* circuit, const std::string& name)
@@ -615,6 +631,22 @@ void CInitScript::RegisterCore()
 	r = engine->RegisterObjectMethod("string", "string toLower() const", asFUNCTION(utils::StringToLower), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("string", "string toUpper() const", asFUNCTION(utils::StringToUpper), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
 
+	r = engine->RegisterObjectType("SFloatIntent", sizeof(SFloatIntent), asOBJ_VALUE | asOBJ_POD); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("SFloatIntent", "const int topic", asOFFSET(SFloatIntent, topic)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("SFloatIntent", "const int objId", asOFFSET(SFloatIntent, objId)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("SFloatIntent", "const float value", asOFFSET(SFloatIntent, value)); ASSERT(r >= 0);
+	r = engine->RegisterObjectType("SArrayFloatIntent", sizeof(SArrayFloatIntent), asOBJ_VALUE | asOBJ_POD); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("SArrayFloatIntent", "const int topic", asOFFSET(SArrayFloatIntent, topic)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("SArrayFloatIntent", "const int objId", asOFFSET(SArrayFloatIntent, objId)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("SArrayFloatIntent", "const uint size", asOFFSET(SArrayFloatIntent, size)); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("SArrayFloatIntent", "const float opIndex(uint) const", asFUNCTION(SArrayFloatIntent_opIndex), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
+	r = engine->RegisterObjectType("SDictFloatIntent", sizeof(SDictFloatIntent), asOBJ_VALUE | asOBJ_POD); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("SDictFloatIntent", "const int topic", asOFFSET(SDictFloatIntent, topic)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("SDictFloatIntent", "const int objId", asOFFSET(SDictFloatIntent, objId)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("SDictFloatIntent", "const uint size", asOFFSET(SDictFloatIntent, size)); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("SDictFloatIntent", "int GetKey(uint) const", asFUNCTION(SDictFloatIntent_GetKey), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("SDictFloatIntent", "float GetValue(uint) const", asFUNCTION(SDictFloatIntent_GetValue), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
+
 	// RegisterCircuitAI
 	r = engine->RegisterTypedef("Id", "int"); ASSERT(r >= 0);
 	cache->idArray = engine->GetTypeInfoByDecl("array<Id>");
@@ -782,6 +814,9 @@ bool CInitScript::Init()
 	mainInfo.receiveMessage = script->GetFunc(mod, "void AiMessage(const string& in, int)");
 	mainInfo.unitFinished = script->GetFunc(mod, "void AiUnitFinished(CCircuitUnit@)");
 	mainInfo.unitDestroyed = script->GetFunc(mod, "void AiUnitDestroyed(CCircuitUnit@)");
+	mainInfo.intentFloat = script->GetFunc(mod, "void AiIntent(const SFloatIntent& in)");
+	mainInfo.intentArrayFloat = script->GetFunc(mod, "void AiIntent(const SArrayFloatIntent& in)");
+	mainInfo.intentDictFloat = script->GetFunc(mod, "void AiIntent(const SDictFloatIntent& in)");
 	asIScriptFunction* main = script->GetFunc(mod, "void AiMain()");
 	if (main == nullptr) {
 		return false;
@@ -808,11 +843,8 @@ void CInitScript::LuaMessage(const char* inData)
 	if (mainInfo.luaMessage == nullptr) {
 		return;
 	}
-	asIScriptContext* ctx = script->PrepareContext(mainInfo.luaMessage);
 	std::string data(inData);
-	ctx->SetArgAddress(0, &data);
-	script->Exec(ctx);
-	script->ReturnContext(ctx);
+	ExecArg1(mainInfo.luaMessage, &data);
 }
 
 void CInitScript::UnitFinished(CCircuitUnit* unit)
@@ -820,10 +852,7 @@ void CInitScript::UnitFinished(CCircuitUnit* unit)
 	if (mainInfo.unitFinished == nullptr) {
 		return;
 	}
-	asIScriptContext* ctx = script->PrepareContext(mainInfo.unitFinished);
-	ctx->SetArgObject(0, unit);
-	script->Exec(ctx);
-	script->ReturnContext(ctx);
+	ExecArg1(mainInfo.unitFinished, unit);
 }
 
 void CInitScript::UnitDestroyed(CCircuitUnit* unit)
@@ -831,8 +860,37 @@ void CInitScript::UnitDestroyed(CCircuitUnit* unit)
 	if (mainInfo.unitDestroyed == nullptr) {
 		return;
 	}
-	asIScriptContext* ctx = script->PrepareContext(mainInfo.unitDestroyed);
-	ctx->SetArgObject(0, unit);
+	ExecArg1(mainInfo.unitDestroyed, unit);
+}
+
+void CInitScript::Intent(const SFloatIntent* intent)
+{
+	if (mainInfo.intentFloat == nullptr) {
+		return;
+	}
+	ExecArg1(mainInfo.intentFloat, (void*)intent);
+}
+
+void CInitScript::Intent(const SArrayFloatIntent* intent)
+{
+	if (mainInfo.intentArrayFloat == nullptr) {
+		return;
+	}
+	ExecArg1(mainInfo.intentArrayFloat, (void*)intent);
+}
+
+void CInitScript::Intent(const SDictFloatIntent* intent)
+{
+	if (mainInfo.intentDictFloat == nullptr) {
+		return;
+	}
+	ExecArg1(mainInfo.intentDictFloat, (void*)intent);
+}
+
+void CInitScript::ExecArg1(asIScriptFunction* func, void* arg)
+{
+	asIScriptContext* ctx = script->PrepareContext(func);
+	ctx->SetArgObject(0, arg);
 	script->Exec(ctx);
 	script->ReturnContext(ctx);
 }
