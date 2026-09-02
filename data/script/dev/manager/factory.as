@@ -46,7 +46,23 @@ int switchInterval = MakeSwitchInterval();
 
 IUnitTask@ AiMakeTask(CCircuitUnit@ unit)
 {
-	return aiFactoryMgr.DefaultMakeTask(unit);
+	Wave::Wave@ wave = Main::intentMgr.GetWaveForFactory(unit);
+	if (wave is null)
+		return aiFactoryMgr.DefaultMakeTask(unit);
+
+	if (wave.orderList.isEmpty()) {
+// 		Main::intentMgr.RemoveWave(wave.id);
+		return null;
+	}
+
+	CCircuitDef@ buildDef = ai.GetCircuitDef(wave.orderList[0].unitDefId);
+	Task::Priority priority = Task::Priority::NORMAL;
+	Task::RecruitType recruit = Task::RecruitType::FIREPOWER;
+	IUnitTask@ task = aiFactoryMgr.Enqueue(TaskS::Recruit(recruit, priority, buildDef, AiTerrainCenter(), 64000.f));
+	if (--wave.orderList[0].num <= 0)
+		wave.orderList.removeAt(0);
+
+	return task;
 }
 
 void AiTaskAdded(IUnitTask@ task)
@@ -73,28 +89,28 @@ void AiUnitAdded(CCircuitUnit@ unit, Unit::UseAs usage)
 			ai.GetCircuitDef(spam[i]).SetIgnore(true);
 	}
 
-	const array<Opener::SO>@ opener = Opener::GetOpener(facDef);
-	if (opener is null)
-		return;
-
-	const AIFloat3 pos = unit.GetPos(ai.frame);
-	for (uint i = 0, icount = opener.length(); i < icount; ++i) {
-		CCircuitDef@ buildDef = aiFactoryMgr.GetRoleDef(facDef, opener[i].role);
-		if ((buildDef is null) || !buildDef.IsAvailable(ai.frame))
-			continue;
-
-		Task::Priority priority;
-		Task::RecruitType recruit;
-		if (opener[i].role == Unit::Role::BUILDER.type) {
-			priority = Task::Priority::NORMAL;
-			recruit  = Task::RecruitType::BUILDPOWER;
-		} else {
-			priority = Task::Priority::LOW;
-			recruit  = Task::RecruitType::FIREPOWER;
-		}
-		for (uint j = 0, jcount = opener[i].count; j < jcount; ++j)
-			aiFactoryMgr.Enqueue(TaskS::Recruit(recruit, priority, buildDef, pos, 64.f));
-	}
+// 	const array<Opener::SO>@ opener = Opener::GetOpener(facDef);
+// 	if (opener is null)
+// 		return;
+//
+// 	const AIFloat3 pos = unit.GetPos(ai.frame);
+// 	for (uint i = 0, icount = opener.length(); i < icount; ++i) {
+// 		CCircuitDef@ buildDef = aiFactoryMgr.GetRoleDef(facDef, opener[i].role);
+// 		if ((buildDef is null) || !buildDef.IsAvailable(ai.frame))
+// 			continue;
+//
+// 		Task::Priority priority;
+// 		Task::RecruitType recruit;
+// 		if (opener[i].role == Unit::Role::BUILDER.type) {
+// 			priority = Task::Priority::NORMAL;
+// 			recruit  = Task::RecruitType::BUILDPOWER;
+// 		} else {
+// 			priority = Task::Priority::LOW;
+// 			recruit  = Task::RecruitType::FIREPOWER;
+// 		}
+// 		for (uint j = 0, jcount = opener[i].count; j < jcount; ++j)
+// 			aiFactoryMgr.Enqueue(TaskS::Recruit(recruit, priority, buildDef, pos, 64.f));
+// 	}
 }
 
 void AiUnitRemoved(CCircuitUnit@ unit, Unit::UseAs usage)

@@ -145,9 +145,9 @@ private:
 	int Load(std::istream& is);
 	int Save(std::ostream& os);
 	int LuaMessage(const char* inData);
-	int Intent(const SFloatIntent* intent);
-	int Intent(const SArrayFloatIntent* intent);
-	int Intent(const SDictFloatIntent* intent);
+	int HandleIntent(const SFloatIntent* intent);
+	int HandleIntent(const SArrayFloatIntent* intent);
+	int HandleIntent(const SDictFloatIntent* intent);
 
 	bool InitSide();
 public:

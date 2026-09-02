@@ -42,7 +42,7 @@ public:
 	void DoneTask(IUnitTask* task) { DequeueTask(task, true); }
 
 public:
-	// script hooks
+	// Script hooks
 	virtual IUnitTask* MakeTask(CCircuitUnit* unit);
 	void TaskAdded(IUnitTask* task);
 	void TaskRemoved(IUnitTask* task, bool done);

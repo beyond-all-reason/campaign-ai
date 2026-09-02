@@ -534,17 +534,17 @@ int CCircuitAI::HandleGameIntent(int topic, const void* data)
 		case INTENT_FLOAT: {
 			TRACY_TOPIC("INTENT_FLOAT", IntentFloat);
 
-			ret = this->Intent((struct SFloatIntent*)data);
+			ret = this->HandleIntent((struct SFloatIntent*)data);
 		} break;
 		case INTENT_ARRAY_FLOAT: {
 			TRACY_TOPIC("INTENT_ARRAY_FLOAT", IntentArrayFloat);
 
-			ret = this->Intent((struct SArrayFloatIntent*)data);
+			ret = this->HandleIntent((struct SArrayFloatIntent*)data);
 		} break;
 		case INTENT_DICT_FLOAT: {
 			TRACY_TOPIC("INTENT_DICT_FLOAT", IntentDictFloat);
 
-			ret = this->Intent((struct SDictFloatIntent*)data);
+			ret = this->HandleIntent((struct SDictFloatIntent*)data);
 		} break;
 		default: break;
 	}
@@ -1471,21 +1471,21 @@ int CCircuitAI::LuaMessage(const char* inData)
 	return 0;  // signaling: OK
 }
 
-int CCircuitAI::Intent(const SFloatIntent* intent)
+int CCircuitAI::HandleIntent(const SFloatIntent* intent)
 {
-	script->Intent(intent);
+	script->HandleIntent(intent);
 	return 0;
 }
 
-int CCircuitAI::Intent(const SArrayFloatIntent* intent)
+int CCircuitAI::HandleIntent(const SArrayFloatIntent* intent)
 {
-	script->Intent(intent);
+	script->HandleIntent(intent);
 	return 0;
 }
 
-int CCircuitAI::Intent(const SDictFloatIntent* intent)
+int CCircuitAI::HandleIntent(const SDictFloatIntent* intent)
 {
-	script->Intent(intent);
+	script->HandleIntent(intent);
 	return 0;
 }
 

@@ -63,14 +63,14 @@ public:
 	void RegisterCore();
 	void RegisterMgr();
 	bool Init() override;
-	// script hooks
+	// Script hooks
 	void Update();
 	void LuaMessage(const char* inData);
 	void UnitFinished(CCircuitUnit* unit);
 	void UnitDestroyed(CCircuitUnit* unit);
-	void Intent(const SFloatIntent* intent);
-	void Intent(const SArrayFloatIntent* intent);
-	void Intent(const SDictFloatIntent* intent);
+	void HandleIntent(const SFloatIntent* intent);
+	void HandleIntent(const SArrayFloatIntent* intent);
+	void HandleIntent(const SDictFloatIntent* intent);
 
 private:
 	void ExecArg1(asIScriptFunction* func, void* arg);
@@ -81,6 +81,7 @@ private:
 	static void RegisterIBuilderTask(asIScriptEngine* engine, const char* cls);
 	template <class T>
 	static void RegisterIFighterTask(asIScriptEngine* engine, const char* cls);
+	static void RegisterCDefendTask(asIScriptEngine* engine);
 	static void RegisterCSuperTask(asIScriptEngine* engine);
 	static void RegisterUnitTasks(asIScriptEngine* engine);
 
@@ -111,9 +112,7 @@ private:
 		asIScriptFunction* update = nullptr;
 		asIScriptFunction* luaMessage = nullptr;
 		asIScriptFunction* receiveMessage = nullptr;
-		asIScriptFunction* intentFloat = nullptr;
-		asIScriptFunction* intentArrayFloat = nullptr;
-		asIScriptFunction* intentDictFloat = nullptr;
+		asIScriptFunction* handleIntent = nullptr;
 	} mainInfo;
 
 	mutable spring::mutex mtx;

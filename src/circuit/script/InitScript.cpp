@@ -14,6 +14,7 @@
 #include "setup/SetupManager.h"
 #include "terrain/TerrainManager.h"
 #include "task/builder/BuilderTask.h"
+#include "task/fighter/DefendTask.h"
 #include "task/static/SuperTask.h"
 #include "unit/CircuitUnit.h"
 #include "CircuitAI.h"
@@ -43,6 +44,15 @@
 namespace circuit {
 
 using namespace springai;
+
+union UIntent {
+//	uint8_t rawBytes[sizeof(SDictFloatIntent)];  // Trick to zero-out union
+	SFloatIntent intentF;
+	SArrayFloatIntent intentA;
+	SDictFloatIntent intentD;
+};
+static_assert(sizeof(SDictFloatIntent) >= sizeof(SFloatIntent));
+static_assert(sizeof(SDictFloatIntent) >= sizeof(SArrayFloatIntent));
 
 CInitScript::SInitInfo::SInitInfo(const SInitInfo& o)
 {
@@ -631,21 +641,19 @@ void CInitScript::RegisterCore()
 	r = engine->RegisterObjectMethod("string", "string toLower() const", asFUNCTION(utils::StringToLower), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("string", "string toUpper() const", asFUNCTION(utils::StringToUpper), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
 
-	r = engine->RegisterObjectType("SFloatIntent", sizeof(SFloatIntent), asOBJ_VALUE | asOBJ_POD); ASSERT(r >= 0);
-	r = engine->RegisterObjectProperty("SFloatIntent", "const int topic", asOFFSET(SFloatIntent, topic)); ASSERT(r >= 0);
-	r = engine->RegisterObjectProperty("SFloatIntent", "const int objId", asOFFSET(SFloatIntent, objId)); ASSERT(r >= 0);
-	r = engine->RegisterObjectProperty("SFloatIntent", "const float value", asOFFSET(SFloatIntent, value)); ASSERT(r >= 0);
-	r = engine->RegisterObjectType("SArrayFloatIntent", sizeof(SArrayFloatIntent), asOBJ_VALUE | asOBJ_POD); ASSERT(r >= 0);
-	r = engine->RegisterObjectProperty("SArrayFloatIntent", "const int topic", asOFFSET(SArrayFloatIntent, topic)); ASSERT(r >= 0);
-	r = engine->RegisterObjectProperty("SArrayFloatIntent", "const int objId", asOFFSET(SArrayFloatIntent, objId)); ASSERT(r >= 0);
-	r = engine->RegisterObjectProperty("SArrayFloatIntent", "const uint size", asOFFSET(SArrayFloatIntent, size)); ASSERT(r >= 0);
-	r = engine->RegisterObjectMethod("SArrayFloatIntent", "const float opIndex(uint) const", asFUNCTION(SArrayFloatIntent_opIndex), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
-	r = engine->RegisterObjectType("SDictFloatIntent", sizeof(SDictFloatIntent), asOBJ_VALUE | asOBJ_POD); ASSERT(r >= 0);
-	r = engine->RegisterObjectProperty("SDictFloatIntent", "const int topic", asOFFSET(SDictFloatIntent, topic)); ASSERT(r >= 0);
-	r = engine->RegisterObjectProperty("SDictFloatIntent", "const int objId", asOFFSET(SDictFloatIntent, objId)); ASSERT(r >= 0);
-	r = engine->RegisterObjectProperty("SDictFloatIntent", "const uint size", asOFFSET(SDictFloatIntent, size)); ASSERT(r >= 0);
-	r = engine->RegisterObjectMethod("SDictFloatIntent", "int GetKey(uint) const", asFUNCTION(SDictFloatIntent_GetKey), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
-	r = engine->RegisterObjectMethod("SDictFloatIntent", "float GetValue(uint) const", asFUNCTION(SDictFloatIntent_GetValue), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
+	static_assert(offsetof(SFloatIntent, topic) == offsetof(SArrayFloatIntent, topic));
+	static_assert(offsetof(SFloatIntent, topic) == offsetof(SDictFloatIntent, topic));
+	static_assert(offsetof(SFloatIntent, objId) == offsetof(SArrayFloatIntent, objId));
+	static_assert(offsetof(SFloatIntent, objId) == offsetof(SDictFloatIntent, objId));
+	static_assert(offsetof(SArrayFloatIntent, size) == offsetof(SDictFloatIntent, size));
+	r = engine->RegisterObjectType("SIntent", sizeof(UIntent), asOBJ_VALUE | asOBJ_POD); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("SIntent", "const int topic", asOFFSET(SFloatIntent, topic)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("SIntent", "const int objId", asOFFSET(SFloatIntent, objId)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("SIntent", "const float value", asOFFSET(SFloatIntent, value)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("SIntent", "const uint size", asOFFSET(SArrayFloatIntent, size)); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("SIntent", "const float opIndex(uint) const", asFUNCTION(SArrayFloatIntent_opIndex), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("SIntent", "int GetKey(uint) const", asFUNCTION(SDictFloatIntent_GetKey), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("SIntent", "float GetValue(uint) const", asFUNCTION(SDictFloatIntent_GetValue), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
 
 	// RegisterCircuitAI
 	r = engine->RegisterTypedef("Id", "int"); ASSERT(r >= 0);
@@ -814,9 +822,7 @@ bool CInitScript::Init()
 	mainInfo.receiveMessage = script->GetFunc(mod, "void AiMessage(const string& in, int)");
 	mainInfo.unitFinished = script->GetFunc(mod, "void AiUnitFinished(CCircuitUnit@)");
 	mainInfo.unitDestroyed = script->GetFunc(mod, "void AiUnitDestroyed(CCircuitUnit@)");
-	mainInfo.intentFloat = script->GetFunc(mod, "void AiIntent(const SFloatIntent& in)");
-	mainInfo.intentArrayFloat = script->GetFunc(mod, "void AiIntent(const SArrayFloatIntent& in)");
-	mainInfo.intentDictFloat = script->GetFunc(mod, "void AiIntent(const SDictFloatIntent& in)");
+	mainInfo.handleIntent = script->GetFunc(mod, "void AiHandleIntent(const SIntent& in)");
 	asIScriptFunction* main = script->GetFunc(mod, "void AiMain()");
 	if (main == nullptr) {
 		return false;
@@ -863,28 +869,35 @@ void CInitScript::UnitDestroyed(CCircuitUnit* unit)
 	ExecArg1(mainInfo.unitDestroyed, unit);
 }
 
-void CInitScript::Intent(const SFloatIntent* intent)
+void CInitScript::HandleIntent(const SFloatIntent* intent)
 {
-	if (mainInfo.intentFloat == nullptr) {
+	if (mainInfo.handleIntent == nullptr) {
 		return;
 	}
-	ExecArg1(mainInfo.intentFloat, (void*)intent);
+	UIntent u;
+	std::memset(&u, 0, sizeof(u));
+	u.intentF = *intent;
+	ExecArg1(mainInfo.handleIntent, &u);
 }
 
-void CInitScript::Intent(const SArrayFloatIntent* intent)
+void CInitScript::HandleIntent(const SArrayFloatIntent* intent)
 {
-	if (mainInfo.intentArrayFloat == nullptr) {
+	if (mainInfo.handleIntent == nullptr) {
 		return;
 	}
-	ExecArg1(mainInfo.intentArrayFloat, (void*)intent);
+	UIntent u;
+	std::memset(&u, 0, sizeof(u));
+	u.intentA = *intent;
+	ExecArg1(mainInfo.handleIntent, &u);
 }
 
-void CInitScript::Intent(const SDictFloatIntent* intent)
+void CInitScript::HandleIntent(const SDictFloatIntent* intent)
 {
-	if (mainInfo.intentDictFloat == nullptr) {
+	if (mainInfo.handleIntent == nullptr) {
 		return;
 	}
-	ExecArg1(mainInfo.intentDictFloat, (void*)intent);
+	UIntent u = {.intentD = *intent};
+	ExecArg1(mainInfo.handleIntent, &u);
 }
 
 void CInitScript::ExecArg1(asIScriptFunction* func, void* arg)
@@ -927,6 +940,13 @@ void CInitScript::RegisterIFighterTask(asIScriptEngine* engine, const char* cls)
 	int r = engine->RegisterObjectMethod(cls, "Type GetFightType() const", asMETHODPR(T, GetFightType, () const, IFighterTask::FightType), asCALL_THISCALL); ASSERT(r >= 0);
 }
 
+void CInitScript::RegisterCDefendTask(asIScriptEngine* engine)
+{
+	RegisterIFighterTask<CDefendTask>(engine, "CDefendTask");
+	RegisterCast<IFighterTask, CDefendTask>(engine, "IFighterTask", "CDefendTask");
+	int r = engine->RegisterObjectMethod("CDefendTask", "void SetTargetPos(const AIFloat3& in)", asMETHOD(CDefendTask, SetTargetPos), asCALL_THISCALL); ASSERT(r >= 0);
+}
+
 void CInitScript::RegisterCSuperTask(asIScriptEngine* engine)
 {
 	RegisterIFighterTask<CSuperTask>(engine, "CSuperTask");
@@ -939,6 +959,7 @@ void CInitScript::RegisterUnitTasks(asIScriptEngine* engine)
 	RegisterIUnitTask<IUnitTask>(engine, "IUnitTask");
 	RegisterIBuilderTask<IBuilderTask>(engine, "IBuilderTask");
 	RegisterIFighterTask<IFighterTask>(engine, "IFighterTask");
+	RegisterCDefendTask(engine);
 	RegisterCSuperTask(engine);
 }
 

@@ -2,9 +2,14 @@
 #include "manager/builder.as"
 #include "manager/factory.as"
 #include "manager/economy.as"
+#include "misc/intent_manager.as"
+#include "misc/wave.as"
 
 
 namespace Main {
+
+Intent::Manager@ intentMgr = null;
+map<Id, CCircuitUnit@> units;
 
 void AiMain()
 {
@@ -45,6 +50,8 @@ void AiMain()
 	names = {Factory::armshltx, Factory::corgant};
 	for (uint i = 0; i < names.length(); ++i)
 		Factory::userData[ai.GetCircuitDef(names[i]).id].attr |= Factory::Attr::T3;
+
+	@intentMgr = Intent::Manager();
 }
 
 void AiUpdate()  // SlowUpdate, every 30 frames with initial offset of skirmishAIId
@@ -67,81 +74,19 @@ void AiUnitFinished(CCircuitUnit@ unit)
 {
 	// NOTE: Experimental. May be deprecated.
 	// Duplicates module's AiUnitAdded, but for any unit.
+	units.insert(unit.id, @unit);
 }
 
 void AiUnitDestroyed(CCircuitUnit@ unit)
 {
 	// NOTE: Experimental. May be deprecated
 	// Duplicates module's AiUnitRemoved, but for any unit.
+	units.erase(unit.id);
 }
 
-// Has to be same as Lua's defines
-enum EIntents {
-	AI_BASE_DEFINE = 1,
-	AI_WAVE_DEFINE = 2,
-	AI_REGION_DEFINE = 3,
-}
-void AiIntent(const SFloatIntent& in intent)
+void AiHandleIntent(const SIntent& in intent)
 {
-	switch (intent.topic) {
-	case AI_BASE_DEFINE: {
-		AiLog("SFloatIntent: BASE, BaseID: " + intent.objId + ", Value: " + intent.value);
-	} break;
-	case AI_WAVE_DEFINE: {
-		AiLog("SFloatIntent: WAVE, WaveID: " + intent.objId + ", Value: " + intent.value);
-	} break;
-	case AI_REGION_DEFINE: {
-		AiLog("SFloatIntent: REGION, RegionID: " + intent.objId + ", Value: " + intent.value);
-	} break;
-	default: break;
-	}
-}
-
-void AiIntent(const SArrayFloatIntent& in intent)
-{
-	switch (intent.topic) {
-	case AI_BASE_DEFINE: {
-		AiLog("SArrayFloatIntent: BASE, BaseID: " + intent.objId + ", Size: " + intent.size + ", Value[0]: " + intent[0]);
-	} break;
-	case AI_WAVE_DEFINE: {
-		AiLog("SArrayFloatIntent: WAVE, WaveID: " + intent.objId + ", Size: " + intent.size + ", Value[0]: " + intent[0]);
-		CCircuitDef@ cdef = ai.GetCircuitDef("corlab");
-		array<float>@ weights = aiFactoryMgr.GetTierWeights(cdef, Unit::SurfType::LAND, 0);
-		if (intent.size != weights.length())
-			return;
-		for (uint i = 0; i < weights.length(); ++i)
-			weights[i] = intent[i];
-		string s;
-		for (uint i = 0; i < weights.length(); ++i) {
-			s += weights[i] + " | ";
-		}
-		AiLog(s);
-		aiFactoryMgr.SetTierWeights(cdef, Unit::SurfType::LAND, 0, weights);
-		aiFactoryMgr.SetTierWeights(cdef, Unit::SurfType::LAND, 1, weights);
-		aiFactoryMgr.SetTierWeights(cdef, Unit::SurfType::LAND, 2, weights);
-		aiFactoryMgr.SetTierWeights(cdef, Unit::SurfType::LAND, 3, weights);
-	} break;
-	case AI_REGION_DEFINE: {
-		AiLog("SArrayFloatIntent: REGION, RegionID: " + intent.objId + ", Size: " + intent.size + ", Value[0]: " + intent[0]);
-	} break;
-	default: break;
-	}
-}
-
-void AiIntent(const SDictFloatIntent& in intent)
-{
-	switch (intent.topic) {
-	case AI_BASE_DEFINE: {
-		AiLog("SDictFloatIntent: BASE, BaseID: " + intent.objId + ", Size: " + intent.size + ", Key[0]: " + intent.GetKey(0) + ", Value[0]: " + intent.GetValue(0));
-	} break;
-	case AI_WAVE_DEFINE: {
-		AiLog("SDictFloatIntent: WAVE, WaveID: " + intent.objId + ", Size: " + intent.size + ", Key[0]: " + intent.GetKey(0) + ", Value[0]: " + intent.GetValue(0));
-	} break;
-	case AI_REGION_DEFINE: {
-		AiLog("SDictFloatIntent: REGION, RegionID: " + intent.objId + ", Size: " + intent.size + ", Key[0]: " + intent.GetKey(0) + ", Value[0]: " + intent.GetValue(0));
-	} break;
-	default: break;
-	}
+	intentMgr.HandleIntent(intent);
 }
 
 }  // namespace Main

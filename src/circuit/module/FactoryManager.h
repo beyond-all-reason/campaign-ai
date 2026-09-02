@@ -106,7 +106,6 @@ public:
 			: startImp(0.f)
 			, switchImp(0.f)
 			, mapSpeedPerc(0.f)
-			, isT1(false)
 			, landDef(nullptr)
 			, waterDef(nullptr)
 			, isRequireEnergy(false)
@@ -117,7 +116,6 @@ public:
 		float startImp;  // importance[0]
 		float switchImp;  // importance[1]
 		float mapSpeedPerc;
-		bool isT1;  // FIXME: DEBUG Silly t1 detection
 		// <<< FactoryData ---- END
 
 		std::vector<CCircuitDef*> buildDefs;
@@ -157,7 +155,6 @@ public:
 	}
 
 	int GetFactoryCount() const { return factories.size(); }
-	int GetNoT1FacCount() const { return noT1FacCount; }
 	float GetMetalRequire() const { return metalRequire; }
 	float GetEnergyRequire() const { return energyRequire; }
 	float GetNewFacModM() const { return newFacModM; }
@@ -189,7 +186,7 @@ public:
 								   bool isStart = false, bool isReset = false);
 	void AddFactory(const CCircuitDef* cdef);
 	void DelFactory(const CCircuitDef* cdef);
-	bool IsT1Factory(const CCircuitDef* cdef);
+	bool IsActiveFactory(ICoreUnit::Id unitId);
 	CCircuitDef* GetRoleDef(const CCircuitDef* facDef, CCircuitDef::RoleT role) const;
 	CCircuitDef* GetLandDef(const CCircuitDef* facDef) const;
 	CCircuitDef* GetWaterDef(const CCircuitDef* facDef) const;
@@ -205,9 +202,10 @@ public:
 	float GetMinOffset() const { return minOffset; }
 	float GetLenOffset() const { return lenOffset; }
 
-	// Script-hooks
+	// Script hooks
 	const SFactoryDef* GetFactoryDef(CCircuitDef* facDef) const;
 	const std::vector<float>* GetTierWeights(CCircuitDef* facDef, int surfType, int tier) const;
+	void SetIsActiveFactory(ICoreUnit::Id unitId, bool value);
 
 private:
 	CCircuitDef* DefaultGetFactoryToBuild(const springai::AIFloat3& position, bool isStart, bool isReset);
@@ -252,7 +250,7 @@ private:
 	struct SFactory {
 		SFactory(CCircuitUnit* u, const std::map<CCircuitDef*, SAssistant>& n, unsigned int ns, unsigned int w, CCircuitDef* b,
 				 float mi, float ei, float mit, float eit)
-			: unit(u), nanos(n), nanoSize(ns), weight(w), builder(b)
+			: unit(u), nanos(n), nanoSize(ns), weight(w), builder(b), isActive(true)
 			, miRequire(mi), eiRequire(ei), miRequireTotal(mit), eiRequireTotal(eit)
 		{}
 		CCircuitUnit* unit;
@@ -260,6 +258,7 @@ private:
 		unsigned int nanoSize;
 		unsigned int weight;
 		CCircuitDef* builder;
+		bool isActive;  // Script hook
 		float miRequire;
 		float eiRequire;
 		float miRequireTotal;
@@ -270,7 +269,6 @@ private:
 	bool isAssistRequired;
 	bool isSwitchTime;
 	int lastSwitchFrame;
-	int noT1FacCount;
 
 	FactoryDefs factoryDefs;
 	// >>> FactoryData ---- BEGIN

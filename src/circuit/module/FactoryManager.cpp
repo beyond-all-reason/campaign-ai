@@ -53,7 +53,6 @@ CFactoryManager::CFactoryManager(CCircuitAI* circuit)
 		, isAssistRequired(false)
 		, isSwitchTime(false)
 		, lastSwitchFrame(-1)
-		, noT1FacCount(0)
 		, bpRatio(1.f)
 		, reWeight(.5f)
 {
@@ -551,9 +550,6 @@ void CFactoryManager::ReadConfig()
 		} else {
 			facDef.startImp = importance.get((unsigned)0, 1.0f).asFloat();
 			facDef.switchImp = importance.get((unsigned)1, 1.0f).asFloat();
-			// FIXME: DEBUG Silly t1 detection
-			facDef.isT1 = (facDef.switchImp <= .0f);
-			// FIXME: DEBUG
 		}
 
 		facDef.isRequireEnergy = factory.get("require_energy", false).asBool();
@@ -926,7 +922,7 @@ CCircuitUnit* CFactoryManager::GetClosestFactory(const AIFloat3& position)
 	float minSqDist = std::numeric_limits<float>::max();
 	const int frame = circuit->GetLastFrame();
 	for (SFactory& fac : factories) {
-		if (IsT1Factory(fac.unit->GetCircuitDef())) {
+		if (!fac.isActive) {
 			continue;
 		}
 		SArea* area = fac.unit->GetArea();
@@ -940,25 +936,6 @@ CCircuitUnit* CFactoryManager::GetClosestFactory(const AIFloat3& position)
 			factory = fac.unit;
 		}
 	}
-	// FIXME: DEBUG lazy t1 factory check
-	if (factory == nullptr) {
-		for (SFactory& fac : factories) {
-			if (!IsT1Factory(fac.unit->GetCircuitDef())) {
-				continue;
-			}
-			SArea* area = fac.unit->GetArea();
-			if ((area != nullptr) && (area->sector.find(iS) == area->sector.end())) {
-				continue;
-			}
-			const AIFloat3& facPos = fac.unit->GetPos(frame);
-			float sqDist = position.SqDistance2D(facPos);
-			if (minSqDist > sqDist) {
-				minSqDist = sqDist;
-				factory = fac.unit;
-			}
-		}
-	}
-	// FIXME: DEBUG
 	return factory;
 }
 
@@ -1114,11 +1091,12 @@ void CFactoryManager::DelFactory(const CCircuitDef* cdef)
 	factoryData->DelFactory(cdef);
 }
 
-bool CFactoryManager::IsT1Factory(const CCircuitDef* cdef)
+bool CFactoryManager::IsActiveFactory(ICoreUnit::Id unitId)
 {
-	auto it = factoryDefs.find(cdef->GetId());
-	if (it != factoryDefs.end()) {
-		return it->second.isT1;
+	for (SFactory& fac : factories) {
+		if (fac.unit->GetId() == unitId) {
+			return fac.isActive;
+		}
 	}
 	return false;
 }
@@ -1214,6 +1192,16 @@ const std::vector<float>* CFactoryManager::GetTierWeights(CCircuitDef* facDef, i
 	return &it->second;
 }
 
+void CFactoryManager::SetIsActiveFactory(ICoreUnit::Id unitId, bool value)
+{
+	for (SFactory& fac : factories) {
+		if (fac.unit->GetId() == unitId) {
+			fac.isActive = value;
+			return;
+		}
+	}
+}
+
 CCircuitDef* CFactoryManager::DefaultGetFactoryToBuild(const AIFloat3& position, bool isStart, bool isReset)
 {
 	CCircuitDef* facDef = factoryData->GetFactoryToBuild(circuit, position, isStart, isReset);
@@ -1306,10 +1294,6 @@ void CFactoryManager::EnableFactory(CCircuitUnit* unit)
 				miRequire, eiRequire, miRequireTotal, eiRequireTotal);
 	} else {
 		factories.emplace_back(unit, nanos, nanoSize, 0, nullptr, 0.f, 0.f, 0.f, 0.f);
-	}
-
-	if (!IsT1Factory(unit->GetCircuitDef())) {
-		noT1FacCount++;
 	}
 
 	if (unit->GetCircuitDef()->GetMobileId() < 0) {
@@ -1419,10 +1403,6 @@ void CFactoryManager::DisableFactory(CCircuitUnit* unit)
 		circuit->GetSetupManager()->SetBasePos(pos);
 	}
 
-	if (!IsT1Factory(unit->GetCircuitDef())) {
-		noT1FacCount--;
-	}
-
 	if (unit->GetCircuitDef()->GetMobileId() < 0) {
 		validAir.erase(unit);
 	}
@@ -1469,7 +1449,8 @@ IUnitTask* CFactoryManager::CreateFactoryTask(CCircuitUnit* unit)
 		}
 	}
 
-	const bool isActive = (noT1FacCount <= 0) || !IsT1Factory(unit->GetCircuitDef());
+	// FIXME: factories is a vector. Must it has be done here?
+	const bool isActive = IsActiveFactory(unit->GetId());
 
 	IUnitTask* task = UpdateBuildPower(unit, isActive);
 	if (task != nullptr) {

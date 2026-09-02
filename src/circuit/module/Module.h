@@ -46,7 +46,7 @@ public:
 	virtual int UnitGiven(CCircuitUnit* unit, int oldTeamId, int newTeamId);
 	virtual int UnitCaptured(CCircuitUnit* unit, int oldTeamId, int newTeamId);
 
-	// script hooks
+	// Script hooks
 	void UnitAdded(CCircuitUnit* unit, UseAs usage);
 	void UnitRemoved(CCircuitUnit* unit, UseAs usage);
 

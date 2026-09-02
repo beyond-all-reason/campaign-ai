@@ -38,6 +38,7 @@ CDefendTask::CDefendTask(ITaskModule* mgr, const AIFloat3& position,
 		, check(check)
 		, promote(promote)
 		, maxPower(maxPower * powerMod)
+		, isTargetOverride(false)
 {
 	this->position = position;
 }
@@ -148,6 +149,11 @@ void CDefendTask::Update()
 		}
 	}
 
+	if (isTargetOverride) {
+		FallbackFrontPos();
+		return;
+	}
+
 	/*
 	 * Update target
 	 */
@@ -186,6 +192,18 @@ void CDefendTask::Update()
 	pathfinder->RunQuery(circuit->GetScheduler().get(), query, [this](const IPathQuery* query) {
 		this->ApplyTargetPath(static_cast<const CQueryPathMulti*>(query));
 	});
+}
+
+void CDefendTask::SetTargetPos(const AIFloat3& pos)
+{
+	SetTarget(nullptr);
+	urgentPositions.clear();
+	isTargetOverride = geom::is_valid(pos);
+	if (isTargetOverride) {
+		targetPos = pos;
+		targetPos.y = manager->GetCircuit()->GetMap()->GetElevationAt(pos.x, pos.z);
+		urgentPositions.push_back(targetPos);
+	}
 }
 
 void CDefendTask::Merge(ISquadTask* task)
@@ -329,10 +347,12 @@ void CDefendTask::ApplyTargetPath(const CQueryPathMulti* query)
 void CDefendTask::FallbackFrontPos()
 {
 	CCircuitAI* circuit = manager->GetCircuit();
-	circuit->GetMilitaryManager()->FillFrontPos(leader, urgentPositions);
-	if (urgentPositions.empty()) {
-		FallbackBasePos();
-		return;
+	if (!isTargetOverride) {
+		circuit->GetMilitaryManager()->FillFrontPos(leader, urgentPositions);
+		if (urgentPositions.empty()) {
+			FallbackBasePos();
+			return;
+		}
 	}
 
 	const AIFloat3& startPos = leader->GetPos(circuit->GetLastFrame());

@@ -51,6 +51,7 @@ CFactoryScript::CFactoryScript(CScriptManager* scr, CFactoryManager* mgr)
 //	r = engine->RegisterObjectMethod("CFactoryManager", "IUnitTask@+ EnqueueRetreat()", asMETHOD(CFactoryManager, EnqueueRetreat), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CFactoryManager", "CCircuitDef@ GetRoleDef(const CCircuitDef@, Type) const", asMETHOD(CFactoryManager, GetRoleDef), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CFactoryManager", "int GetFactoryCount() const", asMETHOD(CFactoryManager, GetFactoryCount), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CFactoryManager", "void SetIsActiveFactory(Id, bool)", asMETHOD(CFactoryManager, SetIsActiveFactory), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CFactoryManager", "bool isAssistRequired", asOFFSET(CFactoryManager, isAssistRequired)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CFactoryManager", "float buildpowerRatio", asOFFSET(CFactoryManager, bpRatio)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CFactoryManager", "float responseWeight", asOFFSET(CFactoryManager, reWeight)); ASSERT(r >= 0);

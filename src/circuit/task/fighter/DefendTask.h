@@ -31,6 +31,9 @@ public:
 
 	FightType GetPromote() const { return promote; }
 
+	// Script hooks
+	void SetTargetPos(const springai::AIFloat3& pos);
+
 protected:
 	float GetMaxPower() const { return maxPower; }
 
@@ -47,6 +50,9 @@ private:
 	FightType check;
 	FightType promote;
 	float maxPower;
+
+	springai::AIFloat3 targetPos;  // Script hook
+	bool isTargetOverride;
 };
 
 } // namespace circuit
