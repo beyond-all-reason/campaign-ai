@@ -67,6 +67,7 @@ public:
 	virtual void OnTravelEnd(CCircuitUnit* unit);
 	virtual void OnRearmStart(CCircuitUnit* unit);
 
+	int GetUnitCount() const { return units.size(); }  // Script hook
 	const std::set<CCircuitUnit*>& GetAssignees() const { return units; }
 	Priority GetPriority() const { return priority; }
 	Type GetType() const { return type; }

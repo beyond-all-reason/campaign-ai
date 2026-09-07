@@ -43,6 +43,10 @@ static inline bool is_in_range(const springai::AIFloat3& posA, const springai::A
 	return posA.SqDistance2D(posB) <= SQUARE(range);
 }
 
+static inline bool is_in_sqrange(const springai::AIFloat3& posA, const springai::AIFloat3& posB, float sqRange) {
+	return posA.SqDistance2D(posB) <= sqRange;
+}
+
 /*
  * nanoflann
  */

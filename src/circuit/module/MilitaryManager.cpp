@@ -1394,7 +1394,9 @@ void CMilitaryManager::UpdateDefenceTasks()
 //		if (groupIdx >= 0) {
 //			dt->SetMaxPower(std::max(minAttackers, enemyGroups[groupIdx].threat));
 //		}
-		dt->SetMaxPower(std::max(minAttackers, circuit->GetEnemyManager()->GetPreMaxGroupThreat()));
+		if (!dt->IsScripted()) {
+			dt->SetMaxPower(std::max(minAttackers, circuit->GetEnemyManager()->GetPreMaxGroupThreat()));
+		}
 	}
 
 	/*

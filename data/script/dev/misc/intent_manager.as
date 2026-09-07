@@ -1,4 +1,4 @@
-#include "wave.as"
+#include "squad.as"
 #include "../../intent.as"
 
 
@@ -24,25 +24,23 @@ class Manager {
 		} break;
 
 		case AI_UNIT_WEIGHTS: {  // SArrayFloatIntent
-			ChangeWeights(intent);
+// 			ChangeWeights(intent);
 		} break;
 
-		case AI_WAVE_CREATE: {  // SDictFloatIntent
-			@waves[intent.objId] = Wave::Create(intent);
+		case AI_SQUAD_CREATE: {  // SDictFloatIntent
+			Squad::mgr.CreateRequest(intent);
 		} break;
 
-		case AI_WAVE_DESTROY: {  // SFloatIntent
-			waves.erase(intent.objId);
+		case AI_SQUAD_COMPOSE: {  // SDictFloatIntent
+			Squad::mgr.ComposeRequest(intent);
 		} break;
 
-		case AI_WAVE_COMPOSE: {  // SDictFloatIntent
-			ComposeWave(intent);
+		case AI_SQUAD_DESTROY: {  // SFloatIntent
+			Squad::mgr.DestroySquad(intent.objId);
 		} break;
 
-		case AI_WAVE_DEFEND: {  // SArrayFloatIntent
-			AIFloat3 pos(intent[0], intent[1], intent[2]);
-			AiLog("defend at " + pos);
-			DefendPosition(intent.objId, pos);
+		case AI_SQUAD_POSITION: {  // SArrayFloatIntent
+			Squad::mgr.SetSquadPosition(intent);
 		} break;
 
 		case AI_REGION_AVOID: {  // SArrayFloatIntent
@@ -72,43 +70,25 @@ class Manager {
 	/*
 	 * Handler helpers
 	 */
-	void ComposeWave(const SIntent& in intent) {
-		bool success = false;
-		Wave::Wave@ wave = waves.find(intent.objId, success);
-		if (!success) {
-			AiLog("Error: Wave " + intent.objId + " not found");
-			return;
-		}
-		for (uint i = 0; i < intent.size; ++i) {
-			Id unitDefId = intent.GetKey(i);
-			CCircuitDef@ cdef = ai.GetCircuitDef(unitDefId);
-			if (cdef is null) {
-				AiLog("Error: Wave " + intent.objId + ", UnitDefID " + unitDefId + " not found");
-				continue;
-			}
-			wave.orderList.insertLast(Wave::UnitNum(unitDefId, int(intent.GetValue(i))));
-		}
-	}
-
-	void ChangeWeights(const SIntent& in intent) {
-		bool success = false;
-		Wave::Wave@ wave = waves.find(intent.objId, success);
-		if (!success) {
-            AiLog("Error: Wave " + intent.objId + " not found");
-			return;
-		}
-		array<float>@ weights = aiFactoryMgr.GetTierWeights(wave.facDef, Unit::SurfType::LAND, 0);
-		if (intent.size != weights.length()) {
-            AiLog("Error: Weights size must be equal to factory.json content");
-			return;
-        }
-		for (uint i = 0; i < weights.length(); ++i)
-			weights[i] = intent[i];
-		aiFactoryMgr.SetTierWeights(wave.facDef, Unit::SurfType::LAND, 0, weights);
-		aiFactoryMgr.SetTierWeights(wave.facDef, Unit::SurfType::LAND, 1, weights);
-		aiFactoryMgr.SetTierWeights(wave.facDef, Unit::SurfType::LAND, 2, weights);
-		aiFactoryMgr.SetTierWeights(wave.facDef, Unit::SurfType::LAND, 3, weights);
-	}
+// 	void ChangeWeights(const SIntent& in intent) {
+// 		bool success = false;
+// 		Squad::Squad@ squad = squads.find(intent.objId, success);
+// 		if (!success) {
+//             AiLog("Error: Squad " + intent.objId + " not found");
+// 			return;
+// 		}
+// 		array<float>@ weights = aiFactoryMgr.GetTierWeights(squad.facDef, Unit::SurfType::LAND, 0);
+// 		if (intent.size != weights.length()) {
+//             AiLog("Error: Weights size must be equal to factory.json content");
+// 			return;
+//         }
+// 		for (uint i = 0; i < weights.length(); ++i)
+// 			weights[i] = intent[i];
+// 		aiFactoryMgr.SetTierWeights(squad.facDef, Unit::SurfType::LAND, 0, weights);
+// 		aiFactoryMgr.SetTierWeights(squad.facDef, Unit::SurfType::LAND, 1, weights);
+// 		aiFactoryMgr.SetTierWeights(squad.facDef, Unit::SurfType::LAND, 2, weights);
+// 		aiFactoryMgr.SetTierWeights(squad.facDef, Unit::SurfType::LAND, 3, weights);
+// 	}
 
 	void UpdateEnabledUnits(Id unitDefId, bool isEnabled) {
 		CCircuitDef@ cdef = ai.GetCircuitDef(unitDefId);
@@ -125,18 +105,6 @@ class Manager {
 		}
 	}
 
-	void DefendPosition(Id unitId, const AIFloat3& in pos) {
-		bool success = false;
-		CCircuitUnit@ unit = Main::units.find(unitId, success);
-		if (!success || unit.task.GetType() != Task::Type::FIGHTER)
-			return;
-		IFighterTask@ taskF = cast<IFighterTask>(unit.task);
-		if (taskF.GetFightType() != Task::FightType::DEFEND)
-			return;
-		CDefendTask@ defendTask = cast<CDefendTask>(taskF);
-		defendTask.SetTargetPos(pos);
-	}
-
 	void ExecOrder66() {
 		int num = 0;
 		for (auto it = Main::units.begin(); it++;) {
@@ -148,26 +116,11 @@ class Manager {
 	}
 
 	/*
-	 * Property accessors
-	 */
-	Wave::Wave@ GetWaveForFactory(CCircuitUnit@ unit) {
-		for (auto it = waves.begin(); it++;) {
-			Wave::Wave@ wave = it.current_value();
-			if (wave.facDef.id == unit.circuitDef.id)
-				return wave;
-		}
-		return null;
-	}
-
-	void RemoveWave(int waveId) {
-		waves.erase(waveId);
-	}
-
-	/*
 	 * Properties
 	 */
-	private map<int, Wave::Wave@> waves;  // waveID: Wave@
 	private map<Id, int> prevUnitLimits;  // behaviour.json may have other than 32000 value
 }
+
+Manager mgr;
 
 }  // namespace Intent

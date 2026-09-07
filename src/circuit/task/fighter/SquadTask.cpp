@@ -26,6 +26,7 @@ using namespace terrain;
 
 ISquadTask::ISquadTask(ITaskModule* mgr, FightType type, float powerMod)
 		: IFighterTask(mgr, type, powerMod)
+		, isScripted(false)
 		, lowestRange(std::numeric_limits<float>::max())
 		, highestRange(.0f)
 		, lowestSpeed(std::numeric_limits<float>::max())
@@ -194,6 +195,9 @@ ISquadTask* ISquadTask::CheckMergeTask()
 			continue;
 		}
 		const ISquadTask* candy = static_cast<const ISquadTask*>(candidate);
+		if (candy->IsScripted()) {
+			continue;
+		}
 
 		const AIFloat3& tp = candy->GetLeaderPos(frame);
 		const AIFloat3& taskPos = geom::is_valid(tp) ? tp : pos;
@@ -219,7 +223,7 @@ ISquadTask* ISquadTask::CheckMergeTask()
 
 ISquadTask* ISquadTask::GetMergeTask()
 {
-	if (updCount % 32 == 1) {
+	if (!isScripted && (updCount % 32 == 1)) {
 		return IsMergeSafe() ? CheckMergeTask() : nullptr;
 	}
 	return nullptr;

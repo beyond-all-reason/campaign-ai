@@ -38,7 +38,7 @@ CDefendTask::CDefendTask(ITaskModule* mgr, const AIFloat3& position,
 		, check(check)
 		, promote(promote)
 		, maxPower(maxPower * powerMod)
-		, isTargetOverride(false)
+		, targetPos(position)
 {
 	this->position = position;
 }
@@ -100,6 +100,10 @@ void CDefendTask::Start(CCircuitUnit* unit)
 
 void CDefendTask::Update()
 {
+	if (leader == nullptr) {  // possible due to AS creation
+		return;
+	}
+
 	++updCount;
 
 	/*
@@ -107,7 +111,9 @@ void CDefendTask::Update()
 	 */
 	if (updCount % 32 == 1) {
 		CMilitaryManager* militaryMgr = static_cast<CMilitaryManager*>(manager);
-		if ((attackPower >= maxPower) || !militaryMgr->GetTasks(check).empty()) {
+		if (!isScripted
+			&& ((attackPower >= maxPower) || !militaryMgr->GetTasks(check).empty()))
+		{
 			IFighterTask* task = militaryMgr->Enqueue(TaskF::Common(promote));
 			decltype(units) tmpUnits = units;
 			for (CCircuitUnit* unit : tmpUnits) {
@@ -149,21 +155,16 @@ void CDefendTask::Update()
 		}
 	}
 
-	if (isTargetOverride) {
-		FallbackFrontPos();
-		return;
-	}
-
 	/*
 	 * Update target
 	 */
-	const bool isTargetsFound = FindTarget();
+	const bool isTargetsFound = isScripted ? FindTargetScripted() : FindTarget();
 
 	const AIFloat3& startPos = leader->GetPos(frame);
 	state = State::ROAM;
 	if ((GetTarget() != nullptr) || isTargetsFound) {
-		const float slack = (circuit->GetInflMap()->GetAllyDefendInflAt(position) > INFL_EPS) ? 500.f : 300.f;
-		if (position.SqDistance2D(startPos) < SQUARE(highestRange + slack)) {
+		const float slack = (circuit->GetInflMap()->GetAllyDefendInflAt(targetPos) > INFL_EPS) ? 500.f : 300.f;
+		if (targetPos.SqDistance2D(startPos) < SQUARE(highestRange + slack)) {
 			state = State::ENGAGE;
 			Attack(frame);
 			return;
@@ -175,7 +176,7 @@ void CDefendTask::Update()
 	}
 
 	if (!isTargetsFound) {  // enemyPositions.empty()
-		FallbackFrontPos();
+		isScripted ? FallbackBasePos() : FallbackFrontPos();
 		return;
 	}
 
@@ -192,18 +193,6 @@ void CDefendTask::Update()
 	pathfinder->RunQuery(circuit->GetScheduler().get(), query, [this](const IPathQuery* query) {
 		this->ApplyTargetPath(static_cast<const CQueryPathMulti*>(query));
 	});
-}
-
-void CDefendTask::SetTargetPos(const AIFloat3& pos)
-{
-	SetTarget(nullptr);
-	urgentPositions.clear();
-	isTargetOverride = geom::is_valid(pos);
-	if (isTargetOverride) {
-		targetPos = pos;
-		targetPos.y = manager->GetCircuit()->GetMap()->GetElevationAt(pos.x, pos.z);
-		urgentPositions.push_back(targetPos);
-	}
 }
 
 void CDefendTask::Merge(ISquadTask* task)
@@ -323,7 +312,96 @@ bool CDefendTask::FindTarget()
 
 	if (bestTarget != nullptr) {
 		SetTarget(bestTarget);
-		position = GetTarget()->GetPos();
+		targetPos = GetTarget()->GetPos();
+	}
+	if (enemyPositions.empty()) {
+		return false;
+	}
+
+	return true;
+	// Return: target, startPos=leader->pos, enemyPositions
+}
+
+bool CDefendTask::FindTargetScripted()
+{
+	CCircuitAI* circuit = manager->GetCircuit();
+	CMap* map = circuit->GetMap();
+	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
+	const AIFloat3& pos = leader->GetPos(circuit->GetLastFrame());
+	SArea* area = leader->GetArea();
+	CCircuitDef* cdef = leader->GetCircuitDef();
+	const float sqRange = SQUARE(range);
+	const float weaponRange = cdef->GetMaxRange() * 0.9f;
+	const int canTargetCat = cdef->GetTargetCategory();
+	const int noChaseCat = cdef->GetNoChaseCategory();
+
+	const AIFloat3& basePos = circuit->GetSetupManager()->GetBasePos();
+	const float baseRange = circuit->GetMilitaryManager()->GetBaseDefRange();
+	const float sqBaseRange = SQUARE(baseRange);
+
+	CEnemyInfo* bestTarget = nullptr;
+	float minSqDist = std::numeric_limits<float>::max();
+
+	SetTarget(nullptr);  // make adequate enemy->GetTasks().size()
+	enemyPositions.clear();
+	circuit->GetThreatMap()->SetThreatType(leader);
+	const CCircuitAI::EnemyInfos& enemies = circuit->GetEnemyInfos();
+	for (auto& kv : enemies) {
+		CEnemyInfo* enemy = kv.second;
+		if (enemy->IsHidden() || (enemy->GetTasks().size() > 2)) {
+			continue;
+		}
+
+		const AIFloat3& ePos = enemy->GetPos();
+		if ((!geom::is_in_sqrange(ePos, basePos, sqBaseRange) && !geom::is_in_sqrange(ePos, pos, sqRange))
+			|| !terrainMgr->CanMoveToPos(area, ePos))
+		{
+			continue;
+		}
+
+		const float elevation = map->GetElevationAt(ePos.x, ePos.z);
+		const bool IsInWater = cdef->IsPredictInWater(elevation);
+		CCircuitDef* edef = enemy->GetCircuitDef();
+		if (edef != nullptr) {
+			if (((edef->GetCategory() & canTargetCat) == 0)
+				|| ((edef->GetCategory() & noChaseCat) != 0)
+				|| circuit->GetCircuitDef(edef->GetId())->IsIgnore()
+				|| (edef->IsAbleToFly() && !(IsInWater ? cdef->HasSubToAir() : cdef->HasSurfToAir())))  // notAA
+			{
+				continue;
+			}
+			float elevation = map->GetElevationAt(ePos.x, ePos.z);
+			if (edef->IsInWater(elevation, ePos.y)) {
+				if (!(IsInWater ? cdef->HasSubToWater() : cdef->HasSurfToWater())) {  // notAW
+					continue;
+				}
+			} else {
+				if (!(IsInWater ? cdef->HasSubToLand() : cdef->HasSurfToLand())) {  // notAL
+					continue;
+				}
+			}
+			if ((ePos.y - elevation > weaponRange)
+				/*|| enemy->IsBeingBuilt()*/)
+			{
+				continue;
+			}
+		} else {
+			if (!(IsInWater ? cdef->HasSubToWater() : cdef->HasSurfToWater()) && (ePos.y < -SQUARE_SIZE * 5)) {  // notAW
+				continue;
+			}
+		}
+
+		float sqDist = pos.SqDistance2D(ePos);
+		if (minSqDist > sqDist) {
+			minSqDist = sqDist;
+			bestTarget = enemy;
+		}
+		enemyPositions.push_back(ePos);
+	}
+
+	if (bestTarget != nullptr) {
+		SetTarget(bestTarget);
+		targetPos = GetTarget()->GetPos();
 	}
 	if (enemyPositions.empty()) {
 		return false;
@@ -347,12 +425,10 @@ void CDefendTask::ApplyTargetPath(const CQueryPathMulti* query)
 void CDefendTask::FallbackFrontPos()
 {
 	CCircuitAI* circuit = manager->GetCircuit();
-	if (!isTargetOverride) {
-		circuit->GetMilitaryManager()->FillFrontPos(leader, urgentPositions);
-		if (urgentPositions.empty()) {
-			FallbackBasePos();
-			return;
-		}
+	circuit->GetMilitaryManager()->FillFrontPos(leader, urgentPositions);
+	if (urgentPositions.empty()) {
+		FallbackBasePos();
+		return;
 	}
 
 	const AIFloat3& startPos = leader->GetPos(circuit->GetLastFrame());
@@ -388,7 +464,7 @@ void CDefendTask::FallbackBasePos()
 	CSetupManager* setupMgr = circuit->GetSetupManager();
 
 	const AIFloat3& startPos = leader->GetPos(circuit->GetLastFrame());
-	const AIFloat3& endPos = setupMgr->GetBasePos();
+	const AIFloat3& endPos = isScripted ? position : setupMgr->GetBasePos();
 	const float pathRange = DEFAULT_SLACK * 4;
 
 	CPathFinder* pathfinder = circuit->GetPathfinder();

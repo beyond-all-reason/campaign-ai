@@ -202,7 +202,7 @@ public:
 	void SetGoalBuildMod(float value) { goalBuildMod = value; }
 	float GetGoalBuildMod() const { return goalBuildMod; }
 	float GetGoalBuildTime(const float metalIncome) const { return goalBuildMod / (metalIncome + DIV0_SLACK); }
-	inline bool CanBuild(const Id buildDefId) const {	return buildOptions.find(buildDefId) != buildOptions.end(); }
+	inline bool CanBuild(const Id buildDefId) const { return buildOptions.find(buildDefId) != buildOptions.end(); }
 	inline bool CanBuild(const CCircuitDef* buildDef) const { return CanBuild(buildDef->GetId()); }
 	int GetCount() const { return count; }
 

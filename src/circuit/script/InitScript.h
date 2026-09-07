@@ -81,6 +81,8 @@ private:
 	static void RegisterIBuilderTask(asIScriptEngine* engine, const char* cls);
 	template <class T>
 	static void RegisterIFighterTask(asIScriptEngine* engine, const char* cls);
+	template <class T>
+	static void RegisterISquadTask(asIScriptEngine* engine, const char* cls);
 	static void RegisterCDefendTask(asIScriptEngine* engine);
 	static void RegisterCSuperTask(asIScriptEngine* engine);
 	static void RegisterUnitTasks(asIScriptEngine* engine);

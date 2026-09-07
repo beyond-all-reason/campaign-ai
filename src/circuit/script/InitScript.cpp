@@ -761,6 +761,7 @@ void CInitScript::RegisterCore()
 	r = engine->RegisterObjectMethod("CCircuitDef", "void SetThreatKernel(float)", asMETHOD(CCircuitDef, SetThreatKernel), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CCircuitDef", "void SetFireState(int)", asMETHOD(CCircuitDef, SetFireState), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CCircuitDef", "int GetFireState() const", asMETHOD(CCircuitDef, GetFireState), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CCircuitDef", "bool CanBuild(Id) const", asMETHODPR(CCircuitDef, CanBuild, (int) const, bool), asCALL_THISCALL); ASSERT(r >= 0);
 
 	r = engine->RegisterObjectProperty("CCircuitUnit", "const Id id", asOFFSET(CCircuitUnit, id)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CCircuitUnit", "const CCircuitDef@ circuitDef", asOFFSET(CCircuitUnit, circuitDef)); ASSERT(r >= 0);
@@ -915,6 +916,7 @@ void CInitScript::RegisterIUnitTask(asIScriptEngine* engine, const char* cls)
 	int r;
 	r = engine->RegisterObjectMethod(cls, "Type GetType() const", asMETHODPR(T, GetType, () const, IUnitTask::Type), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod(cls, "array<CCircuitUnit@>@ GetUnits() const", asFUNCTION(IUnitTask_GetUnits), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod(cls, "int GetUnitCount() const", asMETHOD(T, GetUnitCount), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod(cls, "void Abort()", asMETHOD(T, Abort), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod(cls, "void Done()", asMETHOD(T, Done), asCALL_THISCALL); ASSERT(r >= 0);
 }
@@ -940,11 +942,20 @@ void CInitScript::RegisterIFighterTask(asIScriptEngine* engine, const char* cls)
 	int r = engine->RegisterObjectMethod(cls, "Type GetFightType() const", asMETHODPR(T, GetFightType, () const, IFighterTask::FightType), asCALL_THISCALL); ASSERT(r >= 0);
 }
 
+template <class T>
+void CInitScript::RegisterISquadTask(asIScriptEngine* engine, const char* cls)
+{
+	RegisterIFighterTask<T>(engine, cls);
+	RegisterCast<IFighterTask, T>(engine, "IFighterTask", cls);
+	int r = engine->RegisterObjectProperty(cls, "bool isScripted", asOFFSET(T, isScripted)); ASSERT(r >= 0);
+}
+
 void CInitScript::RegisterCDefendTask(asIScriptEngine* engine)
 {
-	RegisterIFighterTask<CDefendTask>(engine, "CDefendTask");
-	RegisterCast<IFighterTask, CDefendTask>(engine, "IFighterTask", "CDefendTask");
-	int r = engine->RegisterObjectMethod("CDefendTask", "void SetTargetPos(const AIFloat3& in)", asMETHOD(CDefendTask, SetTargetPos), asCALL_THISCALL); ASSERT(r >= 0);
+	RegisterISquadTask<CDefendTask>(engine, "CDefendTask");
+	RegisterCast<ISquadTask, CDefendTask>(engine, "ISquadTask", "CDefendTask");
+	int r = engine->RegisterObjectMethod("CDefendTask", "void SetPosition(const AIFloat3& in)", asMETHOD(CDefendTask, SetPosition), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("CDefendTask", "float range", asOFFSET(CDefendTask, range)); ASSERT(r >= 0);
 }
 
 void CInitScript::RegisterCSuperTask(asIScriptEngine* engine)
@@ -959,6 +970,7 @@ void CInitScript::RegisterUnitTasks(asIScriptEngine* engine)
 	RegisterIUnitTask<IUnitTask>(engine, "IUnitTask");
 	RegisterIBuilderTask<IBuilderTask>(engine, "IBuilderTask");
 	RegisterIFighterTask<IFighterTask>(engine, "IFighterTask");
+	RegisterISquadTask<ISquadTask>(engine, "ISquadTask");
 	RegisterCDefendTask(engine);
 	RegisterCSuperTask(engine);
 }

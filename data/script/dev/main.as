@@ -3,12 +3,11 @@
 #include "manager/factory.as"
 #include "manager/economy.as"
 #include "misc/intent_manager.as"
-#include "misc/wave.as"
+#include "misc/squad.as"
 
 
 namespace Main {
 
-Intent::Manager@ intentMgr = null;
 map<Id, CCircuitUnit@> units;
 
 void AiMain()
@@ -50,8 +49,6 @@ void AiMain()
 	names = {Factory::armshltx, Factory::corgant};
 	for (uint i = 0; i < names.length(); ++i)
 		Factory::userData[ai.GetCircuitDef(names[i]).id].attr |= Factory::Attr::T3;
-
-	@intentMgr = Intent::Manager();
 }
 
 void AiUpdate()  // SlowUpdate, every 30 frames with initial offset of skirmishAIId
@@ -86,7 +83,7 @@ void AiUnitDestroyed(CCircuitUnit@ unit)
 
 void AiHandleIntent(const SIntent& in intent)
 {
-	intentMgr.HandleIntent(intent);
+	Intent::mgr.HandleIntent(intent);
 }
 
 }  // namespace Main

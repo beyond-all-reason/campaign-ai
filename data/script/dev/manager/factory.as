@@ -46,22 +46,9 @@ int switchInterval = MakeSwitchInterval();
 
 IUnitTask@ AiMakeTask(CCircuitUnit@ unit)
 {
-	Wave::Wave@ wave = Main::intentMgr.GetWaveForFactory(unit);
-	if (wave is null)
-		return aiFactoryMgr.DefaultMakeTask(unit);
-
-	if (wave.orderList.isEmpty()) {
-// 		Main::intentMgr.RemoveWave(wave.id);
-		return null;
-	}
-
-	CCircuitDef@ buildDef = ai.GetCircuitDef(wave.orderList[0].unitDefId);
-	Task::Priority priority = Task::Priority::NORMAL;
-	Task::RecruitType recruit = Task::RecruitType::FIREPOWER;
-	IUnitTask@ task = aiFactoryMgr.Enqueue(TaskS::Recruit(recruit, priority, buildDef, AiTerrainCenter(), 64000.f));
-	if (--wave.orderList[0].num <= 0)
-		wave.orderList.removeAt(0);
-
+	IUnitTask@ task = Squad::mgr.GetTaskToBuild(unit);
+	if (task is null)
+		return null;  // aiFactoryMgr.DefaultMakeTask(unit);
 	return task;
 }
 

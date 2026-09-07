@@ -14,6 +14,8 @@ namespace circuit {
 
 class CDefendTask final: public ISquadTask {
 public:
+	friend class CInitScript;
+
 	CDefendTask(ITaskModule* mgr, const springai::AIFloat3& position,
 				FightType check, FightType promote, float maxPower, float powerMod);
 	virtual ~CDefendTask();
@@ -25,14 +27,11 @@ public:
 	virtual void Start(CCircuitUnit* unit) override;
 	virtual void Update() override;
 
-	void SetPosition(const springai::AIFloat3& pos) { position = pos; }
+	void SetPosition(const springai::AIFloat3& pos) { position = pos; }  // Script hook
 	void SetMaxPower(float power) { maxPower = power * powerMod; }
 //	void SetWantedTarget(CEnemyInfo* enemy) { SetTarget(enemy); }
 
 	FightType GetPromote() const { return promote; }
-
-	// Script hooks
-	void SetTargetPos(const springai::AIFloat3& pos);
 
 protected:
 	float GetMaxPower() const { return maxPower; }
@@ -40,6 +39,7 @@ protected:
 private:
 	virtual void Merge(ISquadTask* task) override;
 	bool FindTarget();
+	bool FindTargetScripted();
 	void ApplyTargetPath(const CQueryPathMulti* query);
 	void FallbackFrontPos();
 	void ApplyFrontPos(const CQueryPathMulti* query);
@@ -50,9 +50,8 @@ private:
 	FightType check;
 	FightType promote;
 	float maxPower;
-
-	springai::AIFloat3 targetPos;  // Script hook
-	bool isTargetOverride;
+	float range = 0.f;  // Script hook
+	springai::AIFloat3 targetPos;  // result of FindTarget
 };
 
 } // namespace circuit

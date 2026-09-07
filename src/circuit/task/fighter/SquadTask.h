@@ -16,6 +16,8 @@
 namespace circuit {
 
 class ISquadTask: public IFighterTask {
+	friend class CInitScript;
+
 protected:
 	ISquadTask(ITaskModule* mgr, FightType type, float powerMod);
 public:
@@ -34,6 +36,7 @@ public:
 private:
 	void FindLeader(decltype(units)::iterator itBegin, decltype(units)::iterator itEnd);
 
+	bool IsScripted() const { return isScripted; }
 	bool IsMergeSafe() const;
 	ISquadTask* CheckMergeTask();
 
@@ -45,6 +48,7 @@ protected:
 	void Attack(const int frame);
 	void Attack(const int frame, const bool isGround);
 
+	bool isScripted;  // Script hook
 	float lowestRange;
 	float highestRange;
 	float lowestSpeed;

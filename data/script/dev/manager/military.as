@@ -6,6 +6,9 @@ namespace Military {
 
 IUnitTask@ AiMakeTask(CCircuitUnit@ unit)
 {
+	IUnitTask@ task = Squad::mgr.AssignToSquad(unit);
+	if (task !is null)
+		return task;
 	return aiMilitaryMgr.DefaultMakeTask(unit);
 }
 
@@ -15,6 +18,7 @@ void AiTaskAdded(IUnitTask@ task)
 
 void AiTaskRemoved(IUnitTask@ task, bool done)
 {
+	Squad::mgr.DestroySquad(task);
 }
 
 void AiUnitAdded(CCircuitUnit@ unit, Unit::UseAs usage)
