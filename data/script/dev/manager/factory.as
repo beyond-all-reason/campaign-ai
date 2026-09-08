@@ -43,13 +43,16 @@ string coraap  ("coraap");
 string corgant ("corgant");
 
 int switchInterval = MakeSwitchInterval();
+bool isRecruitScripted = false;
 
 IUnitTask@ AiMakeTask(CCircuitUnit@ unit)
 {
+	if (unit.circuitDef.IsAssist())  // construction turret
+		return aiFactoryMgr.DefaultMakeTask(unit);
 	IUnitTask@ task = Squad::mgr.GetTaskToBuild(unit);
-	if (task is null)
-		return null;  // aiFactoryMgr.DefaultMakeTask(unit);
-	return task;
+	if (task !is null)
+		return task;
+	return isRecruitScripted ? aiFactoryMgr.SelectFactoryTask(unit) : aiFactoryMgr.DefaultMakeTask(unit);
 }
 
 void AiTaskAdded(IUnitTask@ task)

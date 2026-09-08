@@ -1,5 +1,6 @@
 #include "squad.as"
 #include "../../intent.as"
+#include "../../define.as"
 
 
 namespace Intent {
@@ -36,7 +37,7 @@ class Manager {
 		} break;
 
 		case AI_SQUAD_DESTROY: {  // SFloatIntent
-			Squad::mgr.DestroySquad(intent.objId);
+			Squad::mgr.DestroyRequest(intent.objId);
 		} break;
 
 		case AI_SQUAD_POSITION: {  // SArrayFloatIntent
@@ -54,11 +55,15 @@ class Manager {
 
 		case AI_ENABLED_UNITS: {  // SDictFloatIntent
 			for (uint i = 0; i < intent.size; ++i)
-				UpdateEnabledUnits(intent.GetKey(i), intent.GetValue(i) != 0.0);
+				UpdateEnabledUnits(intent.GetKey(i), intent.GetValue(i) != 0.f);
 		} break;
 
 		case AI_EXEC_ORDER_66: {  // SFloatIntent
 			ExecOrder66();
+		} break;
+
+		case AI_RECRUIT_SCRIPT: {  // SFloatIntent
+			Factory::isRecruitScripted = intent.objId != 0;
 		} break;
 
 		default:
@@ -97,7 +102,7 @@ class Manager {
 		if (isEnabled) {
 			bool success = false;
 			int limit = prevUnitLimits.find(cdef.id, success);
-			cdef.maxThisUnit = success ? limit : 32000;  // magic numbers
+			cdef.maxThisUnit = success ? limit : MAX_UNITS;
 			// prevUnitLimits.erase(cdef.id);
 		} else {
 			prevUnitLimits[cdef.id] = cdef.maxThisUnit;
@@ -118,7 +123,7 @@ class Manager {
 	/*
 	 * Properties
 	 */
-	private map<Id, int> prevUnitLimits;  // behaviour.json may have other than 32000 value
+	private map<Id, int> prevUnitLimits;  // behaviour.json may have other than MAX_UNITS value
 }
 
 Manager mgr;

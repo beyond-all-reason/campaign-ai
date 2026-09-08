@@ -8,3 +8,5 @@ const int SQUARE_SIZE = 8;
 const AIFloat3 RgtVector(1.0f, 0.0f, 0.0f);
 
 const float NEAR_ZERO = 1e-3f;
+
+const int MAX_UNITS = 32000;

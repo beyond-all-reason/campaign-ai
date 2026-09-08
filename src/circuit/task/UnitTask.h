@@ -95,6 +95,7 @@ protected:
 
 	ITaskModule* manager;
 	std::set<CCircuitUnit*> units;
+	int id;
 	Type type;
 	Priority priority;
 	State state;

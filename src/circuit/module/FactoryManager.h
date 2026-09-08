@@ -212,6 +212,7 @@ private:
 	void EnableFactory(CCircuitUnit* unit);
 	void DisableFactory(CCircuitUnit* unit);
 	virtual IUnitTask* DefaultMakeTask(CCircuitUnit* unit) override;
+	IUnitTask* SelectFactoryTask(CCircuitUnit* unit);
 	IUnitTask* CreateFactoryTask(CCircuitUnit* unit);
 	IUnitTask* CreateAssistTask(CCircuitUnit* unit);
 

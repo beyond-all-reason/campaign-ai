@@ -20,6 +20,7 @@ enum EIntents {
 	AI_ENABLED_UNITS   = 11,
 
 	AI_EXEC_ORDER_66   = 12,
+	AI_RECRUIT_SCRIPT  = 100,
 }
 
 }  // namespace Intent

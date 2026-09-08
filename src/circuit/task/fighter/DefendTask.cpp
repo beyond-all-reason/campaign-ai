@@ -109,10 +109,9 @@ void CDefendTask::Update()
 	/*
 	 * Promote task if possible
 	 */
-	if (updCount % 32 == 1) {
+	if (!isScripted && (updCount % 32 == 1)) {
 		CMilitaryManager* militaryMgr = static_cast<CMilitaryManager*>(manager);
-		if (!isScripted
-			&& ((attackPower >= maxPower) || !militaryMgr->GetTasks(check).empty()))
+		if ((attackPower >= maxPower) || !militaryMgr->GetTasks(check).empty())
 		{
 			IFighterTask* task = militaryMgr->Enqueue(TaskF::Common(promote));
 			decltype(units) tmpUnits = units;

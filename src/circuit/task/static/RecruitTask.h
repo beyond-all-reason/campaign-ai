@@ -16,6 +16,8 @@ class CCircuitDef;
 
 class CRecruitTask final: public IBuilderTask {
 public:
+	friend class CInitScript;
+
 	enum class RecruitType: char {BUILDPOWER = 0, FIREPOWER};
 
 public:
@@ -47,6 +49,7 @@ public:
 private:
 	RecruitType recruitType;
 	float sqradius;
+	bool isSingle;  // Script hook
 };
 
 } // namespace circuit

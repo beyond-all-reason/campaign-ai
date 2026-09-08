@@ -28,6 +28,7 @@ public:
 
 	virtual void Merge(ISquadTask* task);
 
+	bool IsScripted() const { return isScripted; }
 	const std::map<float, std::set<CCircuitUnit*>>& GetRangeUnits() const { return rangeUnits; }
 
 	CCircuitUnit* GetLeader() const { return leader; }
@@ -36,7 +37,6 @@ public:
 private:
 	void FindLeader(decltype(units)::iterator itBegin, decltype(units)::iterator itEnd);
 
-	bool IsScripted() const { return isScripted; }
 	bool IsMergeSafe() const;
 	ISquadTask* CheckMergeTask();
 

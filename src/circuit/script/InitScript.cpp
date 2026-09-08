@@ -15,6 +15,7 @@
 #include "terrain/TerrainManager.h"
 #include "task/builder/BuilderTask.h"
 #include "task/fighter/DefendTask.h"
+#include "task/static/RecruitTask.h"
 #include "task/static/SuperTask.h"
 #include "unit/CircuitUnit.h"
 #include "CircuitAI.h"
@@ -753,6 +754,7 @@ void CInitScript::RegisterCore()
 	r = engine->RegisterObjectMethod("CCircuitDef", "float GetWaterThreat() const", asMETHOD(CCircuitDef, GetWaterThreat), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CCircuitDef", "bool IsAbleToFly() const", asMETHOD(CCircuitDef, IsAbleToFly), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CCircuitDef", "bool IsMobile() const", asMETHOD(CCircuitDef, IsMobile), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CCircuitDef", "bool IsAssist() const", asMETHOD(CCircuitDef, IsAssist), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CCircuitDef", "int maxThisUnit", asOFFSET(CCircuitDef, maxThisUnit)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CCircuitDef", "int sinceFrame", asOFFSET(CCircuitDef, sinceFrame)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CCircuitDef", "int cooldown", asOFFSET(CCircuitDef, cooldown)); ASSERT(r >= 0);
@@ -950,6 +952,13 @@ void CInitScript::RegisterISquadTask(asIScriptEngine* engine, const char* cls)
 	int r = engine->RegisterObjectProperty(cls, "bool isScripted", asOFFSET(T, isScripted)); ASSERT(r >= 0);
 }
 
+void CInitScript::RegisterCRecruitTask(asIScriptEngine* engine)
+{
+	RegisterIBuilderTask<CRecruitTask>(engine, "CRecruitTask");
+	RegisterCast<IBuilderTask, CRecruitTask>(engine, "IBuilderTask", "CRecruitTask");
+	int r = engine->RegisterObjectProperty("CRecruitTask", "bool isSingle", asOFFSET(CRecruitTask, isSingle)); ASSERT(r >= 0);
+}
+
 void CInitScript::RegisterCDefendTask(asIScriptEngine* engine)
 {
 	RegisterISquadTask<CDefendTask>(engine, "CDefendTask");
@@ -969,6 +978,7 @@ void CInitScript::RegisterUnitTasks(asIScriptEngine* engine)
 {
 	RegisterIUnitTask<IUnitTask>(engine, "IUnitTask");
 	RegisterIBuilderTask<IBuilderTask>(engine, "IBuilderTask");
+	RegisterCRecruitTask(engine);
 	RegisterIFighterTask<IFighterTask>(engine, "IFighterTask");
 	RegisterISquadTask<ISquadTask>(engine, "ISquadTask");
 	RegisterCDefendTask(engine);

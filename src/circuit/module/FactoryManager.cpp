@@ -1412,26 +1412,30 @@ void CFactoryManager::DisableFactory(CCircuitUnit* unit)
 
 IUnitTask* CFactoryManager::DefaultMakeTask(CCircuitUnit* unit)
 {
-	const IUnitTask* task = nullptr;
+	IUnitTask* task = nullptr;
 
 	if (unit->GetCircuitDef()->IsAssist()) {
 		task = CreateAssistTask(unit);
 
 	} else {
 
-		for (const CRecruitTask* candy : factoryTasks) {
-			if (candy->CanAssignTo(unit)) {
-				task = candy;
-				break;
-			}
-		}
-
+		task = SelectFactoryTask(unit);
 		if (task == nullptr) {
 			task = CreateFactoryTask(unit);
 		}
 	}
 
-	return const_cast<IUnitTask*>(task);  // if nullptr then continue to Wait (or Idle)
+	return task;  // if nullptr then continue to Wait (or Idle)
+}
+
+IUnitTask* CFactoryManager::SelectFactoryTask(CCircuitUnit* unit)
+{
+	for (const CRecruitTask* candy : factoryTasks) {
+		if (candy->CanAssignTo(unit)) {
+			return const_cast<CRecruitTask*>(candy);
+		}
+	}
+	return nullptr;
 }
 
 IUnitTask* CFactoryManager::CreateFactoryTask(CCircuitUnit* unit)

@@ -31,10 +31,12 @@ void AiUnitRemoved(CCircuitUnit@ unit, Unit::UseAs usage)
 
 void AiLoad(IStream& istream)
 {
+	// TODO: Squad::Save()
 }
 
 void AiSave(OStream& ostream)
 {
+	// TODO: Squad::Load()
 }
 
 void AiMakeDefence(int cluster, const AIFloat3& in pos)
