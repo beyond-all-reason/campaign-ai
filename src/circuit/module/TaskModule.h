@@ -31,6 +31,7 @@ public:
 	void Init();
 	void Release();
 
+	int GenerateTaskId() { return ++taskId; }
 	virtual void AssignTask(CCircuitUnit* unit, IUnitTask* task);
 	virtual void AssignTask(CCircuitUnit* unit);
 protected:
@@ -47,7 +48,8 @@ public:
 	void TaskAdded(IUnitTask* task);
 	void TaskRemoved(IUnitTask* task, bool done);
 
-	// script API
+	// Script API
+	IUnitTask* GetTaskById(int taskId) const;
 	virtual IUnitTask* DefaultMakeTask(CCircuitUnit* unit) = 0;
 
 public:
@@ -65,12 +67,16 @@ protected:
 	void UpdateIdle();
 	void Update();
 
+	virtual void Load(std::istream& is) override;
+	virtual void Save(std::ostream& os) const override;
+
 	CNilTask* nilTask;
 	CIdleTask* idleTask;
 	CPlayerTask* playerTask;
 
 	std::vector<IUnitTask*> updateTasks;  // owner
 	unsigned int updateIterator;
+	int taskId;  // generator
 
 	float metalPull;
 };

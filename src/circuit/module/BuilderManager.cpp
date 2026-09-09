@@ -1595,6 +1595,7 @@ void CBuilderManager::UpdateAreaUsers()
 
 void CBuilderManager::Load(std::istream& is)
 {
+	ITaskModule::Load(is);
 	/*
 	 * Restore data
 	 */
@@ -1687,6 +1688,7 @@ void CBuilderManager::Load(std::istream& is)
 
 void CBuilderManager::Save(std::ostream& os) const
 {
+	ITaskModule::Save(os);
 	/*
 	 * Save tasks
 	 */

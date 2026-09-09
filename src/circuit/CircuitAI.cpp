@@ -82,14 +82,8 @@ using namespace terrain;
 	#define TRACY_TOPIC_UNIT(txt, topic, unit)
 #endif
 
-/*
- * Почему-то всегда
- * Так незыблемы цели:
- * Разрушать города,
- * Видеть в братьях мишени...
- */
-constexpr char version[]{"1.6.29"};
-constexpr uint32_t VERSION_SAVE = 5;
+constexpr char version[]{"0.0.1"};
+constexpr uint32_t VERSION_SAVE = 1;
 
 std::unique_ptr<CGameAttribute> CCircuitAI::gameAttribute(nullptr);
 unsigned int CCircuitAI::gaCounter = 0;

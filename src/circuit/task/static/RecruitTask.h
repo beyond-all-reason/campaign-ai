@@ -49,7 +49,7 @@ public:
 private:
 	RecruitType recruitType;
 	float sqradius;
-	bool isSingle;  // Script hook
+	bool isSingleBuilder;  // Script API
 };
 
 } // namespace circuit

@@ -1804,4 +1804,14 @@ CCircuitDef* CFactoryManager::GetFacRoleDef(CCircuitDef::RoleT role, const SFact
 	return buildDef;
 }
 
+void CFactoryManager::Load(std::istream& is)
+{
+	ITaskModule::Load(is);
+}
+
+void CFactoryManager::Save(std::ostream& os) const
+{
+	ITaskModule::Save(os);
+}
+
 } // namespace circuit

@@ -1844,4 +1844,14 @@ CDefenceData::SDefPoint* CMilitaryManager::FindClosestDefPoint(int cluster, cons
 	return closestPoint;
 }
 
+void CMilitaryManager::Load(std::istream& is)
+{
+	ITaskModule::Load(is);
+}
+
+void CMilitaryManager::Save(std::ostream& os) const
+{
+	ITaskModule::Save(os);
+}
+
 } // namespace circuit

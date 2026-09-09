@@ -35,6 +35,8 @@ class CQueryPathMulti;
 
 class IUnitTask: public IRefCounter<IUnitTask> {  // CSquad, IAction
 public:
+	friend class CInitScript;
+
 	enum class Priority: char {LOW = 0, NORMAL = 1, HIGH = 2, NOW = 99};
 	enum class Type: char {NIL, PLAYER, IDLE, WAIT, RETREAT, BUILDER, FACTORY, FIGHTER};
 	enum class State: char {ROAM, ENGAGE, DISENGAGE, REGROUP};
@@ -67,7 +69,8 @@ public:
 	virtual void OnTravelEnd(CCircuitUnit* unit);
 	virtual void OnRearmStart(CCircuitUnit* unit);
 
-	int GetUnitCount() const { return units.size(); }  // Script hook
+	int GetId() const { return id; }
+	int GetUnitCount() const { return units.size(); }  // Script API
 	const std::set<CCircuitUnit*>& GetAssignees() const { return units; }
 	Priority GetPriority() const { return priority; }
 	Type GetType() const { return type; }

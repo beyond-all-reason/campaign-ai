@@ -229,7 +229,7 @@ private:
 		std::vector<SVsInfo> vs;
 	};
 	std::vector<SRoleInfo> roleInfos;
-	// Script hooks
+	// Script API
 	const SRoleInfo* GetRoleInfo(CCircuitDef::RoleT type) const { return &roleInfos[type]; }
 
 	std::set<CCircuitUnit*> stockpilers;
@@ -270,6 +270,9 @@ private:
 
 	std::shared_ptr<IMainJob> defend;
 	std::vector<std::pair<springai::AIFloat3, BuildVector>> buildDefence;  // pos: defences
+
+	virtual void Load(std::istream& is) override;
+	virtual void Save(std::ostream& os) const override;
 };
 
 } // namespace circuit

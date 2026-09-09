@@ -202,7 +202,7 @@ public:
 	float GetMinOffset() const { return minOffset; }
 	float GetLenOffset() const { return lenOffset; }
 
-	// Script hooks
+	// Script API
 	const SFactoryDef* GetFactoryDef(CCircuitDef* facDef) const;
 	const std::vector<float>* GetTierWeights(CCircuitDef* facDef, int surfType, int tier) const;
 	void SetIsActiveFactory(ICoreUnit::Id unitId, bool value);
@@ -259,7 +259,7 @@ private:
 		unsigned int nanoSize;
 		unsigned int weight;
 		CCircuitDef* builder;
-		bool isActive;  // Script hook
+		bool isActive;  // Script API
 		float miRequire;
 		float eiRequire;
 		float miRequireTotal;
@@ -302,6 +302,9 @@ private:
 
 	const std::vector<float>& GetFacTierProbs(const SFactoryDef& facDef) const;
 	CCircuitDef* GetFacRoleDef(CCircuitDef::RoleT role, const SFactoryDef& facDef) const;
+
+	virtual void Load(std::istream& is) override;
+	virtual void Save(std::ostream& os) const override;
 };
 
 } // namespace circuit

@@ -22,6 +22,7 @@ using namespace springai;
 
 IUnitTask::IUnitTask(ITaskModule* mgr, Priority priority, Type type, int timeout)
 		: manager(mgr)
+		, id(mgr->GenerateTaskId())
 		, type(type)
 		, priority(priority)
 		, state(State::ROAM)
@@ -34,6 +35,7 @@ IUnitTask::IUnitTask(ITaskModule* mgr, Priority priority, Type type, int timeout
 
 IUnitTask::IUnitTask(ITaskModule* mgr, Type type)
 		: manager(mgr)
+		, id(0)
 		, type(type)
 		, priority(Priority::LOW)
 		, state(State::ROAM)
@@ -157,6 +159,7 @@ bool IUnitTask::IsQueryReady(CCircuitUnit* unit) const
 }
 
 #define SERIALIZE(stream, func)	\
+	utils::binary_##func(stream, id);			\
 	utils::binary_##func(stream, priority);		\
 	utils::binary_##func(stream, state);		\
 	utils::binary_##func(stream, lastTouched);	\

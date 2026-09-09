@@ -93,7 +93,7 @@ public:
 
 	void Welcome() const;
 
-	// Script hooks
+	// Script API
 	// TODO: Replace injected variables by
 	//       separate struct containing setup-related
 	//       script-defined states and values

@@ -916,6 +916,7 @@ void CInitScript::RegisterIUnitTask(asIScriptEngine* engine, const char* cls)
 {
 	T::RegisterRefCounted(engine, cls);
 	int r;
+	r = engine->RegisterObjectProperty(cls, "const Id id", asOFFSET(T, id)); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod(cls, "Type GetType() const", asMETHODPR(T, GetType, () const, IUnitTask::Type), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod(cls, "array<CCircuitUnit@>@ GetUnits() const", asFUNCTION(IUnitTask_GetUnits), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod(cls, "int GetUnitCount() const", asMETHOD(T, GetUnitCount), asCALL_THISCALL); ASSERT(r >= 0);
@@ -956,14 +957,15 @@ void CInitScript::RegisterCRecruitTask(asIScriptEngine* engine)
 {
 	RegisterIBuilderTask<CRecruitTask>(engine, "CRecruitTask");
 	RegisterCast<IBuilderTask, CRecruitTask>(engine, "IBuilderTask", "CRecruitTask");
-	int r = engine->RegisterObjectProperty("CRecruitTask", "bool isSingle", asOFFSET(CRecruitTask, isSingle)); ASSERT(r >= 0);
+	int r = engine->RegisterObjectProperty("CRecruitTask", "bool isSingleBuilder", asOFFSET(CRecruitTask, isSingleBuilder)); ASSERT(r >= 0);
 }
 
 void CInitScript::RegisterCDefendTask(asIScriptEngine* engine)
 {
 	RegisterISquadTask<CDefendTask>(engine, "CDefendTask");
 	RegisterCast<ISquadTask, CDefendTask>(engine, "ISquadTask", "CDefendTask");
-	int r = engine->RegisterObjectMethod("CDefendTask", "void SetPosition(const AIFloat3& in)", asMETHOD(CDefendTask, SetPosition), asCALL_THISCALL); ASSERT(r >= 0);
+	int r;
+	r = engine->RegisterObjectMethod("CDefendTask", "void SetPosition(const AIFloat3& in)", asMETHOD(CDefendTask, SetPosition), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CDefendTask", "float range", asOFFSET(CDefendTask, range)); ASSERT(r >= 0);
 }
 

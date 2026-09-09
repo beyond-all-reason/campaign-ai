@@ -27,7 +27,7 @@ public:
 	virtual void Start(CCircuitUnit* unit) override;
 	virtual void Update() override;
 
-	void SetPosition(const springai::AIFloat3& pos) { position = pos; }  // Script hook
+	void SetPosition(const springai::AIFloat3& pos) { position = pos; }  // Script API
 	void SetMaxPower(float power) { maxPower = power * powerMod; }
 //	void SetWantedTarget(CEnemyInfo* enemy) { SetTarget(enemy); }
 
@@ -50,7 +50,7 @@ private:
 	FightType check;
 	FightType promote;
 	float maxPower;
-	float range = 0.f;  // Script hook
+	float range = 0.f;  // Script API
 	springai::AIFloat3 targetPos;  // result of FindTarget
 };
 

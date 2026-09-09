@@ -14,6 +14,7 @@
 #include "unit/CircuitUnit.h"
 #include "CircuitAI.h"
 #include "util/Profiler.h"
+#include "util/Utils.h"
 
 namespace circuit {
 
@@ -23,6 +24,7 @@ ITaskModule::ITaskModule(CCircuitAI* circuit, IScript* script)
 		, idleTask(nullptr)
 		, playerTask(nullptr)
 		, updateIterator(0)
+		, taskId(0)
 		, metalPull(0.f)
 {
 	Init();
@@ -97,6 +99,16 @@ void ITaskModule::TaskRemoved(IUnitTask* task, bool done)
 	static_cast<ITaskModuleScript*>(script)->TaskRemoved(task, done);
 }
 
+IUnitTask* ITaskModule::GetTaskById(int taskId) const
+{
+	for (IUnitTask* task : updateTasks) {
+		if (task->GetId() == taskId) {
+			return task;
+		}
+	}
+	return nullptr;
+}
+
 void ITaskModule::AssignPlayerTask(CCircuitUnit* unit)
 {
 	AssignTask(unit, playerTask);
@@ -148,6 +160,18 @@ void ITaskModule::Update()
 			n--;
 		}
 	}
+}
+
+void ITaskModule::Load(std::istream& is)
+{
+	IModule::Load(is);
+	utils::binary_read(is, taskId);
+}
+
+void ITaskModule::Save(std::ostream& os) const
+{
+	IModule::Save(os);
+	utils::binary_write(os, taskId);
 }
 
 } // namespace circuit

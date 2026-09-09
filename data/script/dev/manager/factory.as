@@ -49,9 +49,6 @@ IUnitTask@ AiMakeTask(CCircuitUnit@ unit)
 {
 	if (unit.circuitDef.IsAssist())  // construction turret
 		return aiFactoryMgr.DefaultMakeTask(unit);
-	IUnitTask@ task = Squad::mgr.GetTaskToBuild(unit);
-	if (task !is null)
-		return task;
 	return isRecruitScripted ? aiFactoryMgr.SelectFactoryTask(unit) : aiFactoryMgr.DefaultMakeTask(unit);
 }
 
@@ -61,6 +58,11 @@ void AiTaskAdded(IUnitTask@ task)
 
 void AiTaskRemoved(IUnitTask@ task, bool done)
 {
+	if (task.GetType() != Task::Type::FACTORY)
+		return;
+	if (cast<IBuilderTask>(task).GetBuildType() != Task::BuildType::RECRUIT)
+		return;
+	done ? Squad::mgr.OrderFinished(task) : Squad::mgr.OrderCanceled(task);
 }
 
 void AiUnitAdded(CCircuitUnit@ unit, Unit::UseAs usage)

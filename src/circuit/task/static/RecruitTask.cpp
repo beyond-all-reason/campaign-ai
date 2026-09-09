@@ -29,7 +29,7 @@ CRecruitTask::CRecruitTask(ITaskModule* mgr, Priority priority,
 		: IBuilderTask(mgr, priority, buildDef, position, Type::FACTORY, BuildType::RECRUIT, {0.f, 0.f}, 0.f, -1)
 		, recruitType(type)
 		, sqradius(radius * radius)
-		, isSingle(false)
+		, isSingleBuilder(false)
 {
 }
 
@@ -40,7 +40,7 @@ CRecruitTask::~CRecruitTask()
 bool CRecruitTask::CanAssignTo(CCircuitUnit* unit) const
 {
 	return (target == nullptr)
-		&& (!isSingle || GetAssignees().empty())
+		&& (!isSingleBuilder || GetAssignees().empty())
 		&& unit->GetCircuitDef()->CanBuild(buildDef)
 		&& geom::is_in_sqrange(position, unit->GetPos(manager->GetCircuit()->GetLastFrame()), sqradius);
 }
