@@ -1,0 +1,67 @@
+<rml>
+
+    <head>
+        <title>AIIntent demo</title>
+        <link rel="stylesheet" href="gui_intent.rcss" type="text/rcss" />
+    </head>
+
+    <body id="gui_intent-widget" class="intent-root" data-class-collapsed="isCollapsed">
+        <div id="widget-container" data-model="gui_intent_model" class="panel">
+            <!-- Small floating debug buttons -->
+            <!-- <div class="debug-controls">
+                <button class="globallos-btn" data-class-active="globallosEnabled" onclick="widget:Reload()" title="Reload Widget">r</button>
+                <button onclick="widget:ToggleDebugger()" title="Toggle Debugger">d</button>
+            </div> -->
+            <handle move_target="#document">
+                <div class="navbar">
+                    <h1 class="text-white">Intent</h1>
+                    <div class="window-controls">
+                        <button class="winbtn close" data-event-click="closeWidget()" title="Close">X</button>
+                    </div>
+                </div>
+            </handle>
+            <div class="content give intent-collapsible" data-class-collapsed="isCollapsed">
+               <div class="grid commands">
+                    <button onclick="widget:SendCommand('cheat')">cheat</button>
+<!--                    <button onclick="widget:SendCommand('globallos')">global los</button>
+                    <button onclick="widget:SendCommand('godmode')">godmode</button>
+                    <button onclick="widget:SendCommand('nocost')">nocost</button>
+                    <button onclick="widget:SendCommand('atm')">atm</button>
+                    <button onclick="widget:SendCommand('luarules clearwrecks')">no wrecks</button>
+                    <button onclick="widget:SendCommand('luarules loadmissiles')">missiles</button>
+                    <button class="danger" onclick="widget:SendCommand('option restart')">restart</button>
+                    <button onclick="widget:PauseAI()">toggle AI</button>
+                    <button class="danger" onclick="widget:SendCommand('spectator')">spectator</button>-->
+                    <button onclick="widget:SendCommand('pause')">pause</button>
+                    <button onclick="widget:SendCommand('setspeed 1')">></button>
+                    <button onclick="widget:SendCommand('setspeed 10')">>></button>
+                    <button onclick="widget:SendCommand('setspeed 20')">>>></button>
+                </div>
+                <div class="grid commands">
+                    <button onclick="widget:SendNewSquad1()">New Squad1</button>
+                    <button onclick="widget:SendNewSquad2()">New Squad2</button>
+                    <button onclick="widget:SendNewSquad3()">New Squad3</button>
+                    <button onclick="widget:SendSelectSquad1()">Select Squad1</button>
+                    <button onclick="widget:SendSelectSquad2()">Select Squad2</button>
+                    <button onclick="widget:SendSelectSquad3()">Select Squad3</button>
+                    <button onclick="widget:SendCancelSquad1()">Cancel Squad1</button>
+                    <button onclick="widget:SendCancelSquad2()">Cancel Squad2</button>
+                    <button onclick="widget:SendCancelSquad3()">Cancel Squad3</button>
+                    <button onclick="widget:SendCompose1Squad1()">Comp1 AK</button>
+                    <button onclick="widget:SendCompose2Squad1()">Comp2 THUD</button>
+                    <button onclick="widget:SendDeactivateFactoryIntent()">Deactivate Factory</button>
+                    <button onclick="widget:SendActivateFactoryIntent()">Activate Factory</button>
+                    <button onclick="widget:SendDisableUnitsIntent()">Disable Units</button>
+                    <button onclick="widget:ToggleScriptedRectruit()">Scripted recruit</button>
+                </div>
+                <div class="grid commands">
+                    <button onclick="widget:SendArmyAAIntent()">Anti-Air</button>
+                    <button onclick="widget:SendArmySquadIntent()">Attack Squad</button>
+                    <button onclick="widget:SendArmyRaidIntent()">Raid</button>
+                    <button onclick="widget:SendIntent('order_66')">Order 66</button>
+                </div>
+            </div>
+            <div class="collapse-button" data-event-click="toggleCollapse()" title="Minimize" data-class-collapsed="isCollapsed"></div>
+        </div>
+    </body>
+</rml>

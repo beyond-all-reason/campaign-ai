@@ -44,6 +44,10 @@ class Manager {
 			Squad::mgr.SetSquadPosition(intent);
 		} break;
 
+		case AI_SQUAD_PARAMS: {  // SDictFloatIntent
+			Squad::mgr.SetSquadParams(intent);
+		} break;
+
 		case AI_REGION_AVOID: {  // SArrayFloatIntent
 			AiLog("SArrayFloatIntent: AI_REGION_AVOID, RegionID: " + intent.objId + ", Size: " + intent.size + ", Value[0]: " + intent[0]);
 		} break;

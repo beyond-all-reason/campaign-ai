@@ -82,7 +82,7 @@ public:
 	virtual void Dead();
 	bool IsDead() const { return isDead; }
 
-	// AS API
+	// Script API
 	void Abort();
 	void Done();
 

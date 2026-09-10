@@ -1,0 +1,474 @@
+-- luacheck: globals widget RmlUi CMD ---@type Widget
+if not RmlUi then
+    return
+end
+
+-- Cache Spring.* and CMD.* as local variables for optimization
+local spGetAIInfo = Spring.GetAIInfo
+local spGetGameRulesParam = Spring.GetGameRulesParam
+local spGetTeamList = Spring.GetTeamList
+local spGetTeamInfo = Spring.GetTeamInfo
+local spGetPlayerInfo = Spring.GetPlayerInfo
+local spGetMyTeamID = Spring.GetMyTeamID
+local spGetViewGeometry = Spring.GetViewGeometry
+local spSetConfigInt = Spring.SetConfigInt
+local spGetConfigInt = Spring.GetConfigInt
+local spGetMouseState = Spring.GetMouseState
+local spTraceScreenRay = Spring.TraceScreenRay
+local spSendCommands = Spring.SendCommands
+local spGiveOrderToUnit = Spring.GiveOrderToUnit
+local spGetTeamUnits = Spring.GetTeamUnits
+local spGetUnitStates = Spring.GetUnitStates
+
+local CMD_WAIT = CMD and CMD.WAIT
+
+local widget = widget ---@type Widget
+
+function widget:GetInfo()
+    return {
+        name = "AiIntent demo",
+        desc = "AiIntent showcase",
+        author = "rlcevg",
+        date = "2025-10-20",
+        license = "My private v2 or later",
+        layer = 0,
+        enabled = true,
+    }
+end
+
+-- Constants
+local WIDGET_NAME = "gui_intent"
+local MODEL_NAME = "gui_intent_model"
+local RML_PATH = "LuaUI/Widgets/gui_intent/gui_intent.rml"
+
+-- Widget state
+local document
+local dm_handle
+local arePausing = true
+local drawHandle = nil
+
+--------------------------------------------------------------------------------
+-- Intent API parameters
+--------------------------------------------------------------------------------
+
+local teamID = 1
+local squadID1 = 1
+local squadID2 = 2
+local squadID3 = 3
+local power = 5.2
+local retreatThreshold = 2.2
+local isRecruitScripted = false
+
+-- BEGIN Intents
+local AI_ENABLE          =  1
+local AI_BASE_CREATE     =  2
+local AI_BASE_REBUILD    =  3
+local AI_UNIT_WEIGHTS    =  4
+
+local AI_SQUAD_CREATE    =  5
+local AI_SQUAD_COMPOSE   =  6
+local AI_SQUAD_DESTROY   =  7
+local AI_SQUAD_POSITION  =  8
+local AI_SQUAD_PARAMS    =  9
+
+local AI_REGION_AVOID    = 10
+local AI_FACTORY_ENABLE  = 11
+local AI_ENABLED_UNITS   = 12
+local AI_EXEC_ORDER_66   = 13  -- Attack allies not implemented
+local AI_RECRUIT_SCRIPT  = 100
+-- END Intents
+
+local SQUAD_CREATE_RANGE = 1
+local SQUAD_POS_X        = 2
+local SQUAD_POS_Z        = 3
+local SQUAD_ATTACK_RANGE = 4
+local SQUAD_REPEAT       = 5
+local SQUAD_TASK_DEFEND  = 6
+local SQUAD_TASK_RAID    = 7
+local SQUAD_TASK_ATTACK  = 8
+
+--------------------------------------------------------------------------------
+
+local nameToDefID = {}
+
+for _, unitDef in ipairs(UnitDefs) do
+    nameToDefID[unitDef.name] = unitDef.id
+end
+
+-- Initial data model
+local init_model = {
+    debugMode = false,
+    selectedWave = false,
+    selectedTeamID = spGetMyTeamID(),
+    -- Window controls
+    isCollapsed = false,
+    toggleCollapse = function(ev)
+        dm_handle.isCollapsed = not dm_handle.isCollapsed
+    end,
+    closeWidget = function(ev)
+        if document then document:Close() end
+        local ctx = RmlUi.GetContext("shared")
+        if ctx and dm_handle then
+            ctx:RemoveDataModel(MODEL_NAME)
+        end
+        widgetHandler:RemoveWidget(widget)
+    end,
+    sendCommand = function(ev, command)
+        widget:SendCommand(command)
+    end,
+    updateTeam = function(ev)
+        dm_handle.selectedTeamID = ev.parameters.value
+        -- Don't send "team X" here — that moves you onto the team.
+        -- selectedTeamID is used as the target for give commands only.
+    end,
+    onInputFocus = function()
+        Spring.SDLStartTextInput()
+    end,
+    onInputBlur = function()
+        Spring.SDLStopTextInput()
+    end,
+    sendIntent = function(ev, command)
+        widget:SendIntent(command)
+    end,
+}
+
+local function clearDrawHandles()
+    if drawHandle then
+        WG.StopDrawUnitShapeGL4(drawHandle)
+        drawHandle = nil
+    end
+end
+
+function widget:MousePress(x, y, button)
+    if button == 3 then
+        dm_handle.selectedWave = false
+        clearDrawHandles()
+        return false
+    end
+
+    if button == 2 then
+        return false
+    end
+
+    local type, pos = Spring.TraceScreenRay(x, y)
+    if type ~= 'ground' then
+        -- Selected unit may go here?
+        return false
+    end
+    local wx, wy, wz = pos[1], pos[2], pos[3]
+
+    local alt, ctrl, meta, shift = Spring.GetModKeyState()
+
+    local amount = 1
+    if ctrl then
+        amount = amount * 5
+    end
+    if shift then
+        amount = amount * 10
+    end
+
+    if wx and wy and wz then
+        Spring.Echo("x: "..wx.." z: "..wz)
+        if dm_handle.selectedWave then
+            Spring.AiIntentArray(teamID, AI_SQUAD_POSITION, dm_handle.selectedWave, {wx, wz})
+        end
+    end
+end
+
+function widget:Initialize()
+    if widget:GetInfo().enabled == false then
+        return false
+    end
+
+    widget.rmlContext = RmlUi.GetContext("shared")
+    if not widget.rmlContext then
+        return false
+    end
+
+    dm_handle = widget.rmlContext:OpenDataModel(MODEL_NAME, init_model)
+    if not dm_handle then
+        return false
+    end
+
+    document = widget.rmlContext:LoadDocument(RML_PATH, widget)
+    if not document then
+        widget:Shutdown()
+        return false
+    end
+
+    document:AddEventListener("dragend", function() widget:SavePosition() end)
+
+    document:ReloadStyleSheet()
+    document:Show()
+    widget:LoadPosition()
+
+    return true
+end
+
+function widget:SavePosition()
+    if not document then return end
+    local element = document:GetElementById("gui_intent-widget")
+    if not element then return end
+    local x = element.offset_left
+    local y = element.offset_top
+    if not x or not y then return end
+
+    local vsx, vsy = spGetViewGeometry()
+    if not vsx or not vsy then return end
+    local relX = x / vsx
+    local relY = y / vsy
+    spSetConfigInt("intent_RelativeX", math.floor(relX * 1000))
+    spSetConfigInt("intent_RelativeY", math.floor(relY * 1000))
+end
+
+function widget:LoadPosition()
+    if not document then return end
+    local element = document:GetElementById("gui_intent-widget")
+    if not element then return end
+    local relX = spGetConfigInt("intent_RelativeX", -1)
+    local relY = spGetConfigInt("intent_RelativeY", -1)
+    if relX == -1 or relY == -1 then return end
+    relX = relX / 1000
+    relY = relY / 1000
+    local vsx, vsy = spGetViewGeometry()
+    if not vsx or not vsy then return end
+    local x = math.floor(relX * vsx)
+    local y = math.floor(relY * vsy)
+    element.style.position = "absolute"
+    element.style.left = x .. "px"
+    element.style.top = y .. "px"
+end
+
+function widget:PauseAI()
+    local allTeams = spGetTeamList()
+    for _, teamID in ipairs(allTeams) do
+        local _, _, _, isAI = spGetTeamInfo(teamID, false)
+        if isAI then
+            local units = spGetTeamUnits(teamID)
+            for _, unitID in pairs(units) do
+                local states = spGetUnitStates(unitID)
+                if states then
+                    if arePausing and states['active'] then
+                        spGiveOrderToUnit(unitID, CMD_WAIT, {}, {})
+                    elseif not arePausing and not states['active'] then
+                        spGiveOrderToUnit(unitID, CMD_WAIT, {}, {})
+                    end
+                end
+            end
+        end
+    end
+    arePausing = not arePausing
+end
+
+function widget:KeyPress(key, mods, isRepeat, label, unicode)
+    if key == 27 then -- ESC key
+        clearDrawHandles()
+        return true
+    end
+    return false
+end
+
+function widget:SendCommand(command)
+    spSendCommands(command)
+end
+
+-- ["corck"]    = 0.0,
+-- ["corak"]    = 0.0,
+-- ["cornecro"] = 0.0,
+-- ["corstorm"] = 0.5,
+-- ["corthud"]  = 0.5,
+-- ["corcrash"] = 0.0,
+
+
+
+function widget:SendIntent(command)
+    if command == "order_66" then
+        Spring.AiIntentFloat(teamID, AI_EXEC_ORDER_66);
+    end
+end
+
+function CreateSquad(squadID, pos, range, composition)
+--     tracy.ZoneBeginN("AI_SQUAD_CREATE")
+    Spring.AiIntentDict(teamID, AI_SQUAD_CREATE, squadID, {
+        [SQUAD_CREATE_RANGE] = range,
+        [SQUAD_POS_X] = pos[1],  -- 3072,
+        [SQUAD_POS_Z] = pos[2],  -- 3584,
+        [SQUAD_ATTACK_RANGE] = 1024,
+        [SQUAD_REPEAT] = true,
+    })
+    Spring.AiIntentUnitDefs(teamID, AI_SQUAD_COMPOSE, squadID, composition)
+--     tracy.ZoneEnd()
+end
+
+function widget:SendNewSquad1()
+    -- Between 2 corlabs: {4155, 1854}
+    CreateSquad(squadID1, {4155, 1854}, 710, {
+        ["corstorm"] = 3,
+        ["corthud"]  = 10,
+    })
+end
+function widget:SendNewSquad2()
+    -- Map center: {3072, 3584}
+    -- Off-center: {3844, 3300}
+    CreateSquad(squadID2, {3844, 3300}, 8000, {
+        ["corstorm"] = 10,
+        ["corthud"]  = 3,
+    })
+end
+function widget:SendNewSquad3()
+    -- Only 1 corlab: {4500, 1800}
+    CreateSquad(squadID3, {4500, 1800}, 710, {
+        ["corstorm"] = 3,
+        ["corthud"]  = 3,
+        ["corak"]    = 3,
+        ["corcrash"] = 3,
+    })
+end
+function widget:SendSelectSquad1()
+    dm_handle.selectedWave = squadID1
+end
+function widget:SendSelectSquad2()
+    dm_handle.selectedWave = squadID2
+end
+function widget:SendSelectSquad3()
+    dm_handle.selectedWave = squadID3
+end
+function widget:SendCancelSquad1()
+    Spring.AiIntentFloat(teamID, AI_SQUAD_DESTROY, squadID1);
+end
+function widget:SendCancelSquad2()
+    Spring.AiIntentFloat(teamID, AI_SQUAD_DESTROY, squadID2);
+end
+function widget:SendCancelSquad3()
+    Spring.AiIntentFloat(teamID, AI_SQUAD_DESTROY, squadID3);
+end
+function widget:SendCompose1Squad1()
+    Spring.AiIntentUnitDefs(teamID, AI_SQUAD_COMPOSE, squadID1, {
+        ["corak"] = 10,
+    });
+end
+function widget:SendCompose2Squad1()
+    Spring.AiIntentUnitDefs(teamID, AI_SQUAD_COMPOSE, squadID1, {
+        ["corthud"]  = 10,
+    });
+end
+
+-- function widget:SendArmyAAIntent()
+--     -- FIXME: According corlab's array in factory.json
+--     Spring.AiIntentArray(teamID, AI_UNIT_WEIGHTS, squadID1, {
+--         0, 0, 0, 0, 0, 1
+--     })
+-- end
+-- function widget:SendArmySquadIntent()
+--     -- FIXME: According corlab's array in factory.json
+--     Spring.AiIntentArray(teamID, AI_UNIT_WEIGHTS, squadID1, {
+--         0, 0, 0, 0.5, 0.5, 0
+--     })
+-- end
+-- function widget:SendArmyRaidIntent()
+--     -- FIXME: According corlab's array in factory.json
+--     Spring.AiIntentArray(teamID, AI_UNIT_WEIGHTS, squadID1, {
+--         0, 1, 0, 0, 0, 0
+--     })
+-- end
+function widget:SendDeactivateFactoryIntent()
+    local units = Spring.GetSelectedUnits()
+    if #units > 0 then
+        Spring.AiIntentArray(teamID, AI_FACTORY_ENABLE, 0, units)
+    end
+end
+function widget:SendActivateFactoryIntent()
+    local units = Spring.GetSelectedUnits()
+    if #units > 0 then
+        Spring.AiIntentArray(teamID, AI_FACTORY_ENABLE, 1, units)
+    end
+end
+function widget:SendDisableUnitsIntent()
+    tracy.ZoneBeginN("AI_ENABLED_UNITS")
+    -- Alias for:
+--     Spring.AiIntentDict(teamID, AI_ENABLED_UNITS, -1, {
+--         [nameToDefID["corstorm"]] = 1,
+--         [nameToDefID["corck"]]    = 0,
+--         [nameToDefID["cornecro"]] = 0,
+--     })
+    -- String alternative:
+--     Spring.SendSkirmishAIMessage(teamID, "AI_kekw_UNITS:"..
+--         nameToDefID["corstorm"].."=1:"..
+--         nameToDefID["corck"]   .."=0:"..
+--         nameToDefID["cornecro"].."=0")
+    Spring.AiIntentUnitDefs(teamID, AI_ENABLED_UNITS, -1, {
+        ["corstorm"] = 1,
+        ["corck"]    = 0,
+        ["cornecro"] = 0,
+    })
+    tracy.ZoneEnd()
+end
+function widget:ToggleScriptedRectruit()
+    isRecruitScripted = not isRecruitScripted
+    Spring.AiIntentFloat(teamID, AI_RECRUIT_SCRIPT, isRecruitScripted and 1 or 0);
+end
+
+
+
+function widget:Shutdown()
+    Spring.SDLStopTextInput()
+    if widget.rmlContext and dm_handle then
+        widget.rmlContext:RemoveDataModel(MODEL_NAME)
+        dm_handle = nil
+    end
+
+    if document then
+        document:Close()
+        document = nil
+    end
+
+    widget.rmlContext = nil
+    clearDrawHandles()
+end
+
+function widget:Update()
+    if dm_handle then
+        clearDrawHandles()
+    end
+end
+
+function widget:SelectionChanged(selectedUnits)
+    if not dm_handle then return end
+    if selectedUnits and #selectedUnits > 0 then
+        local teamID = Spring.GetUnitTeam(selectedUnits[1])
+        if teamID then
+            dm_handle.selectedTeamID = teamID
+        end
+    end
+end
+
+function widget:GameStart()
+    isRecruitScripted = true
+    Spring.AiIntentFloat(teamID, AI_RECRUIT_SCRIPT, isRecruitScripted and 1 or 0);
+end
+
+function widget:RecvLuaMsg(message, playerID)
+    if not document then return end
+    if message:sub(1, 19) == 'LobbyOverlayActive1' then
+        document:Hide()
+    elseif message:sub(1, 19) == 'LobbyOverlayActive0' then
+        document:Show()
+    end
+end
+
+function widget:Reload()
+    widget:Shutdown()
+    widget:Initialize()
+end
+
+function widget:ToggleDebugger()
+    if dm_handle then
+        dm_handle.debugMode = not dm_handle.debugMode
+
+        if dm_handle.debugMode then
+            RmlUi.SetDebugContext('shared')
+        else
+            RmlUi.SetDebugContext(nil)
+        end
+    end
+end

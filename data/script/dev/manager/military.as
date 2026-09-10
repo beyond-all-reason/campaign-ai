@@ -18,7 +18,7 @@ void AiTaskAdded(IUnitTask@ task)
 
 void AiTaskRemoved(IUnitTask@ task, bool done)
 {
-	Squad::mgr.DestroySquad(task);
+	Squad::mgr.SquadTaskDestroyed(task);
 }
 
 void AiUnitAdded(CCircuitUnit@ unit, Unit::UseAs usage)

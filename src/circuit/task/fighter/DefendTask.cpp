@@ -194,6 +194,12 @@ void CDefendTask::Update()
 	});
 }
 
+void CDefendTask::OnUnitDamaged(CCircuitUnit* unit, CEnemyInfo* attacker)
+{
+	if (isRetreat)  // TODO: retreat level
+		ISquadTask::OnUnitDamaged(unit, attacker);
+}
+
 void CDefendTask::Merge(ISquadTask* task)
 {
 	CCircuitAI* circuit = manager->GetCircuit();

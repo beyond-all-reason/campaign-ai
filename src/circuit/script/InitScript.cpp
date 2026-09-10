@@ -967,6 +967,7 @@ void CInitScript::RegisterCDefendTask(asIScriptEngine* engine)
 	int r;
 	r = engine->RegisterObjectMethod("CDefendTask", "void SetPosition(const AIFloat3& in)", asMETHOD(CDefendTask, SetPosition), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CDefendTask", "float range", asOFFSET(CDefendTask, range)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("CDefendTask", "bool isRetreat", asOFFSET(CDefendTask, isRetreat)); ASSERT(r >= 0);
 }
 
 void CInitScript::RegisterCSuperTask(asIScriptEngine* engine)
