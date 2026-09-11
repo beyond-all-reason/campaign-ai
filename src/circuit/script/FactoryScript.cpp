@@ -58,6 +58,7 @@ CFactoryScript::CFactoryScript(CScriptManager* scr, CFactoryManager* mgr)
 	r = engine->RegisterObjectProperty("CFactoryManager", "float buildpowerRatio", asOFFSET(CFactoryManager, bpRatio)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CFactoryManager", "float responseWeight", asOFFSET(CFactoryManager, reWeight)); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CFactoryManager", "IUnitTask@+ GetTaskById(Id) const", asMETHOD(CFactoryManager, GetTaskById), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CFactoryManager", "void AssignTask(CCircuitUnit@, IUnitTask@+)", asMETHODPR(CFactoryManager, AssignTask, (CCircuitUnit*, IUnitTask*), void), asCALL_THISCALL); ASSERT(r >= 0);
 
 	// AS docs / "Registering object methods" / "Composite members"
 	r = engine->RegisterObjectMethod("CFactoryManager", "void SetTierWeights(const CCircuitDef@, int, int, array<float>@+)", asMETHOD(CFactoryScript, SetTierWeights), asCALL_THISCALL, 0, asOFFSET(CFactoryManager, script), true); ASSERT(r >= 0);

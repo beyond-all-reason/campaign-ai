@@ -44,11 +44,15 @@
                     <button onclick="widget:SendSelectSquad1()">Select Squad1</button>
                     <button onclick="widget:SendSelectSquad2()">Select Squad2</button>
                     <button onclick="widget:SendSelectSquad3()">Select Squad3</button>
+                    <button onclick="widget:SendCancelReq1()">Cancel Req1</button>
+                    <button onclick="widget:SendCancelReq2()">Cancel Req2</button>
+                    <button onclick="widget:SendCancelReq3()">Cancel Req3</button>
                     <button onclick="widget:SendCancelSquad1()">Cancel Squad1</button>
                     <button onclick="widget:SendCancelSquad2()">Cancel Squad2</button>
                     <button onclick="widget:SendCancelSquad3()">Cancel Squad3</button>
-                    <button onclick="widget:SendCompose1Squad1()">Comp1 AK</button>
-                    <button onclick="widget:SendCompose2Squad1()">Comp2 THUD</button>
+                    <button onclick="widget:SendCompose1Squad2()">Comp1 AK</button>
+                    <button onclick="widget:SendCompose2Squad2()">Comp2 Tanks</button>
+                    <button onclick="widget:SendCompose3Squad2()">Comp2 Std</button>
                     <button onclick="widget:SendDeactivateFactoryIntent()">Deactivate Factory</button>
                     <button onclick="widget:SendActivateFactoryIntent()">Activate Factory</button>
                     <button onclick="widget:SendDisableUnitsIntent()">Disable Units</button>

@@ -60,32 +60,35 @@ local retreatThreshold = 2.2
 local isRecruitScripted = false
 
 -- BEGIN Intents
-local AI_ENABLE          =  1
-local AI_BASE_CREATE     =  2
-local AI_BASE_REBUILD    =  3
-local AI_UNIT_WEIGHTS    =  4
+local AI_ENABLE          =   1
+local AI_BASE_CREATE     = 101  -- Base starts at 100
+local AI_BASE_REBUILD    = 102
+local AI_UNIT_WEIGHTS    =   4
 
-local AI_SQUAD_CREATE    =  5
-local AI_SQUAD_COMPOSE   =  6
-local AI_SQUAD_DESTROY   =  7
-local AI_SQUAD_POSITION  =  8
-local AI_SQUAD_PARAMS    =  9
+local AI_REQUEST_SQUAD   = 201  -- Squad Request starts at 200
+local AI_REQ_COMPOSE     = 202
+local AI_REQ_CANCEL      = 203
+local AI_REQ_PARAMS      = 204
+local AI_SQUAD_ASSEMBLE  = 211  -- Squad starts at 210
+local AI_SQUAD_DISBAND   = 212
+local AI_SQUAD_PARAMS    = 213
 
-local AI_REGION_AVOID    = 10
-local AI_FACTORY_ENABLE  = 11
-local AI_ENABLED_UNITS   = 12
-local AI_EXEC_ORDER_66   = 13  -- Attack allies not implemented
-local AI_RECRUIT_SCRIPT  = 100
+local AI_REGION_AVOID    =  12
+local AI_FACTORY_ENABLE  =  13
+local AI_ENABLED_UNITS   =  14
+local AI_EXEC_ORDER_66   =  15  -- Attack allies not implemented
+local AI_RECRUIT_SCRIPT  =  16
 -- END Intents
 
-local SQUAD_CREATE_RANGE = 1
-local SQUAD_POS_X        = 2
-local SQUAD_POS_Z        = 3
+local SQUAD_POS_X        = 1
+local SQUAD_POS_Z        = 2
+local SQUAD_GATHER_RANGE = 3
 local SQUAD_ATTACK_RANGE = 4
-local SQUAD_REPEAT       = 5
+local SQUAD_IS_REPEAT    = 5
 local SQUAD_TASK_DEFEND  = 6
-local SQUAD_TASK_RAID    = 7
-local SQUAD_TASK_ATTACK  = 8
+local SQUAD_TASK_ATTACK  = 7
+local SQUAD_TASK_RAID    = 8
+local SQUAD_TASK_RETREAT = 9
 
 --------------------------------------------------------------------------------
 
@@ -170,7 +173,10 @@ function widget:MousePress(x, y, button)
     if wx and wy and wz then
         Spring.Echo("x: "..wx.." z: "..wz)
         if dm_handle.selectedWave then
-            Spring.AiIntentArray(teamID, AI_SQUAD_POSITION, dm_handle.selectedWave, {wx, wz})
+            Spring.AiIntentDict(teamID, AI_SQUAD_PARAMS, dm_handle.selectedWave, {
+                [SQUAD_POS_X] = wx,
+                [SQUAD_POS_Z] = wz,
+            })
         end
     end
 end
@@ -288,15 +294,15 @@ function widget:SendIntent(command)
 end
 
 function CreateSquad(squadID, pos, range, composition)
---     tracy.ZoneBeginN("AI_SQUAD_CREATE")
-    Spring.AiIntentDict(teamID, AI_SQUAD_CREATE, squadID, {
-        [SQUAD_CREATE_RANGE] = range,
-        [SQUAD_POS_X] = pos[1],  -- 3072,
-        [SQUAD_POS_Z] = pos[2],  -- 3584,
+--     tracy.ZoneBeginN("AI_REQUEST_SQUAD")
+    Spring.AiIntentDict(teamID, AI_REQUEST_SQUAD, squadID, {
+        [SQUAD_POS_X] = pos[1],
+        [SQUAD_POS_Z] = pos[2],
+        [SQUAD_GATHER_RANGE] = range,
         [SQUAD_ATTACK_RANGE] = 1024,
-        [SQUAD_REPEAT] = true,
+        [SQUAD_IS_REPEAT] = true,
     })
-    Spring.AiIntentUnitDefs(teamID, AI_SQUAD_COMPOSE, squadID, composition)
+    Spring.AiIntentUnitDefs(teamID, AI_REQ_COMPOSE, squadID, composition)
 --     tracy.ZoneEnd()
 end
 
@@ -318,10 +324,10 @@ end
 function widget:SendNewSquad3()
     -- Only 1 corlab: {4500, 1800}
     CreateSquad(squadID3, {4500, 1800}, 710, {
-        ["corstorm"] = 3,
-        ["corthud"]  = 3,
-        ["corak"]    = 3,
-        ["corcrash"] = 3,
+        ["corstorm"] = 1,
+        ["corthud"]  = 1,
+        ["corak"]    = 1,
+        ["corcrash"] = 1,
     })
 end
 function widget:SendSelectSquad1()
@@ -333,22 +339,37 @@ end
 function widget:SendSelectSquad3()
     dm_handle.selectedWave = squadID3
 end
+function widget:SendCancelReq1()
+    Spring.AiIntentFloat(teamID, AI_REQ_CANCEL, squadID1);
+end
+function widget:SendCancelReq2()
+    Spring.AiIntentFloat(teamID, AI_REQ_CANCEL, squadID2);
+end
+function widget:SendCancelReq3()
+    Spring.AiIntentFloat(teamID, AI_REQ_CANCEL, squadID3);
+end
 function widget:SendCancelSquad1()
-    Spring.AiIntentFloat(teamID, AI_SQUAD_DESTROY, squadID1);
+    Spring.AiIntentFloat(teamID, AI_SQUAD_DISBAND, squadID1);
 end
 function widget:SendCancelSquad2()
-    Spring.AiIntentFloat(teamID, AI_SQUAD_DESTROY, squadID2);
+    Spring.AiIntentFloat(teamID, AI_SQUAD_DISBAND, squadID2);
 end
 function widget:SendCancelSquad3()
-    Spring.AiIntentFloat(teamID, AI_SQUAD_DESTROY, squadID3);
+    Spring.AiIntentFloat(teamID, AI_SQUAD_DISBAND, squadID3);
 end
-function widget:SendCompose1Squad1()
-    Spring.AiIntentUnitDefs(teamID, AI_SQUAD_COMPOSE, squadID1, {
+function widget:SendCompose1Squad2()
+    Spring.AiIntentUnitDefs(teamID, AI_REQ_COMPOSE, squadID2, {
         ["corak"] = 10,
     });
 end
-function widget:SendCompose2Squad1()
-    Spring.AiIntentUnitDefs(teamID, AI_SQUAD_COMPOSE, squadID1, {
+function widget:SendCompose2Squad2()
+    Spring.AiIntentUnitDefs(teamID, AI_REQ_COMPOSE, squadID2, {
+        ["corgator"] = 10,
+    });
+end
+function widget:SendCompose3Squad2()
+    Spring.AiIntentUnitDefs(teamID, AI_REQ_COMPOSE, squadID2, {
+        ["corstorm"] = 3,
         ["corthud"]  = 10,
     });
 end

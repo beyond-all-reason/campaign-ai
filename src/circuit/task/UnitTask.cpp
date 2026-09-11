@@ -82,7 +82,7 @@ void IUnitTask::RemoveAssignee(CCircuitUnit* unit)
 {
 	pathQueries.erase(unit);
 	units.erase(unit);
-	unit->Clear();
+	unit->ClearAct();
 
 	manager->GetIdleTask()->AssignTo(unit);
 
@@ -101,7 +101,7 @@ void IUnitTask::Stop(bool done)
 
 	CIdleTask* idleTask = manager->GetIdleTask();
 	for (CCircuitUnit* unit : units) {
-		unit->Clear();
+		unit->ClearAct();
 		idleTask->AssignTo(unit);
 	}
 	units.clear();

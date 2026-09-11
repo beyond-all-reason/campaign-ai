@@ -62,7 +62,7 @@ void AiTaskRemoved(IUnitTask@ task, bool done)
 		return;
 	if (cast<IBuilderTask>(task).GetBuildType() != Task::BuildType::RECRUIT)
 		return;
-	done ? Squad::mgr.OrderFinished(task) : Squad::mgr.OrderCanceled(task);
+	done ? Squad::mgr.BuildOrderFinished(task) : Squad::mgr.BuildOrderCanceled(task);
 }
 
 void AiUnitAdded(CCircuitUnit@ unit, Unit::UseAs usage)

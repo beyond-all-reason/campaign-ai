@@ -70,6 +70,7 @@ CBuilderScript::CBuilderScript(CScriptManager* scr, CBuilderManager* mgr)
 	r = engine->RegisterObjectMethod("CBuilderManager", "uint GetWorkerCount() const", asMETHOD(CBuilderManager, GetWorkerCount), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CBuilderManager", "int dangerHysteresis", asOFFSET(CBuilderManager, dangerHysteresis)); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CBuilderManager", "IUnitTask@+ GetTaskById(Id) const", asMETHOD(CBuilderManager, GetTaskById), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CBuilderManager", "void AssignTask(CCircuitUnit@, IUnitTask@+)", asMETHODPR(CBuilderManager, AssignTask, (CCircuitUnit*, IUnitTask*), void), asCALL_THISCALL); ASSERT(r >= 0);
 }
 
 CBuilderScript::~CBuilderScript()

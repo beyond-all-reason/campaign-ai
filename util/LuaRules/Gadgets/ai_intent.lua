@@ -30,14 +30,19 @@ end
 else  -- not gadgetHandler:IsSyncedCode()
 -----------------------------------------
 
-local AI_SQUAD_POSITION  =  8
+local AI_SQUAD_PARAMS  = 213
+local SQUAD_POS_X = 1
+local SQUAD_POS_Z = 2
 
 local actions = {
 	["ai_squad_finished"] = function(teamID, dataStr)
 		-- "ai_squad_finished:<squadID>"
 		local squadID = tonumber(dataStr)
 		Spring.Echo("Squad Finished: " .. squadID)
-		Spring.AiIntentArray(teamID, AI_SQUAD_POSITION, squadID, {881, 6507})
+		Spring.AiIntentDict(teamID, AI_SQUAD_PARAMS, squadID, {
+			[SQUAD_POS_X] = 881,
+			[SQUAD_POS_Z] = 6507,
+		})
 	end,
 	["ai_squad_destroyed"] = function(teamID, dataStr)
 		-- "ai_squad_destroyed:<squadID>"

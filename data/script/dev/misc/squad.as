@@ -2,11 +2,11 @@ namespace Squad {
 
 // Has to be same as Lua's defines
 enum ESquadParams {
-	SQUAD_GATHER_RANGE = 1,
-	SQUAD_POS_X        = 2,
-	SQUAD_POS_Z        = 3,
+	SQUAD_POS_X        = 1,
+	SQUAD_POS_Z        = 2,
+	SQUAD_GATHER_RANGE = 3,
 	SQUAD_ATTACK_RANGE = 4,
-	SQUAD_REPEAT       = 5,
+	SQUAD_IS_REPEAT    = 5,
 	SQUAD_TASK         = 6,
 }
 
@@ -120,19 +120,22 @@ class Amount {
 }
 
 class Manager {
-	private void ParseCreation(const SIntent& in intent, Request@ req) {
+	private void ParseRequestParams(const SIntent& in intent, Request@ req) {
 		for (uint i = 0; i < intent.size; ++i) {
 			switch (intent.GetKey(i)) {
+			case ESquadParams::SQUAD_POS_X: { req.pos.x = intent.GetValue(i); } break;
+			case ESquadParams::SQUAD_POS_Z: { req.pos.z = intent.GetValue(i); } break;
 			case ESquadParams::SQUAD_GATHER_RANGE: {
 				req.gatherRange = intent.GetValue(i);
 			} break;
-			case ESquadParams::SQUAD_POS_X: { req.pos.x = intent.GetValue(i); } break;
-			case ESquadParams::SQUAD_POS_Z: { req.pos.z = intent.GetValue(i); } break;
 			case ESquadParams::SQUAD_ATTACK_RANGE: {
 				req.attackRange = intent.GetValue(i);
 			} break;
-			case ESquadParams::SQUAD_REPEAT: {
+			case ESquadParams::SQUAD_IS_REPEAT: {
 				req.isRepeat = intent.GetValue(i) != 0.f;
+			} break;
+			case ESquadParams::SQUAD_TASK: {
+				// TODO
 			} break;
 			default: break;
 			}
@@ -145,7 +148,7 @@ class Manager {
 			return false;
 
 		Request req(intent.objId);
-		ParseCreation(intent, req);
+		ParseRequestParams(intent, req);
 		requests.insertLast(@req);
 
 		Squad squad(req);
@@ -241,21 +244,39 @@ class Manager {
 		ai.CallRules(SIG_SQUAD_DESTROYED + req.squadId);
 	}
 
-	// Invoked by Intent::Manager::HandleIntent
-	void DestroyRequest(int squadId) {
-		if (!squads.contains(squadId))
-			return;
-
-		Squad@ squad = squads[squadId];
-		RemoveRequest(squad.req);
-		squads.erase(squadId);
+	private void RemoveSquad(Squad@ squad) {
+		squads.erase(squad.id);
 		if (squad.task !is null) {
 			taskToSquad.erase(squad.task.id);
 			squad.task.Abort();
 		}
 	}
 
-	private void RepeatRequest(Request@ req) {
+	// Invoked by Intent::Manager::HandleIntent
+	bool DestroyRequest(int squadId) {
+		bool success;
+		Squad@ squad = squads.find(squadId, success);
+		if (!success)
+			return false;
+
+		RemoveRequest(squad.req);
+		RemoveSquad(squad);
+		return true;
+	}
+
+	private void RepeatRequest(Squad@ squad) {
+		Request@ req = squad.req;
+		if (squad.task !is null) {
+			taskToSquad.erase(squad.task.id);
+			// FIXME: Example of crude task assignment (loop)
+			IUnitTask@ newTask = aiMilitaryMgr.Enqueue(TaskF::Defend(Task::FightType::ATTACK, req.power));
+			array<CCircuitUnit@>@ units = squad.task.GetUnits();
+			foreach (auto unit, auto index : units)
+				aiMilitaryMgr.AssignTask(unit, newTask);
+// 			squad.task.Abort();  // auto-aborted when no assignees left
+			@squad.task = null;
+		}
+
 		RemoveRequest(req);
 		for (auto it = req.unitDefs.begin(); it++;) {
 			Amount@ am = it.current_value();
@@ -267,8 +288,27 @@ class Manager {
 		requests.insertLast(req);
 	}
 
+	private void DestroySquad(Squad@ squad) {
+		if (squad.req.isRepeat) {
+			RepeatRequest(squad);
+		} else {
+			RemoveSquad(squad);
+		}
+	}
+
+	// Invoked by Intent::Manager::HandleIntent
+	bool DestroySquadId(int squadId) {
+		bool success;
+		Squad@ squad = squads.find(squadId, success);
+		if (!success)
+			return false;
+
+		DestroySquad(squad);
+		return true;
+	}
+
 	// Invoked by Factory::AiTaskRemoved done=false
-	void OrderCanceled(IUnitTask@ task) {
+	void BuildOrderCanceled(IUnitTask@ task) {
 		bool success;
 		Request@ req = buildTaskToReq.find(task.id, success);
 		if (!success)
@@ -281,7 +321,7 @@ class Manager {
 	}
 
 	// Invoked by Factory::AiTaskRemoved done=true
-	void OrderFinished(IUnitTask@ task) {
+	void BuildOrderFinished(IUnitTask@ task) {
 		bool success;
 		Request@ req = buildTaskToReq.find(task.id, success);
 		if (!success)
@@ -299,36 +339,28 @@ class Manager {
 			return false;
 
 		taskToSquad.erase(task.id);
-		if (squad.req.isRepeat) {
-			RepeatRequest(squad.req);
-			@squad.task = null;
-		} else {
-			RemoveRequest(squad.req);
-			squads.erase(squad.id);
-		}
+		@squad.task = null;
+		DestroySquad(squad);
 		return true;
 	}
 
 	// Invoked by Intent::Manager::HandleIntent
-	bool SetSquadPosition(const SIntent& in intent) {
+	bool SetRequestParams(const SIntent& in intent) {
 		bool success;
 		Squad@ squad = squads.find(intent.objId, success);
-		if (!success || squad.task is null)
+		if (!success)
 			return false;
 
-		squad.SetPosition(AIFloat3(intent[0], 0, intent[1]));
+		ParseRequestParams(intent, squad.req);
 		return true;
 	}
 
-	// Invoked by Intent::Manager::HandleIntent
-	bool SetSquadParams(const SIntent& in intent) {
-		bool success;
-		Squad@ squad = squads.find(intent.objId, success);
-		if (!success || squad.task is null)
-			return false;
-
+	private void ParseSquadParams(const SIntent& in intent, Squad@ squad) {
+		AIFloat3 pos(-RgtVector);
 		for (uint i = 0; i < intent.size; ++i) {
 			switch (intent.GetKey(i)) {
+			case ESquadParams::SQUAD_POS_X: { pos.x = intent.GetValue(i); } break;
+			case ESquadParams::SQUAD_POS_Z: { pos.z = intent.GetValue(i); } break;
 			case ESquadParams::SQUAD_ATTACK_RANGE: {
 				squad.SetAttackRange(intent.GetValue(i));
 			} break;
@@ -339,6 +371,18 @@ class Manager {
 			default: break;
 			}
 		}
+		if (pos.x >= 0.f)
+			squad.SetPosition(pos);
+	}
+
+	// Invoked by Intent::Manager::HandleIntent
+	bool SetSquadParams(const SIntent& in intent) {
+		bool success;
+		Squad@ squad = squads.find(intent.objId, success);
+		if (!success || squad.task is null)
+			return false;
+
+		ParseSquadParams(intent, squad);
 		return true;
 	}
 

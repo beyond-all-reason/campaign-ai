@@ -28,20 +28,28 @@ class Manager {
 // 			ChangeWeights(intent);
 		} break;
 
-		case AI_SQUAD_REQUEST: {  // SDictFloatIntent
+		case AI_REQUEST_SQUAD: {  // SDictFloatIntent
 			Squad::mgr.CreateRequest(intent);
 		} break;
 
-		case AI_SQUAD_COMPOSE: {  // SDictFloatIntent
+		case AI_REQ_COMPOSE: {  // SDictFloatIntent
 			Squad::mgr.ComposeRequest(intent);
 		} break;
 
-		case AI_SQUAD_DISBAND: {  // SFloatIntent
+		case AI_REQ_CANCEL: {  // SFloatIntent
 			Squad::mgr.DestroyRequest(intent.objId);
 		} break;
 
-		case AI_SQUAD_POSITION: {  // SArrayFloatIntent
-			Squad::mgr.SetSquadPosition(intent);
+		case AI_REQ_PARAMS: {  // SArrayFloatIntent
+			Squad::mgr.SetRequestParams(intent);
+		} break;
+
+		case AI_SQUAD_ASSEMBLE: {
+			// TODO
+		} break;
+
+		case AI_SQUAD_DISBAND: {  // SFloatIntent
+			Squad::mgr.DestroySquadId(intent.objId);
 		} break;
 
 		case AI_SQUAD_PARAMS: {  // SDictFloatIntent
