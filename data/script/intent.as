@@ -9,9 +9,9 @@ enum EIntents {
 
 	AI_UNIT_WEIGHTS    =  4,
 
-	AI_SQUAD_CREATE    =  5,
+	AI_SQUAD_REQUEST   =  5,
 	AI_SQUAD_COMPOSE   =  6,
-	AI_SQUAD_DESTROY   =  7,
+	AI_SQUAD_DISBAND   =  7,
 	AI_SQUAD_POSITION  =  8,
 	AI_SQUAD_PARAMS    =  9,
 

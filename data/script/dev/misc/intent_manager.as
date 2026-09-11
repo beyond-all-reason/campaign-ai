@@ -28,7 +28,7 @@ class Manager {
 // 			ChangeWeights(intent);
 		} break;
 
-		case AI_SQUAD_CREATE: {  // SDictFloatIntent
+		case AI_SQUAD_REQUEST: {  // SDictFloatIntent
 			Squad::mgr.CreateRequest(intent);
 		} break;
 
@@ -36,7 +36,7 @@ class Manager {
 			Squad::mgr.ComposeRequest(intent);
 		} break;
 
-		case AI_SQUAD_DESTROY: {  // SFloatIntent
+		case AI_SQUAD_DISBAND: {  // SFloatIntent
 			Squad::mgr.DestroyRequest(intent.objId);
 		} break;
 

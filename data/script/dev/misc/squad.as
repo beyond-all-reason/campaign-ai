@@ -2,7 +2,7 @@ namespace Squad {
 
 // Has to be same as Lua's defines
 enum ESquadParams {
-	SQUAD_CREATE_RANGE = 1,
+	SQUAD_GATHER_RANGE = 1,
 	SQUAD_POS_X        = 2,
 	SQUAD_POS_Z        = 3,
 	SQUAD_ATTACK_RANGE = 4,
@@ -80,19 +80,15 @@ class Request {
 	}
 
 	void ClearForRepeat(map<Id, Request@>& buildTaskToReq) {
-AiLog("Request.ClearForRepeat 0: " + recruitTasks.size());
 		unitNum = 0;  // TODO: also power?
 		for (auto it = recruitTasks.begin(); it++;) {
-AiLog("Request.ClearForRepeat 1");
 			buildTaskToReq.erase(it.current());
 			aiFactoryMgr.GetTaskById(it.current()).Abort();
 		}
 		recruitTasks.clear();
-AiLog("Request.ClearForRepeat 2");
 	}
 
 	void ClearForCompose(map<Id, Request@>& buildTaskToReq) {
-AiLog("Request.ClearForCompose 0");
 		ClearForRepeat(buildTaskToReq);
 		unitDefs.clear();
 		power = 0.f;
@@ -105,7 +101,7 @@ AiLog("Request.ClearForCompose 0");
 	map<Id, Amount@> unitDefs;  // UnitDefId: amount
 	set<Id> recruitTasks;  // IUnitTask.id for cleanup
 	AIFloat3 pos;
-	float factoryRange = 64.f;
+	float gatherRange = 64.f;
 	float attackRange = 300.f;
 	float power = 0.f;  // FIXME: power or unit number?
 	int unitNum = 0;
@@ -127,8 +123,8 @@ class Manager {
 	private void ParseCreation(const SIntent& in intent, Request@ req) {
 		for (uint i = 0; i < intent.size; ++i) {
 			switch (intent.GetKey(i)) {
-			case ESquadParams::SQUAD_CREATE_RANGE: {
-				req.factoryRange = intent.GetValue(i);
+			case ESquadParams::SQUAD_GATHER_RANGE: {
+				req.gatherRange = intent.GetValue(i);
 			} break;
 			case ESquadParams::SQUAD_POS_X: { req.pos.x = intent.GetValue(i); } break;
 			case ESquadParams::SQUAD_POS_Z: { req.pos.z = intent.GetValue(i); } break;
@@ -145,7 +141,6 @@ class Manager {
 
 	// Invoked by Intent::Manager::HandleIntent
 	bool CreateRequest(const SIntent& in intent) {
-AiLog("CreateRequest");
 		if (squads.contains(intent.objId))
 			return false;
 
@@ -159,12 +154,11 @@ AiLog("CreateRequest");
 	}
 
 	private void PlaceOrder(Request@ req, CCircuitDef@ cdef, int inum) {
-AiLog("PlaceOrder");
 		req.unitNum += inum;
 		Task::Priority priority = Task::Priority::NORMAL;
 		Task::RecruitType recruit = Task::RecruitType::FIREPOWER;
 		for (int j = 0; j < inum; ++j) {
-			IUnitTask@ task = aiFactoryMgr.Enqueue(TaskS::Recruit(recruit, priority, cdef, req.pos, req.factoryRange));
+			IUnitTask@ task = aiFactoryMgr.Enqueue(TaskS::Recruit(recruit, priority, cdef, req.pos, req.gatherRange));
 			cast<CRecruitTask>(task).isSingleBuilder = true;
 			@buildTaskToReq[task.id] = req;
 			req.recruitTasks.insert(task.id);
@@ -173,7 +167,6 @@ AiLog("PlaceOrder");
 
 	// Invoked by Intent::Manager::HandleIntent
 	bool ComposeRequest(const SIntent& in intent) {
-AiLog("ComposeRequest");
 		// intent has {unitDefIs: amount} dictionary
 		bool success;
 		Squad@ squad = squads.find(intent.objId, success);
@@ -197,7 +190,6 @@ AiLog("ComposeRequest");
 	}
 
 	private Request@ GetRequestToAssign(CCircuitUnit@ unit) {
-AiLog("GetRequestToAssign");
 		Id defId = unit.circuitDef.id;
 		for (uint i = 0; i < requests.length(); ++i) {
 			Request@ req = requests[i];
@@ -216,7 +208,6 @@ AiLog("GetRequestToAssign");
 
 	// Invoked by Military::AiMakeTask
 	IUnitTask@ AssignToSquad(CCircuitUnit@ unit) {
-AiLog("AssignToSquad");
 		Request@ req = GetRequestToAssign(unit);
 		if (req is null)
 			return null;
@@ -240,7 +231,6 @@ AiLog("AssignToSquad");
 	}
 
 	private void RemoveRequest(Request@ req) {
-AiLog("RemoveRequest");
 		int idx = requests.findByRef(req);
 		if (idx < 0)
 			return;
@@ -253,7 +243,6 @@ AiLog("RemoveRequest");
 
 	// Invoked by Intent::Manager::HandleIntent
 	void DestroyRequest(int squadId) {
-AiLog("DestroyRequest");
 		if (!squads.contains(squadId))
 			return;
 
@@ -267,7 +256,6 @@ AiLog("DestroyRequest");
 	}
 
 	private void RepeatRequest(Request@ req) {
-AiLog("RepeatRequest");
 		RemoveRequest(req);
 		for (auto it = req.unitDefs.begin(); it++;) {
 			Amount@ am = it.current_value();
@@ -281,7 +269,6 @@ AiLog("RepeatRequest");
 
 	// Invoked by Factory::AiTaskRemoved done=false
 	void OrderCanceled(IUnitTask@ task) {
-AiLog("OrderCanceled 0");
 		bool success;
 		Request@ req = buildTaskToReq.find(task.id, success);
 		if (!success)
@@ -291,12 +278,10 @@ AiLog("OrderCanceled 0");
 		req.recruitTasks.erase(task.id);
 		// NOTE: Alternative is to re-create task; Not invoked on exit.
 		req.unitNum--;
-AiLog("OrderCanceled 1");
 	}
 
 	// Invoked by Factory::AiTaskRemoved done=true
 	void OrderFinished(IUnitTask@ task) {
-AiLog("OrderFinished");
 		bool success;
 		Request@ req = buildTaskToReq.find(task.id, success);
 		if (!success)
@@ -308,7 +293,6 @@ AiLog("OrderFinished");
 
 	// Invoked by Military::AiTaskRemoved
 	bool SquadTaskDestroyed(IUnitTask@ task) {
-AiLog("SquadTaskDestroyed");
 		bool success;
 		Squad@ squad = taskToSquad.find(task.id, success);
 		if (!success)
