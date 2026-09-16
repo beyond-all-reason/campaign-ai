@@ -81,10 +81,7 @@ void CSReclaimTask::Update()
 			// Repair task
 			IUnitTask* task = circuit->GetFactoryManager()->Enqueue(TaskS::Repair(
 					IBuilderTask::Priority::NORMAL, repairTarget));
-			decltype(units) tmpUnits = units;
-			for (CCircuitUnit* unit : tmpUnits) {
-				manager->AssignTask(unit, task);
-			}
+			manager->ReplaceTask(this, task);
 			manager->AbortTask(this);
 		}
 	}

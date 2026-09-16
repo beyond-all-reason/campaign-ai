@@ -34,6 +34,7 @@ public:
 	int GenerateTaskId() { return ++taskId; }
 	virtual void AssignTask(CCircuitUnit* unit, IUnitTask* task);
 	virtual void AssignTask(CCircuitUnit* unit);
+	void ReplaceTask(IUnitTask* src, IUnitTask* dst);  // unsafe replacement
 protected:
 	virtual void DequeueTask(IUnitTask* task, bool done = false);
 

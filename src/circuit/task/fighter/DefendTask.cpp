@@ -114,11 +114,8 @@ void CDefendTask::Update()
 		if ((attackPower >= maxPower) || !militaryMgr->GetTasks(check).empty())
 		{
 			IFighterTask* task = militaryMgr->Enqueue(TaskF::Common(promote));
-			decltype(units) tmpUnits = units;
-			for (CCircuitUnit* unit : tmpUnits) {
-				manager->AssignTask(unit, task);
-			}
-//			manager->DoneTask(this);  // NOTE: RemoveAssignee() will abort task
+			manager->ReplaceTask(this, task);
+//			manager->DoneTask(this);  // NOTE: CDefendTask::RemoveAssignee() will abort task
 			return;
 		}
 	}

@@ -7,18 +7,23 @@ enum ESquadParams {
 	SQUAD_GATHER_RANGE = 3,
 	SQUAD_ATTACK_RANGE = 4,
 	SQUAD_IS_REPEAT    = 5,
-	SQUAD_TASK         = 6,
 }
 
 enum ESquadTasks {
 	TASK_DEFEND  = 1,
-	TASK_RAID    = 2,
-	TASK_ATTACK  = 3,
-	TASK_RETREAT = 4,
+	TASK_SCOUT   = 2,
+	TASK_RAID    = 3,
+	TASK_ATTACK  = 4,
+	TASK_BOMB    = 5,
+	TASK_ARTY    = 6,
+	TASK_AA      = 7,
+	TASK_SUPPORT = 8,
+	TASK_RETREAT = 9,
 }
 
 string SIG_SQUAD_FINISHED ("ai_squad_finished:" );
 string SIG_SQUAD_DESTROYED("ai_squad_destroyed:");
+
 
 class Squad {
 	Squad(Request@ p_req) {
@@ -49,19 +54,51 @@ class Squad {
 		cast<CDefendTask>(task).range = range;
 	}
 
+	private void ChangeTask(SFightTask& in data) {
+		IUnitTask@ newTask = aiMilitaryMgr.Enqueue(data);
+		task.ReplaceBy(newTask);
+		task.Abort();
+		@task = newTask;
+
+		IFighterTask@ fighterTask = cast<IFighterTask>(task);
+		fighterTask.isScripted = true;
+		fighterTask.SetPosition(req.pos);
+	}
+
 	void SetTask(int type) {
 		switch (type) {
 		case ESquadTasks::TASK_DEFEND: {
-			// TODO;
+			ChangeTask(TaskF::Defend(Task::FightType::ATTACK, req.power));
+			CDefendTask@ defendTask = cast<CDefendTask>(task);
+			defendTask.range = req.attackRange;
+			defendTask.isRetreat = false;
+		} break;
+		case ESquadTasks::TASK_SCOUT: {
+			ChangeTask(TaskF::Common(Task::FightType::SCOUT));
 		} break;
 		case ESquadTasks::TASK_RAID: {
-			// TODO;
+			ChangeTask(TaskF::Common(Task::FightType::RAID));
 		} break;
 		case ESquadTasks::TASK_ATTACK: {
-			// TODO;
+			ChangeTask(TaskF::Common(Task::FightType::ATTACK));
+		} break;
+		case ESquadTasks::TASK_BOMB: {
+			ChangeTask(TaskF::Common(Task::FightType::BOMB));
+		} break;
+		case ESquadTasks::TASK_ARTY: {
+			ChangeTask(TaskF::Common(Task::FightType::ARTY));
+		} break;
+		case ESquadTasks::TASK_AA: {
+			ChangeTask(TaskF::Common(Task::FightType::AA));
+		} break;
+		case ESquadTasks::TASK_SUPPORT: {
+			ChangeTask(TaskF::Common(Task::FightType::SUPPORT));
 		} break;
 		case ESquadTasks::TASK_RETREAT: {
-			// TODO;
+			IUnitTask@ newTask = aiMilitaryMgr.EnqueueRetreat();
+			task.ReplaceBy(newTask);
+			task.Abort();
+			@task = newTask;
 		} break;
 		default: break;
 		}
@@ -71,6 +108,7 @@ class Squad {
 	Request@ req;
 	IUnitTask@ task = null;  // military ISquadTask
 }
+
 
 class Request {
 	Request(Id p_id) {
@@ -110,6 +148,7 @@ class Request {
 // 	bool isInfinite = false;  // constantly produce squads
 }
 
+
 class Amount {
 	Amount(int n) {
 		amount = n;
@@ -118,6 +157,7 @@ class Amount {
 	int amount;
 	int assignedCount = 0;
 }
+
 
 class Manager {
 	private void ParseRequestParams(const SIntent& in intent, Request@ req) {
@@ -133,9 +173,6 @@ class Manager {
 			} break;
 			case ESquadParams::SQUAD_IS_REPEAT: {
 				req.isRepeat = intent.GetValue(i) != 0.f;
-			} break;
-			case ESquadParams::SQUAD_TASK: {
-				// TODO
 			} break;
 			default: break;
 			}
@@ -194,8 +231,11 @@ class Manager {
 
 	private Request@ GetRequestToAssign(CCircuitUnit@ unit) {
 		Id defId = unit.circuitDef.id;
+		AIFloat3 unitPos = unit.GetPos(ai.frame);
 		for (uint i = 0; i < requests.length(); ++i) {
 			Request@ req = requests[i];
+			if (!unitPos.IsInRange(req.pos, req.gatherRange))
+				continue;
 			bool success;
 			Amount@ am = req.unitDefs.find(defId, success);
 			if (!success)
@@ -220,9 +260,9 @@ class Manager {
 			@squad.task = aiMilitaryMgr.Enqueue(TaskF::Defend(Task::FightType::ATTACK, req.power));  // FIXME: power or unit number?
 			CDefendTask@ defendTask = cast<CDefendTask>(squad.task);
 			defendTask.isScripted = true;
+			defendTask.SetPosition(req.pos);
 			defendTask.range = req.attackRange;
 			defendTask.isRetreat = false;
-			defendTask.SetPosition(req.pos);
 			@taskToSquad[defendTask.id] = squad;
 		}
 
@@ -268,12 +308,9 @@ class Manager {
 		Request@ req = squad.req;
 		if (squad.task !is null) {
 			taskToSquad.erase(squad.task.id);
-			// FIXME: Example of crude task assignment (loop)
 			IUnitTask@ newTask = aiMilitaryMgr.Enqueue(TaskF::Defend(Task::FightType::ATTACK, req.power));
-			array<CCircuitUnit@>@ units = squad.task.GetUnits();
-			foreach (auto unit, auto index : units)
-				aiMilitaryMgr.AssignTask(unit, newTask);
-// 			squad.task.Abort();  // auto-aborted when no assignees left
+			squad.task.ReplaceBy(newTask);
+			squad.task.Abort();
 			@squad.task = null;
 		}
 
@@ -357,6 +394,7 @@ class Manager {
 
 	private void ParseSquadParams(const SIntent& in intent, Squad@ squad) {
 		AIFloat3 pos(-RgtVector);
+
 		for (uint i = 0; i < intent.size; ++i) {
 			switch (intent.GetKey(i)) {
 			case ESquadParams::SQUAD_POS_X: { pos.x = intent.GetValue(i); } break;
@@ -364,13 +402,10 @@ class Manager {
 			case ESquadParams::SQUAD_ATTACK_RANGE: {
 				squad.SetAttackRange(intent.GetValue(i));
 			} break;
-			case ESquadParams::SQUAD_TASK: {
-				squad.SetTask(int(intent.GetValue(i)));
-			} break;
-			// TODO
 			default: break;
 			}
 		}
+
 		if (pos.x >= 0.f)
 			squad.SetPosition(pos);
 	}
@@ -383,6 +418,19 @@ class Manager {
 			return false;
 
 		ParseSquadParams(intent, squad);
+		return true;
+	}
+
+	// Invoked by Intent::Manager::HandleIntent
+	bool SetSquadTask(const SIntent& in intent) {
+		bool success;
+		Squad@ squad = squads.find(intent.objId, success);
+		if (!success || squad.task is null)
+			return false;
+
+		taskToSquad.erase(squad.task.id);
+		squad.SetTask(int(intent.value));
+		@taskToSquad[squad.task.id] = squad;
 		return true;
 	}
 

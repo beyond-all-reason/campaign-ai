@@ -51,6 +51,7 @@ public:
 	virtual bool CanAssignTo(CCircuitUnit* unit) const;
 	virtual void AssignTo(CCircuitUnit* unit);
 	virtual void RemoveAssignee(CCircuitUnit* unit);
+	bool ReplaceBy(IUnitTask* task);  // Script API
 
 	virtual void Start(CCircuitUnit* unit) = 0;  // <=> IAction::OnStart()
 	virtual void Update() = 0;

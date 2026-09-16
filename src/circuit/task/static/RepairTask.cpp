@@ -137,10 +137,7 @@ void CSRepairTask::Update()
 		}
 
 		if (task != nullptr) {
-			decltype(units) tmpUnits = units;
-			for (CCircuitUnit* unit : tmpUnits) {
-				manager->AssignTask(unit, task);
-			}
+			manager->ReplaceTask(this, task);
 			manager->AbortTask(this);
 		}
 	}

@@ -77,6 +77,14 @@ void ITaskModule::AssignTask(CCircuitUnit* unit)
 	}
 }
 
+void ITaskModule::ReplaceTask(IUnitTask* src, IUnitTask* dst)
+{
+	std::set<CCircuitUnit*> tmpUnits = src->GetAssignees();
+	for (CCircuitUnit* unit : tmpUnits) {
+		AssignTask(unit, dst);
+	}
+}
+
 void ITaskModule::DequeueTask(IUnitTask* task, bool done)
 {
 	task->Dead();

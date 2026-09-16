@@ -26,7 +26,6 @@ using namespace terrain;
 
 ISquadTask::ISquadTask(ITaskModule* mgr, FightType type, float powerMod)
 		: IFighterTask(mgr, type, powerMod)
-		, isScripted(false)
 		, lowestRange(std::numeric_limits<float>::max())
 		, highestRange(.0f)
 		, lowestSpeed(std::numeric_limits<float>::max())
@@ -309,7 +308,8 @@ bool ISquadTask::IsMustRegroup()
 	bool wasRegroup = (State::REGROUP == state);
 	state = State::ROAM;
 
-	const float sqMaxDist = SQUARE(std::max<float>(SQUARE_SIZE * 8 * validUnits.size(), highestRange));
+//	const float sqMaxDist = SQUARE(std::max<float>(SQUARE_SIZE * 8 * validUnits.size(), highestRange));
+	const float sqMaxDist = SQUARE(300.f);
 	for (CCircuitUnit* unit : validUnits) {
 		const float sqDist = groupPos.SqDistance2D(unit->GetLastPos());
 		if (sqDist > sqMaxDist) {

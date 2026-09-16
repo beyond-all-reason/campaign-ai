@@ -91,6 +91,16 @@ void IUnitTask::RemoveAssignee(CCircuitUnit* unit)
 	}
 }
 
+bool IUnitTask::ReplaceBy(IUnitTask* task)
+{
+	// NOTE: CBuilderManager works with CCombatTask::type == FIGHTER
+	if (manager != task->GetManager()) {
+		return false;
+	}
+	manager->ReplaceTask(this, task);
+	return true;
+}
+
 void IUnitTask::Stop(bool done)
 {
 	if (done) {
@@ -143,12 +153,16 @@ void IUnitTask::Dead()
 
 void IUnitTask::Abort()
 {
-	manager->AbortTask(this);
+	if (!isDead) {
+		manager->AbortTask(this);
+	}
 }
 
 void IUnitTask::Done()
 {
-	manager->DoneTask(this);
+	if (!isDead) {
+		manager->DoneTask(this);
+	}
 }
 
 bool IUnitTask::IsQueryReady(CCircuitUnit* unit) const

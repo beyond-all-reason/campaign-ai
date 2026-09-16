@@ -53,6 +53,19 @@
                     <button onclick="widget:SendCompose1Squad2()">Comp1 AK</button>
                     <button onclick="widget:SendCompose2Squad2()">Comp2 Tanks</button>
                     <button onclick="widget:SendCompose3Squad2()">Comp2 Std</button>
+                </div>
+                <div class="grid commands">
+                    <button onclick="widget:SendTaskDefend()">defend</button>
+                    <button onclick="widget:SendTaskScout()">scout</button>
+                    <button onclick="widget:SendTaskRaid()">raid</button>
+                    <button onclick="widget:SendTaskAttack()">attack</button>
+                    <button onclick="widget:SendTaskBomb()">bomb</button>
+                    <button onclick="widget:SendTaskArty()">arty</button>
+                    <button onclick="widget:SendTaskAA()">AA</button>
+                    <button onclick="widget:SendTaskSupport()">support</button>
+                    <button onclick="widget:SendTaskRetreat()">retreat</button>
+                </div>
+                <div class="grid commands">
                     <button onclick="widget:SendDeactivateFactoryIntent()">Deactivate Factory</button>
                     <button onclick="widget:SendActivateFactoryIntent()">Activate Factory</button>
                     <button onclick="widget:SendDisableUnitsIntent()">Disable Units</button>

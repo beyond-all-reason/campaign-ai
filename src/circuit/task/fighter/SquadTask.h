@@ -48,7 +48,6 @@ protected:
 	void Attack(const int frame);
 	void Attack(const int frame, const bool isGround);
 
-	bool isScripted;  // Script API
 	float lowestRange;
 	float highestRange;
 	float lowestSpeed;

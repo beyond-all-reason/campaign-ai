@@ -19,6 +19,8 @@ class CEnemyInfo;
 
 class IFighterTask: public IUnitTask {
 public:
+	friend class CInitScript;
+
 	enum class FightType: char {RALLY = 0, GUARD, DEFEND, SCOUT, RAID, ATTACK, BOMB, MELEE, ARTY, AA, AH, SUPPORT, SUPER, _SIZE_};
 	using FT = std::underlying_type<FightType>::type;
 
@@ -38,6 +40,7 @@ public:
 
 	FightType GetFightType() const { return fightType; }
 	const springai::AIFloat3& GetPosition() const { return position; }
+	void SetPosition(const springai::AIFloat3& pos) { position = pos; }  // Script API
 
 	float GetAttackPower() const { return attackPower; }
 	CEnemyInfo* GetTarget() const { return target; }
@@ -51,6 +54,7 @@ protected:
 
 	FightType fightType;
 	springai::AIFloat3 position;  // attack/scout position
+	bool isScripted = false;  // Script API
 
 	float attackPower;
 	float powerMod;

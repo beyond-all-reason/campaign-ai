@@ -162,7 +162,7 @@ void CSupportTask::ApplyPath(const CQueryPathMulti* query)
 			}
 		}
 		manager->AssignTask(unit, task);
-//		manager->DoneTask(this);  // NOTE: RemoveAssignee will abort task
+//		manager->DoneTask(this);  // NOTE: CSupportTask::RemoveAssignee will abort task
 	} else {
 		TRY_UNIT(circuit, unit,
 			unit->CmdFightTo(endPos, UNIT_COMMAND_OPTION_RIGHT_MOUSE_KEY, frame + FRAMES_PER_SEC * 60);

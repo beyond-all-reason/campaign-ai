@@ -29,7 +29,6 @@ public:
 
 	virtual void OnUnitDamaged(CCircuitUnit* unit, CEnemyInfo* attacker) override;
 
-	void SetPosition(const springai::AIFloat3& pos) { position = pos; }  // Script API
 	void SetMaxPower(float power) { maxPower = power * powerMod; }
 //	void SetWantedTarget(CEnemyInfo* enemy) { SetTarget(enemy); }
 

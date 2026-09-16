@@ -15,7 +15,8 @@ enum EIntents {
 	AI_REQ_PARAMS      = 204,
 	AI_SQUAD_ASSEMBLE  = 211,  // Squad starts at 210
 	AI_SQUAD_DISBAND   = 212,
-	AI_SQUAD_PARAMS    = 213,
+	AI_SQUAD_TASK      = 213,
+	AI_SQUAD_PARAMS    = 214,
 
 	AI_REGION_AVOID    =  12,
 

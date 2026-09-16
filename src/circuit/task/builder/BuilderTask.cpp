@@ -222,10 +222,7 @@ void IBuilderTask::Finish()
 		const int buildDelay = circuit->GetEconomyManager()->GetBuildDelay();
 		if (buildDelay > 0) {
 			IUnitTask* task = builderMgr->Enqueue(TaskB::Wait(buildDelay));
-			decltype(units) tmpUnits = units;
-			for (CCircuitUnit* unit : tmpUnits) {
-				manager->AssignTask(unit, task);
-			}
+			manager->ReplaceTask(this, task);
 		}
 	}
 

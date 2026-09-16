@@ -59,36 +59,7 @@ local power = 5.2
 local retreatThreshold = 2.2
 local isRecruitScripted = false
 
--- BEGIN Intents
-local AI_ENABLE          =   1
-local AI_BASE_CREATE     = 101  -- Base starts at 100
-local AI_BASE_REBUILD    = 102
-local AI_UNIT_WEIGHTS    =   4
-
-local AI_REQUEST_SQUAD   = 201  -- Squad Request starts at 200
-local AI_REQ_COMPOSE     = 202
-local AI_REQ_CANCEL      = 203
-local AI_REQ_PARAMS      = 204
-local AI_SQUAD_ASSEMBLE  = 211  -- Squad starts at 210
-local AI_SQUAD_DISBAND   = 212
-local AI_SQUAD_PARAMS    = 213
-
-local AI_REGION_AVOID    =  12
-local AI_FACTORY_ENABLE  =  13
-local AI_ENABLED_UNITS   =  14
-local AI_EXEC_ORDER_66   =  15  -- Attack allies not implemented
-local AI_RECRUIT_SCRIPT  =  16
--- END Intents
-
-local SQUAD_POS_X        = 1
-local SQUAD_POS_Z        = 2
-local SQUAD_GATHER_RANGE = 3
-local SQUAD_ATTACK_RANGE = 4
-local SQUAD_IS_REPEAT    = 5
-local SQUAD_TASK_DEFEND  = 6
-local SQUAD_TASK_ATTACK  = 7
-local SQUAD_TASK_RAID    = 8
-local SQUAD_TASK_RETREAT = 9
+local intent = VFS.Include("luarules/utilities/ai_lib/intent.lua")
 
 --------------------------------------------------------------------------------
 
@@ -171,11 +142,11 @@ function widget:MousePress(x, y, button)
     end
 
     if wx and wy and wz then
-        Spring.Echo("x: "..wx.." z: "..wz)
+        Spring.Echo("x: "..wx.." y: "..wy.." z: "..wz)
         if dm_handle.selectedWave then
-            Spring.AiIntentDict(teamID, AI_SQUAD_PARAMS, dm_handle.selectedWave, {
-                [SQUAD_POS_X] = wx,
-                [SQUAD_POS_Z] = wz,
+            Spring.AiIntentDict(teamID, intent.topic.AI_SQUAD_PARAMS, dm_handle.selectedWave, {
+                [intent.param.SQUAD_POS_X] = wx,
+                [intent.param.SQUAD_POS_Z] = wz,
             })
         end
     end
@@ -289,20 +260,20 @@ end
 
 function widget:SendIntent(command)
     if command == "order_66" then
-        Spring.AiIntentFloat(teamID, AI_EXEC_ORDER_66);
+        Spring.AiIntentFloat(teamID, intent.topic.AI_EXEC_ORDER_66);
     end
 end
 
 function CreateSquad(squadID, pos, range, composition)
 --     tracy.ZoneBeginN("AI_REQUEST_SQUAD")
-    Spring.AiIntentDict(teamID, AI_REQUEST_SQUAD, squadID, {
-        [SQUAD_POS_X] = pos[1],
-        [SQUAD_POS_Z] = pos[2],
-        [SQUAD_GATHER_RANGE] = range,
-        [SQUAD_ATTACK_RANGE] = 1024,
-        [SQUAD_IS_REPEAT] = true,
+    Spring.AiIntentDict(teamID, intent.topic.AI_REQUEST_SQUAD, squadID, {
+        [intent.param.SQUAD_POS_X] = pos[1],
+        [intent.param.SQUAD_POS_Z] = pos[2],
+        [intent.param.SQUAD_GATHER_RANGE] = range,
+        [intent.param.SQUAD_ATTACK_RANGE] = 512,
+        [intent.param.SQUAD_IS_REPEAT] = true,
     })
-    Spring.AiIntentUnitDefs(teamID, AI_REQ_COMPOSE, squadID, composition)
+    Spring.AiIntentUnitDefs(teamID, intent.topic.AI_REQ_COMPOSE, squadID, composition)
 --     tracy.ZoneEnd()
 end
 
@@ -340,68 +311,96 @@ function widget:SendSelectSquad3()
     dm_handle.selectedWave = squadID3
 end
 function widget:SendCancelReq1()
-    Spring.AiIntentFloat(teamID, AI_REQ_CANCEL, squadID1);
+    Spring.AiIntentFloat(teamID, intent.topic.AI_REQ_CANCEL, squadID1);
 end
 function widget:SendCancelReq2()
-    Spring.AiIntentFloat(teamID, AI_REQ_CANCEL, squadID2);
+    Spring.AiIntentFloat(teamID, intent.topic.AI_REQ_CANCEL, squadID2);
 end
 function widget:SendCancelReq3()
-    Spring.AiIntentFloat(teamID, AI_REQ_CANCEL, squadID3);
+    Spring.AiIntentFloat(teamID, intent.topic.AI_REQ_CANCEL, squadID3);
 end
 function widget:SendCancelSquad1()
-    Spring.AiIntentFloat(teamID, AI_SQUAD_DISBAND, squadID1);
+    Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_DISBAND, squadID1);
 end
 function widget:SendCancelSquad2()
-    Spring.AiIntentFloat(teamID, AI_SQUAD_DISBAND, squadID2);
+    Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_DISBAND, squadID2);
 end
 function widget:SendCancelSquad3()
-    Spring.AiIntentFloat(teamID, AI_SQUAD_DISBAND, squadID3);
+    Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_DISBAND, squadID3);
 end
 function widget:SendCompose1Squad2()
-    Spring.AiIntentUnitDefs(teamID, AI_REQ_COMPOSE, squadID2, {
+    Spring.AiIntentUnitDefs(teamID, intent.topic.AI_REQ_COMPOSE, squadID2, {
         ["corak"] = 10,
     });
 end
 function widget:SendCompose2Squad2()
-    Spring.AiIntentUnitDefs(teamID, AI_REQ_COMPOSE, squadID2, {
+    Spring.AiIntentUnitDefs(teamID, intent.topic.AI_REQ_COMPOSE, squadID2, {
         ["corgator"] = 10,
     });
 end
 function widget:SendCompose3Squad2()
-    Spring.AiIntentUnitDefs(teamID, AI_REQ_COMPOSE, squadID2, {
+    Spring.AiIntentUnitDefs(teamID, intent.topic.AI_REQ_COMPOSE, squadID2, {
         ["corstorm"] = 3,
         ["corthud"]  = 10,
     });
 end
 
+function widget:SendTaskDefend()
+    Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, squadID1, intent.task.TASK_DEFEND);
+end
+function widget:SendTaskScout()
+    Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, squadID1, intent.task.TASK_SCOUT);
+end
+function widget:SendTaskRaid()
+    Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, squadID1, intent.task.TASK_RAID);
+end
+function widget:SendTaskAttack()
+    Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, squadID1, intent.task.TASK_ATTACK);
+end
+function widget:SendTaskBomb()
+    Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, squadID1, intent.task.TASK_BOMB);
+end
+function widget:SendTaskArty()
+    Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, squadID1, intent.task.TASK_ARTY);
+end
+function widget:SendTaskAA()
+    Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, squadID1, intent.task.TASK_AA);
+end
+function widget:SendTaskSupport()
+    Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, squadID1, intent.task.TASK_SUPPORT);
+end
+function widget:SendTaskRetreat()
+    Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, squadID1, intent.task.TASK_RETREAT);
+end
+
 -- function widget:SendArmyAAIntent()
 --     -- FIXME: According corlab's array in factory.json
---     Spring.AiIntentArray(teamID, AI_UNIT_WEIGHTS, squadID1, {
+--     Spring.AiIntentArray(teamID, intent.topic.AI_UNIT_WEIGHTS, squadID1, {
 --         0, 0, 0, 0, 0, 1
 --     })
 -- end
 -- function widget:SendArmySquadIntent()
 --     -- FIXME: According corlab's array in factory.json
---     Spring.AiIntentArray(teamID, AI_UNIT_WEIGHTS, squadID1, {
+--     Spring.AiIntentArray(teamID, intent.topic.AI_UNIT_WEIGHTS, squadID1, {
 --         0, 0, 0, 0.5, 0.5, 0
 --     })
 -- end
 -- function widget:SendArmyRaidIntent()
 --     -- FIXME: According corlab's array in factory.json
---     Spring.AiIntentArray(teamID, AI_UNIT_WEIGHTS, squadID1, {
+--     Spring.AiIntentArray(teamID, intent.topic.AI_UNIT_WEIGHTS, squadID1, {
 --         0, 1, 0, 0, 0, 0
 --     })
 -- end
 function widget:SendDeactivateFactoryIntent()
     local units = Spring.GetSelectedUnits()
     if #units > 0 then
-        Spring.AiIntentArray(teamID, AI_FACTORY_ENABLE, 0, units)
+        Spring.AiIntentArray(teamID, intent.topic.AI_FACTORY_ENABLE, 0, units)
     end
 end
 function widget:SendActivateFactoryIntent()
     local units = Spring.GetSelectedUnits()
     if #units > 0 then
-        Spring.AiIntentArray(teamID, AI_FACTORY_ENABLE, 1, units)
+        Spring.AiIntentArray(teamID, intent.topic.AI_FACTORY_ENABLE, 1, units)
     end
 end
 function widget:SendDisableUnitsIntent()
@@ -417,7 +416,7 @@ function widget:SendDisableUnitsIntent()
 --         nameToDefID["corstorm"].."=1:"..
 --         nameToDefID["corck"]   .."=0:"..
 --         nameToDefID["cornecro"].."=0")
-    Spring.AiIntentUnitDefs(teamID, AI_ENABLED_UNITS, -1, {
+    Spring.AiIntentUnitDefs(teamID, intent.topic.AI_ENABLED_UNITS, -1, {
         ["corstorm"] = 1,
         ["corck"]    = 0,
         ["cornecro"] = 0,
@@ -426,7 +425,7 @@ function widget:SendDisableUnitsIntent()
 end
 function widget:ToggleScriptedRectruit()
     isRecruitScripted = not isRecruitScripted
-    Spring.AiIntentFloat(teamID, AI_RECRUIT_SCRIPT, isRecruitScripted and 1 or 0);
+    Spring.AiIntentFloat(teamID, intent.topic.AI_RECRUIT_SCRIPT, isRecruitScripted and 1 or 0);
 end
 
 
@@ -465,7 +464,7 @@ end
 
 function widget:GameStart()
     isRecruitScripted = true
-    Spring.AiIntentFloat(teamID, AI_RECRUIT_SCRIPT, isRecruitScripted and 1 or 0);
+    Spring.AiIntentFloat(teamID, intent.topic.AI_RECRUIT_SCRIPT, isRecruitScripted and 1 or 0);
 end
 
 function widget:RecvLuaMsg(message, playerID)

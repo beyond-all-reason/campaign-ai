@@ -40,6 +40,10 @@ class Manager {
 			Squad::mgr.DestroyRequest(intent.objId);
 		} break;
 
+		case AI_SQUAD_TASK: {
+			Squad::mgr.SetSquadTask(intent);
+		} break;
+
 		case AI_REQ_PARAMS: {  // SArrayFloatIntent
 			Squad::mgr.SetRequestParams(intent);
 		} break;

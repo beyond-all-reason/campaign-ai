@@ -922,6 +922,7 @@ void CInitScript::RegisterIUnitTask(asIScriptEngine* engine, const char* cls)
 	r = engine->RegisterObjectMethod(cls, "int GetUnitCount() const", asMETHOD(T, GetUnitCount), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod(cls, "void Abort()", asMETHOD(T, Abort), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod(cls, "void Done()", asMETHOD(T, Done), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod(cls, "bool ReplaceBy(IUnitTask@+)", asMETHOD(T, ReplaceBy), asCALL_THISCALL); ASSERT(r >= 0);
 }
 
 template <class T>
@@ -942,7 +943,10 @@ void CInitScript::RegisterIFighterTask(asIScriptEngine* engine, const char* cls)
 {
 	RegisterIUnitTask<T>(engine, cls);
 	RegisterCast<IUnitTask, T>(engine, "IUnitTask", cls);
-	int r = engine->RegisterObjectMethod(cls, "Type GetFightType() const", asMETHODPR(T, GetFightType, () const, IFighterTask::FightType), asCALL_THISCALL); ASSERT(r >= 0);
+	int r;
+	r = engine->RegisterObjectMethod(cls, "Type GetFightType() const", asMETHODPR(T, GetFightType, () const, IFighterTask::FightType), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty(cls, "bool isScripted", asOFFSET(T, isScripted)); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod(cls, "void SetPosition(const AIFloat3& in)", asMETHOD(T, SetPosition), asCALL_THISCALL); ASSERT(r >= 0);
 }
 
 template <class T>
@@ -950,7 +954,7 @@ void CInitScript::RegisterISquadTask(asIScriptEngine* engine, const char* cls)
 {
 	RegisterIFighterTask<T>(engine, cls);
 	RegisterCast<IFighterTask, T>(engine, "IFighterTask", cls);
-	int r = engine->RegisterObjectProperty(cls, "bool isScripted", asOFFSET(T, isScripted)); ASSERT(r >= 0);
+//	int r;
 }
 
 void CInitScript::RegisterCRecruitTask(asIScriptEngine* engine)
@@ -965,7 +969,6 @@ void CInitScript::RegisterCDefendTask(asIScriptEngine* engine)
 	RegisterISquadTask<CDefendTask>(engine, "CDefendTask");
 	RegisterCast<ISquadTask, CDefendTask>(engine, "ISquadTask", "CDefendTask");
 	int r;
-	r = engine->RegisterObjectMethod("CDefendTask", "void SetPosition(const AIFloat3& in)", asMETHOD(CDefendTask, SetPosition), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CDefendTask", "float range", asOFFSET(CDefendTask, range)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CDefendTask", "bool isRetreat", asOFFSET(CDefendTask, isRetreat)); ASSERT(r >= 0);
 }
