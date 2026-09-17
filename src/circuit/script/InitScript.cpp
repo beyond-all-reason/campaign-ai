@@ -946,6 +946,8 @@ void CInitScript::RegisterIFighterTask(asIScriptEngine* engine, const char* cls)
 	int r;
 	r = engine->RegisterObjectMethod(cls, "Type GetFightType() const", asMETHODPR(T, GetFightType, () const, IFighterTask::FightType), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty(cls, "bool isScripted", asOFFSET(T, isScripted)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty(cls, "bool isMergeAllowed", asOFFSET(T, isMergeAllowed)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty(cls, "bool isRegroupAllowed", asOFFSET(T, isRegroupAllowed)); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod(cls, "void SetPosition(const AIFloat3& in)", asMETHOD(T, SetPosition), asCALL_THISCALL); ASSERT(r >= 0);
 }
 

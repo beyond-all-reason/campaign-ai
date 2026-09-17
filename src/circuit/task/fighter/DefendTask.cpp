@@ -41,6 +41,7 @@ CDefendTask::CDefendTask(ITaskModule* mgr, const AIFloat3& position,
 		, targetPos(position)
 {
 	this->position = position;
+	isRegroupAllowed = false;
 }
 
 CDefendTask::~CDefendTask()
@@ -132,8 +133,22 @@ void CDefendTask::Update()
 	}
 
 	/*
-	 * No regroup
+	 * Regroup if required
 	 */
+	bool wasRegroup = (State::REGROUP == state);
+	bool mustRegroup = IsMustRegroup();
+	if (State::REGROUP == state) {
+		if (mustRegroup) {
+			CCircuitAI* circuit = manager->GetCircuit();
+			int frame = circuit->GetLastFrame() + FRAMES_PER_SEC * 60;
+			for (CCircuitUnit* unit : units) {
+				unit->GetTravelAct()->StateWait();
+				unit->Gather(groupPos, frame);
+			}
+		}
+		return;
+	}
+
 	CCircuitAI* circuit = manager->GetCircuit();
 	const int frame = circuit->GetLastFrame();
 	bool isExecute = (updCount % 16 == 2);
@@ -142,6 +157,9 @@ void CDefendTask::Update()
 			isExecute |= unit->IsForceUpdate(frame);
 		}
 		if (!isExecute) {
+			if (wasRegroup && !pPath->posPath.empty()) {
+				ActivePath(lowestSpeed);
+			}
 			return;
 		}
 	} else {

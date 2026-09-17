@@ -54,7 +54,6 @@ protected:
 
 	FightType fightType;
 	springai::AIFloat3 position;  // attack/scout position
-	bool isScripted = false;  // Script API
 
 	float attackPower;
 	float powerMod;
@@ -66,6 +65,10 @@ protected:
 	static F3Vec enemyPositions;  // NOTE: micro-opt
 
 	int attackFrame;
+
+	bool isScripted = false;  // Script API
+	bool isMergeAllowed = true;  // Script API
+	bool isRegroupAllowed = true;  // Script API
 
 private:  // NOTE: Never assign directly, use SetTarget() to avoid access to a dead target
 	CEnemyInfo* target;

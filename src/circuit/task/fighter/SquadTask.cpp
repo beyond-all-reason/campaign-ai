@@ -222,7 +222,7 @@ ISquadTask* ISquadTask::CheckMergeTask()
 
 ISquadTask* ISquadTask::GetMergeTask()
 {
-	if (!isScripted && (updCount % 32 == 1)) {
+	if (isMergeAllowed && (updCount % 32 == 1)) {
 		return IsMergeSafe() ? CheckMergeTask() : nullptr;
 	}
 	return nullptr;
@@ -230,7 +230,7 @@ ISquadTask* ISquadTask::GetMergeTask()
 
 bool ISquadTask::IsMustRegroup()
 {
-	if ((State::ENGAGE == state) || (updCount % 16 != 15)) {
+	if (!isRegroupAllowed || (State::ENGAGE == state) || (updCount % 16 != 15)) {
 		return false;
 	}
 
@@ -275,15 +275,14 @@ bool ISquadTask::IsMustRegroup()
 		groupFrame = frame;
 	} else if (frame >= groupFrame + FRAMES_PER_SEC * 60) {
 		// eliminate buggy units
-		const float sqMaxDist = SQUARE(std::max<float>(SQUARE_SIZE * 8 * validUnits.size(), highestRange));
+		const float sqMaxDist = SQUARE(std::max<float>(SQUARE_SIZE * 4 * validUnits.size(), highestRange));
 		for (CCircuitUnit* unit : units) {
 			if (unit->GetCircuitDef()->IsPlane()) {
 				continue;
 			}
 			const AIFloat3& pos = unit->GetLastPos();
-			const float sqDist = groupPos.SqDistance2D(pos);
-			if ((sqDist > sqMaxDist) &&
-				((unit->GetTaskFrame() < groupFrame) || !terrainMgr->CanMoveToPos(unit->GetArea(), pos)))
+			if (!geom::is_in_sqrange(groupPos, pos, sqMaxDist)
+				&& ((unit->GetTaskFrame() < groupFrame) || !terrainMgr->CanMoveToPos(unit->GetArea(), pos)))
 			{
 				TRY_UNIT(circuit, unit,
 					unit->CmdStop();
@@ -308,11 +307,13 @@ bool ISquadTask::IsMustRegroup()
 	bool wasRegroup = (State::REGROUP == state);
 	state = State::ROAM;
 
-//	const float sqMaxDist = SQUARE(std::max<float>(SQUARE_SIZE * 8 * validUnits.size(), highestRange));
-	const float sqMaxDist = SQUARE(300.f);
+	float maxDist = std::max<float>(SQUARE_SIZE * 4 * validUnits.size(), highestRange);
+	if (wasRegroup) {
+		maxDist *= 0.5f;  // hysteresis
+	}
+	const float sqMaxDist = SQUARE(maxDist);
 	for (CCircuitUnit* unit : validUnits) {
-		const float sqDist = groupPos.SqDistance2D(unit->GetLastPos());
-		if (sqDist > sqMaxDist) {
+		if (!geom::is_in_sqrange(groupPos, unit->GetLastPos(), sqMaxDist)) {
 			state = State::REGROUP;
 			break;
 		}

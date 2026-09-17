@@ -1205,7 +1205,7 @@ int CCircuitAI::UnitDamaged(CCircuitUnit* unit, ICoreUnit::Id attackerId, int we
 	CEnemyInfo* attacker = GetEnemyInfo(attackerId);
 
 	if (IsValidWeaponDefId(weaponId)) {
-		if (attacker != nullptr) {
+		if ((attacker != nullptr) && (attacker->GetCircuitDef() != nullptr)) {
 			CheckDecoy(attacker, weaponId);
 		} else if ((dir != ZeroVector) && (GetFriendlyUnit(attackerId) == nullptr)) {
 			CreateFakeEnemy(weaponId, unit->GetPos(lastFrame), dir);  // currently only for threatmap

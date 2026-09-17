@@ -62,13 +62,15 @@ class Squad {
 
 		IFighterTask@ fighterTask = cast<IFighterTask>(task);
 		fighterTask.isScripted = true;
+		fighterTask.isMergeAllowed = false;
+		fighterTask.isRegroupAllowed = true;
 		fighterTask.SetPosition(req.pos);
 	}
 
 	void SetTask(int type) {
 		switch (type) {
 		case ESquadTasks::TASK_DEFEND: {
-			ChangeTask(TaskF::Defend(Task::FightType::ATTACK, req.power));
+			ChangeTask(TaskF::Defend(Task::FightType::ATTACK, MAX_POWER));
 			CDefendTask@ defendTask = cast<CDefendTask>(task);
 			defendTask.range = req.attackRange;
 			defendTask.isRetreat = false;
@@ -129,7 +131,19 @@ class Request {
 	void ClearForCompose(map<Id, Request@>& buildTaskToReq) {
 		ClearForRepeat(buildTaskToReq);
 		unitDefs.clear();
-		power = 0.f;
+// 		power = 0.f;
+	}
+
+	IUnitTask@ InitialTask() {
+		IUnitTask@ task = aiMilitaryMgr.Enqueue(TaskF::Defend(Task::FightType::ATTACK, MAX_POWER));  // NOTE: ignore power
+		CDefendTask@ defendTask = cast<CDefendTask>(task);
+		defendTask.isScripted = true;
+		defendTask.isMergeAllowed = false;
+		defendTask.isRegroupAllowed = false;
+		defendTask.SetPosition(this.pos);
+		defendTask.range = this.attackRange;
+		defendTask.isRetreat = false;
+		return task;
 	}
 
 	Id squadId;
@@ -141,7 +155,7 @@ class Request {
 	AIFloat3 pos;
 	float gatherRange = 64.f;
 	float attackRange = 300.f;
-	float power = 0.f;  // FIXME: power or unit number?
+// 	float power = 0.f;  // FIXME: power or unit number?
 	int unitNum = 0;
 
 	bool isRepeat = false;  // re-create on squad killed
@@ -215,6 +229,7 @@ class Manager {
 
 		Request@ req = squad.req;
 		req.ClearForCompose(buildTaskToReq);
+		DestroySquad(squad);
 		for (uint i = 0; i < intent.size; ++i) {
 			CCircuitDef@ cdef = ai.GetCircuitDef(intent.GetKey(i));
 			if (cdef is null)
@@ -222,7 +237,7 @@ class Manager {
 			float num = intent.GetValue(i);
 			int inum = int(num);
 			req.unitDefs.insert(cdef.id, Amount(inum));
-			req.power += cdef.power * num;
+// 			req.power += cdef.power * num;
 
 			PlaceOrder(req, cdef, inum);
 		}
@@ -257,16 +272,13 @@ class Manager {
 
 		Squad@ squad = squads[req.squadId];
 		if (squad.task is null) {
-			@squad.task = aiMilitaryMgr.Enqueue(TaskF::Defend(Task::FightType::ATTACK, req.power));  // FIXME: power or unit number?
-			CDefendTask@ defendTask = cast<CDefendTask>(squad.task);
-			defendTask.isScripted = true;
-			defendTask.SetPosition(req.pos);
-			defendTask.range = req.attackRange;
-			defendTask.isRetreat = false;
-			@taskToSquad[defendTask.id] = squad;
+			@squad.task = req.InitialTask();
+			@taskToSquad[squad.task.id] = squad;
 		}
 
 		if (req.unitNum == squad.task.GetUnitCount() + 1) {
+			IFighterTask@ fighterTask = cast<IFighterTask>(squad.task);
+			fighterTask.isRegroupAllowed = true;
 			ai.CallRules(SIG_SQUAD_FINISHED + req.squadId);
 		}
 
@@ -308,8 +320,8 @@ class Manager {
 		Request@ req = squad.req;
 		if (squad.task !is null) {
 			taskToSquad.erase(squad.task.id);
-			IUnitTask@ newTask = aiMilitaryMgr.Enqueue(TaskF::Defend(Task::FightType::ATTACK, req.power));
-			squad.task.ReplaceBy(newTask);
+// 			IUnitTask@ newTask = aiMilitaryMgr.Enqueue(TaskF::Defend(Task::FightType::ATTACK, MAX_POWER));
+// 			squad.task.ReplaceBy(newTask);
 			squad.task.Abort();
 			@squad.task = null;
 		}
