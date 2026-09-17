@@ -24,6 +24,9 @@ enum ESquadTasks {
 string SIG_SQUAD_FINISHED ("ai_squad_finished:" );
 string SIG_SQUAD_DESTROYED("ai_squad_destroyed:");
 
+const int TASK_NO_TAG = 0;
+const int TASK_SQUAD_TAG = 42;
+
 
 class Squad {
 	Squad(Request@ p_req) {
@@ -56,6 +59,7 @@ class Squad {
 
 	private void ChangeTask(SFightTask& in data) {
 		IUnitTask@ newTask = aiMilitaryMgr.Enqueue(data);
+		task.tag = TASK_SQUAD_TAG;
 		task.ReplaceBy(newTask);
 		task.Abort();
 		@task = newTask;
@@ -98,6 +102,7 @@ class Squad {
 		} break;
 		case ESquadTasks::TASK_RETREAT: {
 			IUnitTask@ newTask = aiMilitaryMgr.EnqueueRetreat();
+			task.tag = TASK_SQUAD_TAG;
 			task.ReplaceBy(newTask);
 			task.Abort();
 			@task = newTask;
@@ -136,13 +141,14 @@ class Request {
 
 	IUnitTask@ InitialTask() {
 		IUnitTask@ task = aiMilitaryMgr.Enqueue(TaskF::Defend(Task::FightType::ATTACK, MAX_POWER));  // NOTE: ignore power
+		task.tag = TASK_SQUAD_TAG;
 		CDefendTask@ defendTask = cast<CDefendTask>(task);
 		defendTask.isScripted = true;
 		defendTask.isMergeAllowed = false;
 		defendTask.isRegroupAllowed = false;
 		defendTask.SetPosition(this.pos);
 		defendTask.range = this.attackRange;
-		defendTask.isRetreat = false;
+// 		defendTask.isRetreat = false;
 		return task;
 	}
 
@@ -207,11 +213,23 @@ class Manager {
 		return true;
 	}
 
-	private void PlaceOrder(Request@ req, CCircuitDef@ cdef, int inum) {
-		req.unitNum += inum;
+	// Check for existing units. Place build-order if not enough found.
+	private void PlaceOrder(Squad@ squad, CCircuitDef@ cdef, Amount@ am) {
+		Request@ req = squad.req;
+		req.unitNum += am.amount;
+
 		Task::Priority priority = Task::Priority::NORMAL;
 		Task::RecruitType recruit = Task::RecruitType::FIREPOWER;
-		for (int j = 0; j < inum; ++j) {
+		for (int j = 0; j < am.amount; ++j) {
+			CCircuitUnit@ freeUnit = ai.GetUnitInRange(req.pos, req.gatherRange,
+					cdef.id, Task::Type::FIGHTER, TASK_NO_TAG);
+			if (freeUnit !is null) {
+				UpdateSquadTask(squad);
+				aiMilitaryMgr.AssignTask(freeUnit, squad.task);
+				am.assignedCount++;
+				continue;
+			}
+
 			IUnitTask@ task = aiFactoryMgr.Enqueue(TaskS::Recruit(recruit, priority, cdef, req.pos, req.gatherRange));
 			cast<CRecruitTask>(task).isSingleBuilder = true;
 			@buildTaskToReq[task.id] = req;
@@ -221,7 +239,7 @@ class Manager {
 
 	// Invoked by Intent::Manager::HandleIntent
 	bool ComposeRequest(const SIntent& in intent) {
-		// intent has {unitDefIs: amount} dictionary
+		// intent has {unitDefId: amount} dictionary
 		bool success;
 		Squad@ squad = squads.find(intent.objId, success);
 		if (!success)
@@ -236,10 +254,14 @@ class Manager {
 				continue;
 			float num = intent.GetValue(i);
 			int inum = int(num);
-			req.unitDefs.insert(cdef.id, Amount(inum));
+			Amount@ am = Amount(inum);
+			req.unitDefs.insert(cdef.id, am);
 // 			req.power += cdef.power * num;
 
-			PlaceOrder(req, cdef, inum);
+			PlaceOrder(squad, cdef, am);
+		}
+		if (squad.task !is null) {
+			CheckSquadFinished(squad);
 		}
 		return true;
 	}
@@ -264,23 +286,30 @@ class Manager {
 		return null;
 	}
 
+	private void UpdateSquadTask(Squad@ squad) {
+		if (squad.task is null) {
+			@squad.task = squad.req.InitialTask();
+			@taskToSquad[squad.task.id] = squad;
+		}
+	}
+
+	private void CheckSquadFinished(Squad@ squad) {
+		if (squad.req.unitNum == squad.task.GetUnitCount() + 1) {
+			IFighterTask@ fighterTask = cast<IFighterTask>(squad.task);
+			fighterTask.isRegroupAllowed = true;
+			ai.CallRules(SIG_SQUAD_FINISHED + squad.req.squadId);
+		}
+	}
+
 	// Invoked by Military::AiMakeTask
-	IUnitTask@ AssignToSquad(CCircuitUnit@ unit) {
+	IUnitTask@ AssignToRequest(CCircuitUnit@ unit) {
 		Request@ req = GetRequestToAssign(unit);
 		if (req is null)
 			return null;
 
 		Squad@ squad = squads[req.squadId];
-		if (squad.task is null) {
-			@squad.task = req.InitialTask();
-			@taskToSquad[squad.task.id] = squad;
-		}
-
-		if (req.unitNum == squad.task.GetUnitCount() + 1) {
-			IFighterTask@ fighterTask = cast<IFighterTask>(squad.task);
-			fighterTask.isRegroupAllowed = true;
-			ai.CallRules(SIG_SQUAD_FINISHED + req.squadId);
-		}
+		UpdateSquadTask(squad);
+		CheckSquadFinished(squad);
 
 		return squad.task;
 	}
@@ -332,7 +361,7 @@ class Manager {
 			am.assignedCount = 0;
 
 			CCircuitDef@ cdef = ai.GetCircuitDef(it.current_key());
-			PlaceOrder(req, cdef, am.amount);
+			PlaceOrder(squad, cdef, am);
 		}
 		requests.insertLast(req);
 	}

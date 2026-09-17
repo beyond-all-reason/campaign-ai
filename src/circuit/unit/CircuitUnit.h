@@ -241,6 +241,9 @@ private:
 
 	CCircuitDef::AttrM attr;
 
+public:
+	int tag = 0;  // Script API
+
 #ifdef DEBUG_VIS
 public:
 	void Log();

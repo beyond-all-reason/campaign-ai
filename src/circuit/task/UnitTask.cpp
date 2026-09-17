@@ -179,14 +179,15 @@ bool IUnitTask::IsQueryReady(CCircuitUnit* unit) const
 	utils::binary_##func(stream, lastTouched);	\
 	utils::binary_##func(stream, timeout);		\
 	utils::binary_##func(stream, updCount);		\
-	utils::binary_##func(stream, isDead);
+	utils::binary_##func(stream, isDead);		\
+	utils::binary_##func(stream, tag);
 
 bool IUnitTask::Load(std::istream& is)
 {
 	SERIALIZE(is, read)
 #ifdef DEBUG_SAVELOAD
-	manager->GetCircuit()->LOG("%s | priority=%i | state=%i | lastTouched=%i | timeout=%i | updCount=%i | isDead=%i",
-			__PRETTY_FUNCTION__, priority, state, lastTouched, timeout, updCount, isDead);
+	manager->GetCircuit()->LOG("%s | id=%i | priority=%i | state=%i | lastTouched=%i | timeout=%i | updCount=%i | isDead=%i | tag=%i",
+			__PRETTY_FUNCTION__, id, priority, state, lastTouched, timeout, updCount, isDead, tag);
 #endif
 	return true;
 }
@@ -195,8 +196,8 @@ void IUnitTask::Save(std::ostream& os) const
 {
 	SERIALIZE(os, write)
 #ifdef DEBUG_SAVELOAD
-	manager->GetCircuit()->LOG("%s | priority=%i | state=%i | lastTouched=%i | timeout=%i | updCount=%i | isDead=%i",
-			__PRETTY_FUNCTION__, priority, state, lastTouched, timeout, updCount, isDead);
+	manager->GetCircuit()->LOG("%s | id=%i | priority=%i | state=%i | lastTouched=%i | timeout=%i | updCount=%i | isDead=%i | tag=%i",
+			__PRETTY_FUNCTION__, id, priority, state, lastTouched, timeout, updCount, isDead, tag);
 #endif
 }
 
@@ -204,7 +205,7 @@ void IUnitTask::Save(std::ostream& os) const
 void IUnitTask::Log()
 {
 	CCircuitAI* circuit = manager->GetCircuit();
-	circuit->LOG("task: %lx | type: %i | state: %i", this, type, state);
+	circuit->LOG("task: %p | id: %i | type: %i | state: %i | tag: %i", this, id, type, state, tag);
 }
 #endif
 

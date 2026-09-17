@@ -111,6 +111,9 @@ protected:
 	unsigned int updCount;
 	bool isDead;
 
+public:
+	int tag = 0;  // Script API
+
 #ifdef DEBUG_VIS
 public:
 	virtual void Log();

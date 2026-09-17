@@ -247,6 +247,25 @@ static void CCircuitAI_GiveUnits(CCircuitAI* circuit, const CScriptArray* array,
 	circuit->GiveUnits(std::move(units), newTeamId);
 }
 
+static CCircuitUnit* CCircuitAI_GetUnitInRange(CCircuitAI* circuit,
+		const AIFloat3& pos, float range, CCircuitDef::Id defId, IUnitTask::Type type, int tag)
+{
+	// FIXME: Spatial query
+	const int frame = circuit->GetLastFrame();
+	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
+	for (auto& kv : circuit->GetTeamUnits()) {
+		CCircuitUnit* unit = kv.second;
+		if ((unit->GetCircuitDef()->GetId() == defId) && (unit->GetTask()->tag == tag)
+			&& (unit->GetTask()->GetType() == type)
+			&& geom::is_in_range(pos, unit->GetPos(frame), range)
+			&& terrainMgr->CanMoveToPos(unit->GetArea(), pos))
+		{
+			return unit;
+		}
+	}
+	return nullptr;
+}
+
 static std::string CCircuitAI_CallRules(CCircuitAI* circuit, const std::string& data)
 {
 	return circuit->GetLua()->CallRules(data.c_str(), data.size());
@@ -699,6 +718,7 @@ void CInitScript::RegisterCore()
 	r = engine->RegisterObjectMethod("CCircuitAI", "void GiveUnits(const array<CCircuitUnit@>@+, int)", asFUNCTION(CCircuitAI_GiveUnits), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CCircuitAI", "bool UnitControl(CCircuitUnit@, bool)", asMETHODPR(CCircuitAI, UnitControl, (CCircuitUnit*, bool), bool), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CCircuitAI", "bool UnitControl(Id, bool)", asMETHODPR(CCircuitAI, UnitControl, (ICoreUnit::Id, bool), bool), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CCircuitAI", "CCircuitUnit@ GetUnitInRange(const AIFloat3& in, float, Id, Type, int)", asFUNCTION(CCircuitAI_GetUnitInRange), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
 	// Lua<-->AI communications [in Spring 0.83+]
 	r = engine->RegisterObjectMethod("CCircuitAI", "string CallRules(const string& in)", asFUNCTION(CCircuitAI_CallRules), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CCircuitAI", "string CallUI(const string& in)", asFUNCTION(CCircuitAI_CallUI), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
@@ -776,6 +796,7 @@ void CInitScript::RegisterCore()
 	r = engine->RegisterObjectMethod("CCircuitUnit", "void SetMoveState(int)", asMETHOD(CCircuitUnit, TrySetMoveState), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CCircuitUnit", "void SelfDestruct(bool)", asMETHOD(CCircuitUnit, CmdSelfD), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CCircuitUnit", "IUnitTask@ const task", asOFFSET(CCircuitUnit, task)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("CCircuitUnit", "int tag", asOFFSET(CCircuitUnit, tag)); ASSERT(r >= 0);
 	// RulesParams accessor on Unit
 	r = engine->RegisterObjectMethod("CCircuitUnit", "float GetRulesParam(const string& in, float) const", asFUNCTION(CCircuitUnit_GetRulesParamFloat), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CCircuitUnit", "string GetRulesParam(const string& in, const string& in) const", asFUNCTION(CCircuitUnit_GetRulesParamString), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
@@ -923,6 +944,7 @@ void CInitScript::RegisterIUnitTask(asIScriptEngine* engine, const char* cls)
 	r = engine->RegisterObjectMethod(cls, "void Abort()", asMETHOD(T, Abort), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod(cls, "void Done()", asMETHOD(T, Done), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod(cls, "bool ReplaceBy(IUnitTask@+)", asMETHOD(T, ReplaceBy), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty(cls, "int tag", asOFFSET(T, tag)); ASSERT(r >= 0);
 }
 
 template <class T>
