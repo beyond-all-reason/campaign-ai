@@ -120,6 +120,11 @@ private:
 
 	mutable spring::mutex mtx;
 	std::map<asIScriptContext*, CScriptDictionary*> takenContexts;
+
+#ifdef DEBUG_LOG
+public:
+	void DumpASPredefined();
+#endif
 };
 
 } // namespace circuit

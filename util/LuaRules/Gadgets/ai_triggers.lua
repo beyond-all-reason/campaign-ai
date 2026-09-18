@@ -16,7 +16,7 @@ end
 if gadgetHandler:IsSyncedCode() then
 
 function gadget:RecvSkirmishAIMessage(teamID, dataStr)
-	Spring.Echo("gadget | teamID: " .. teamID .. " | dataStr: " .. dataStr)
+-- 	Spring.Echo("gadget | teamID: " .. teamID .. " | dataStr: " .. dataStr)
 	local prefix = "ai_"
 
 	if dataStr:sub(1, #prefix) ~= prefix then
@@ -32,17 +32,20 @@ else  -- not gadgetHandler:IsSyncedCode()
 
 local intent = VFS.Include("luarules/utilities/ai_lib/intent.lua")
 
-local actions = {
+local triggers = {
 	["ai_squad_finished"] = function(teamID, dataStr)
 		-- "ai_squad_finished:<squadID>"
 		local squadID = tonumber(dataStr)
 		Spring.Echo("Squad Finished: " .. squadID)
-		Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, squadID, intent.task.TASK_ATTACK)
+
+-- 		Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, squadID, intent.task.TASK_ATTACK)
+
 		Spring.AiIntentDict(teamID, intent.topic.AI_SQUAD_PARAMS, squadID, {
 			[intent.param.SQUAD_POS_X] = 881,
 			[intent.param.SQUAD_POS_Z] = 6507,
 		})
 	end,
+
 	["ai_squad_destroyed"] = function(teamID, dataStr)
 		-- "ai_squad_destroyed:<squadID>"
 		local squadID = tonumber(dataStr)
@@ -52,8 +55,8 @@ local actions = {
 
 local function HandleAiCall(cmd, teamID, dataStr)
 	local actName = dataStr:match("^([^:]*)")
-	if actions[actName] then
-		actions[actName](teamID, dataStr:sub(#actName + 2))
+	if triggers[actName] then
+		triggers[actName](teamID, dataStr:sub(#actName + 2))
 	end
 end
 

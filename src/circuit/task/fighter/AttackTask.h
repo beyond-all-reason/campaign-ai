@@ -28,6 +28,7 @@ public:
 
 private:
 	void FindTarget();
+	void FindTargetScripted();
 	void ApplyTargetPath(const CQueryPathSingle* query);
 	void FallbackFrontPos();
 	void ApplyFrontPos(const CQueryPathMulti* query);

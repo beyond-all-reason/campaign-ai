@@ -170,16 +170,19 @@ void CAttackTask::Update()
 	}
 
 	const AIFloat3& startPos = leader->GetPos(frame);
-//	if (circuit->GetInflMap()->GetInfluenceAt(startPos) < -INFL_EPS) {
-//		SetTarget(nullptr);  // FIXME: back-forths group
-//	} else {
+	if (isScripted) {
+		FindTargetScripted();
+		if (GetTarget() == nullptr) {
+			FindTarget();
+		}
+	} else {
 		FindTarget();
-//	}
+	}
 
 	state = State::ROAM;
 	if (GetTarget() != nullptr) {
 		const float slack = (circuit->GetInflMap()->GetAllyDefendInflAt(position) > INFL_EPS) ? 300.f : 100.f;
-		if (position.SqDistance2D(startPos) < SQUARE(highestRange + slack)) {
+		if (geom::is_in_range(position, startPos, highestRange + slack)) {
 			int xs, ys, xe, ye;
 			circuit->GetPathfinder()->Pos2PathXY(startPos, &xs, &ys);
 			circuit->GetPathfinder()->Pos2PathXY(position, &xe, &ye);
@@ -225,7 +228,7 @@ void CAttackTask::OnUnitIdle(CCircuitUnit* unit)
 
 	CCircuitAI* circuit = manager->GetCircuit();
 	const float maxDist = std::max<float>(lowestRange, circuit->GetPathfinder()->GetSquareSize());
-	if (position.SqDistance2D(leader->GetPos(circuit->GetLastFrame())) < SQUARE(maxDist)) {
+	if (geom::is_in_range(position, leader->GetPos(circuit->GetLastFrame()), maxDist)) {
 		CTerrainManager* terrainMgr = circuit->GetTerrainManager();
 		position = terrainMgr->GetRandomMovePosition(leader);
 	}
@@ -322,6 +325,84 @@ void CAttackTask::FindTarget()
 				bestTarget = enemy;
 				hasGoodTarget |= !isOverpowered;
 			}
+		}
+	}
+
+	if (bestTarget != nullptr) {
+		SetTarget(bestTarget);
+		position = GetTarget()->GetPos();
+	}
+	// Return: target, startPos=leader->pos, endPos=position
+}
+
+void CAttackTask::FindTargetScripted()
+{
+	CCircuitAI* circuit = manager->GetCircuit();
+	CMap* map = circuit->GetMap();
+	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
+	const AIFloat3& pos = leader->GetPos(circuit->GetLastFrame());
+	SArea* area = leader->GetArea();
+	CCircuitDef* cdef = leader->GetCircuitDef();
+	const float sqRange = SQUARE(range);
+	const float weaponRange = cdef->GetMaxRange() * 0.9f;
+	const int canTargetCat = cdef->GetTargetCategory();
+	const int noChaseCat = cdef->GetNoChaseCategory();
+
+	CEnemyInfo* bestTarget = nullptr;
+	float minSqDist = std::numeric_limits<float>::max();
+
+	SetTarget(nullptr);  // make adequate enemy->GetTasks().size()
+	circuit->GetThreatMap()->SetThreatType(leader);
+	const CCircuitAI::EnemyInfos& enemies = circuit->GetEnemyInfos();
+	for (auto& kv : enemies) {
+		CEnemyInfo* enemy = kv.second;
+		if (enemy->IsHidden()) {
+			continue;
+		}
+
+		const AIFloat3& ePos = enemy->GetPos();
+		if ((!geom::is_in_sqrange(ePos, targetPos, sqRange))
+			|| !terrainMgr->CanMoveToPos(area, ePos))
+		{
+			continue;
+		}
+
+		const float elevation = map->GetElevationAt(ePos.x, ePos.z);
+		const bool IsInWater = cdef->IsPredictInWater(elevation);
+		CCircuitDef* edef = enemy->GetCircuitDef();
+		if (edef != nullptr) {
+			if (((edef->GetCategory() & canTargetCat) == 0)
+				|| ((edef->GetCategory() & noChaseCat) != 0)
+				|| circuit->GetCircuitDef(edef->GetId())->IsIgnore()
+				|| (edef->IsAbleToFly() && !(IsInWater ? cdef->HasSubToAir() : cdef->HasSurfToAir())))  // notAA
+			{
+				continue;
+			}
+			float elevation = map->GetElevationAt(ePos.x, ePos.z);
+			if (edef->IsInWater(elevation, ePos.y)) {
+				if (!(IsInWater ? cdef->HasSubToWater() : cdef->HasSurfToWater())) {  // notAW
+					continue;
+				}
+			} else {
+				if (!(IsInWater ? cdef->HasSubToLand() : cdef->HasSurfToLand())) {  // notAL
+					continue;
+				}
+			}
+			if ((ePos.y - elevation > weaponRange)
+				/*|| enemy->IsBeingBuilt()*/)
+			{
+				continue;
+			}
+		} else {
+			if (!(IsInWater ? cdef->HasSubToWater() : cdef->HasSurfToWater()) && (ePos.y < -SQUARE_SIZE * 5)) {  // notAW
+				continue;
+			}
+		}
+
+		float sqDist = pos.SqDistance2D(ePos);
+		if (minSqDist > sqDist) {
+			minSqDist = sqDist;
+			bestTarget = enemy;
 		}
 	}
 

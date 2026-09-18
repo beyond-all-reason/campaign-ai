@@ -1,0 +1,1023 @@
+class string{
+	~string();
+	string();
+	string(const string&in);
+	string& opAssign(const string&in);
+	string& opAddAssign(const string&in);
+	bool opEquals(const string&in) const;
+	int opCmp(const string&in) const;
+	string opAdd(const string&in) const;
+	uint length() const;
+	void resize(uint);
+	bool isEmpty() const;
+	uint8& opIndex(uint);
+	const uint8& opIndex(uint) const;
+	string& opAssign(double);
+	string& opAddAssign(double);
+	string opAdd(double) const;
+	string opAdd_r(double) const;
+	string& opAssign(float);
+	string& opAddAssign(float);
+	string opAdd(float) const;
+	string opAdd_r(float) const;
+	string& opAssign(int64);
+	string& opAddAssign(int64);
+	string opAdd(int64) const;
+	string opAdd_r(int64) const;
+	string& opAssign(uint64);
+	string& opAddAssign(uint64);
+	string opAdd(uint64) const;
+	string opAdd_r(uint64) const;
+	string& opAssign(bool);
+	string& opAddAssign(bool);
+	string opAdd(bool) const;
+	string opAdd_r(bool) const;
+	string substr(uint start = 0, int count = -1) const;
+	int findFirst(const string&in, uint start = 0) const;
+	int findFirstOf(const string&in, uint start = 0) const;
+	int findFirstNotOf(const string&in, uint start = 0) const;
+	int findLast(const string&in, int start = -1) const;
+	int findLastOf(const string&in, int start = -1) const;
+	int findLastNotOf(const string&in, int start = -1) const;
+	void insert(uint pos, const string&in other);
+	void erase(uint pos, int count = -1);
+	int regexFind(const string&in regex, uint start = 0, uint&out lengthOfMatch = void) const;
+	string[]@ split(const string&in) const;
+	string toLower() const;
+	string toUpper() const;
+}
+class array<T>{
+	T& opIndex(uint index);
+	const T& opIndex(uint index) const;
+	uint opForBegin() const;
+	bool opForEnd(uint) const;
+	uint opForNext(uint) const;
+	const T& opForValue0(uint index) const;
+	uint opForValue1(uint index) const;
+	T[]& opAssign(const T[]&in);
+	void insertAt(uint index, const T&in value);
+	void insertAt(uint index, const T[]&inout arr);
+	void insertLast(const T&in value);
+	void removeAt(uint index);
+	void removeLast();
+	void removeRange(uint start, uint count);
+	uint length() const;
+	void reserve(uint length);
+	void resize(uint length);
+	void sortAsc();
+	void sortAsc(uint startAt, uint count);
+	void sortDesc();
+	void sortDesc(uint startAt, uint count);
+	void reverse();
+	int find(const T&in value) const;
+	int find(uint startAt, const T&in value) const;
+	int findByRef(const T&in value) const;
+	int findByRef(uint startAt, const T&in value) const;
+	bool opEquals(const T[]&in) const;
+	bool isEmpty() const;
+	void sort(T[]::less&in, uint startAt = 0, uint count = uint(-1));
+	funcdef bool less(const T&in, const T&in);
+}
+class dictionaryValue{
+	~dictionaryValue();
+	dictionaryValue();
+	dictionaryValue& opAssign(const dictionaryValue&in);
+	dictionaryValue& opHndlAssign(const ?&in);
+	dictionaryValue& opHndlAssign(const dictionaryValue&in);
+	dictionaryValue& opAssign(const ?&in);
+	dictionaryValue& opAssign(double);
+	dictionaryValue& opAssign(int64);
+	void opCast(?&out);
+	void opConv(?&out);
+	int64 opConv();
+	double opConv();
+}
+class dictionary{
+	dictionary& opAssign(const dictionary&in);
+	void set(const string&in, const ?&in);
+	bool get(const string&in, ?&out) const;
+	void set(const string&in, const int64&in);
+	bool get(const string&in, int64&out) const;
+	void set(const string&in, const double&in);
+	bool get(const string&in, double&out) const;
+	bool exists(const string&in) const;
+	bool isEmpty() const;
+	uint getSize() const;
+	bool delete(const string&in);
+	void deleteAll();
+	string[]@ getKeys() const;
+	dictionaryValue& opIndex(const string&in);
+	const dictionaryValue& opIndex(const string&in) const;
+	dictionaryIter@ opForBegin() const;
+	bool opForEnd(dictionaryIter@) const;
+	dictionaryIter@ opForNext(dictionaryIter@) const;
+	const dictionaryValue& opForValue0(dictionaryIter@) const;
+	const string& opForValue1(dictionaryIter@) const;
+}
+class dictionaryIter{
+}
+class aatc_funcpointer{
+	bool Set(string);
+	bool Set(string, ?&in);
+	void Call();
+	bool ready;
+	bool is_thiscall;
+	string funcname;
+}
+class vector<T>{
+	vector<T>& opAssign(vector<T>@);
+	void SetDirectcomp(bool);
+	void clear();
+	bool empty();
+	int size();
+	vector_iterator<T> begin();
+	vector_iterator<T> end();
+	vector<T>& swap(vector<T>&inout);
+	void reserve(int);
+	void push_back(const T&in);
+	void pop_back();
+	T& back();
+	T& front();
+	T& opIndex(int);
+	void sort(bool ascending);
+	void sort(const aatc_funcpointer&in, bool ascending);
+	void erase(const vector_iterator<T>&in);
+	void erase(int);
+	int erase(const vector_iterator<T>&in, const vector_iterator<T>&in);
+	void erase(int, int);
+	int erase_value(const T&in, bool all = false);
+	vector_iterator<T> find_iterator(const T&in);
+	void insert(const vector_iterator<T>&in, const T&in);
+	bool contains(const T&in);
+	int count(const T&in);
+}
+class vector_iterator<T>{
+	~vector_iterator();
+	vector_iterator(int&in);
+	vector_iterator(int&in, const vector_iterator<T>&in);
+	vector_iterator(int&in, vector<T>@);
+	T& current();
+	T& get_value();
+	void set_value(const T&in);
+	bool next();
+	bool opPreInc();
+	bool opPostInc();
+	vector_iterator<T>& opAssign(const vector_iterator<T>&in);
+	bool opEquals(const vector_iterator<T>&in);
+	bool IsEnd();
+	bool IsValid();
+}
+class list<T>{
+	list<T>& opAssign(list<T>@);
+	void SetDirectcomp(bool);
+	void clear();
+	bool empty();
+	int size();
+	list_iterator<T> begin();
+	list_iterator<T> end();
+	list<T>& swap(list<T>&inout);
+	void push_back(const T&in);
+	void pop_back();
+	void push_front(const T&in);
+	void pop_front();
+	T& back();
+	T& front();
+	void sort(bool ascending);
+	void sort(const aatc_funcpointer&in funcptr, bool ascending);
+	void erase(const list_iterator<T>&in);
+	void erase(int);
+	int erase(const list_iterator<T>&in, const list_iterator<T>&in);
+	void erase(int, int);
+	int erase_value(const T&in, bool all = false);
+	list_iterator<T> find_iterator(const T&in);
+	void insert(const list_iterator<T>&in, const T&in);
+	bool contains(const T&in);
+	int count(const T&in);
+}
+class list_iterator<T>{
+	~list_iterator();
+	list_iterator(int&in);
+	list_iterator(int&in, const list_iterator<T>&in);
+	list_iterator(int&in, list<T>@);
+	T& current();
+	T& get_value();
+	void set_value(const T&in);
+	bool next();
+	bool opPreInc();
+	bool opPostInc();
+	list_iterator<T>& opAssign(const list_iterator<T>&in);
+	bool opEquals(const list_iterator<T>&in);
+	bool IsEnd();
+	bool IsValid();
+}
+class deque<T>{
+	deque<T>& opAssign(deque<T>@);
+	void SetDirectcomp(bool);
+	void clear();
+	bool empty();
+	int size();
+	deque_iterator<T> begin();
+	deque_iterator<T> end();
+	deque<T>& swap(deque<T>&inout);
+	void push_back(const T&in);
+	void pop_back();
+	void push_front(const T&in);
+	void pop_front();
+	T& back();
+	T& front();
+	T& opIndex(int);
+	void sort(bool ascending);
+	void sort(const aatc_funcpointer&in, bool ascending);
+	void erase(const deque_iterator<T>&in);
+	void erase(int);
+	int erase(const deque_iterator<T>&in, const deque_iterator<T>&in);
+	void erase(int, int);
+	int erase_value(const T&in, bool all = false);
+	deque_iterator<T> find_iterator(const T&in);
+	void insert(const deque_iterator<T>&in, const T&in);
+	bool contains(const T&in);
+	int count(const T&in);
+}
+class deque_iterator<T>{
+	~deque_iterator();
+	deque_iterator(int&in);
+	deque_iterator(int&in, const deque_iterator<T>&in);
+	deque_iterator(int&in, deque<T>@);
+	T& current();
+	T& get_value();
+	void set_value(const T&in);
+	bool next();
+	bool opPreInc();
+	bool opPostInc();
+	deque_iterator<T>& opAssign(const deque_iterator<T>&in);
+	bool opEquals(const deque_iterator<T>&in);
+	bool IsEnd();
+	bool IsValid();
+}
+class set<T>{
+	set<T>& opAssign(set<T>@);
+	void SetDirectcomp(bool);
+	void clear();
+	bool empty();
+	int size();
+	set_iterator<T> begin();
+	set_iterator<T> end();
+	set<T>& swap(set<T>&inout);
+	void insert(const T&in);
+	bool erase(const T&in);
+	void erase(const set_iterator<T>&in);
+	int erase(const set_iterator<T>&in, const set_iterator<T>&in);
+	set_iterator<T> find_iterator(const T&in);
+	bool contains(const T&in);
+}
+class set_iterator<T>{
+	~set_iterator();
+	set_iterator(int&in);
+	set_iterator(int&in, const set_iterator<T>&in);
+	set_iterator(int&in, set<T>@);
+	const T& current();
+	const T& get_value();
+	bool next();
+	bool opPreInc();
+	bool opPostInc();
+	set_iterator<T>& opAssign(const set_iterator<T>&in);
+	bool opEquals(const set_iterator<T>&in);
+	bool IsEnd();
+	bool IsValid();
+}
+class unordered_set<T>{
+	unordered_set<T>& opAssign(unordered_set<T>@);
+	void SetDirectcomp(bool);
+	void clear();
+	bool empty();
+	int size();
+	unordered_set_iterator<T> begin();
+	unordered_set_iterator<T> end();
+	unordered_set<T>& swap(unordered_set<T>&inout);
+	void insert(const T&in);
+	bool erase(const T&in);
+	void erase(const unordered_set_iterator<T>&in);
+	int erase(const unordered_set_iterator<T>&in, const unordered_set_iterator<T>&in);
+	unordered_set_iterator<T> find_iterator(const T&in);
+	bool contains(const T&in);
+}
+class unordered_set_iterator<T>{
+	~unordered_set_iterator();
+	unordered_set_iterator(int&in);
+	unordered_set_iterator(int&in, const unordered_set_iterator<T>&in);
+	unordered_set_iterator(int&in, unordered_set<T>@);
+	const T& current();
+	const T& get_value();
+	bool next();
+	bool opPreInc();
+	bool opPostInc();
+	unordered_set_iterator<T>& opAssign(const unordered_set_iterator<T>&in);
+	bool opEquals(const unordered_set_iterator<T>&in);
+	bool IsEnd();
+	bool IsValid();
+}
+class map<, T_keyT_value>{
+	map<T_key,T_value>& opAssign(map<T_key,T_value>@);
+	void SetDirectcomp(bool);
+	void clear();
+	bool empty();
+	int size();
+	map_iterator<T_key,T_value> begin();
+	map_iterator<T_key,T_value> end();
+	map<T_key,T_value>& swap(map<T_key,T_value>&inout);
+	void insert(const T_key&in, const T_value&in);
+	void erase(const T_key&in);
+	T_value& find(const T_key&in);
+	T_value& find(const T_key&in, bool&out);
+	bool contains(const T_key&in);
+	map_iterator<T_key,T_value> find_iterator(const T_key&in);
+	bool erase(const map_iterator<T_key,T_value>&in);
+	int erase(const map_iterator<T_key,T_value>&in, const map_iterator<T_key,T_value>&in);
+	const T_value& get_opIndex(const T_key&in) const;
+	void set_opIndex(const T_key&in, const T_value&in);
+}
+class map_iterator<, T_keyT_value>{
+	~map_iterator();
+	map_iterator(int&in);
+	map_iterator(int&in, const map_iterator<T_key,T_value>&in);
+	map_iterator(int&in, map<T_key,T_value>@);
+	const T_key& current_key();
+	T_value& current_value();
+	const T_key& get_key();
+	T_value& get_value();
+	void set_value(const T_value&in);
+	bool next();
+	bool opPreInc();
+	bool opPostInc();
+	map_iterator<T_key,T_value>& opAssign(const map_iterator<T_key,T_value>&in);
+	bool opEquals(const map_iterator<T_key,T_value>&in);
+	bool IsEnd();
+	bool IsValid();
+}
+class unordered_map<, T_keyT_value>{
+	unordered_map<T_key,T_value>& opAssign(unordered_map<T_key,T_value>@);
+	void SetDirectcomp(bool);
+	void clear();
+	bool empty();
+	int size();
+	unordered_map_iterator<T_key,T_value> begin();
+	unordered_map_iterator<T_key,T_value> end();
+	unordered_map<T_key,T_value>& swap(unordered_map<T_key,T_value>&inout);
+	void insert(const T_key&in, const T_value&in);
+	void erase(const T_key&in);
+	T_value& find(const T_key&in);
+	T_value& find(const T_key&in, bool&out);
+	bool contains(const T_key&in);
+	unordered_map_iterator<T_key,T_value> find_iterator(const T_key&in);
+	bool erase(const unordered_map_iterator<T_key,T_value>&in);
+	int erase(const unordered_map_iterator<T_key,T_value>&in, const unordered_map_iterator<T_key,T_value>&in);
+	const T_value& get_opIndex(const T_key&in) const;
+	void set_opIndex(const T_key&in, const T_value&in);
+}
+class unordered_map_iterator<, T_keyT_value>{
+	~unordered_map_iterator();
+	unordered_map_iterator(int&in);
+	unordered_map_iterator(int&in, const unordered_map_iterator<T_key,T_value>&in);
+	unordered_map_iterator(int&in, unordered_map<T_key,T_value>@);
+	const T_key& current_key();
+	T_value& current_value();
+	const T_key& get_key();
+	T_value& get_value();
+	void set_value(const T_value&in);
+	bool next();
+	bool opPreInc();
+	bool opPostInc();
+	unordered_map_iterator<T_key,T_value>& opAssign(const unordered_map_iterator<T_key,T_value>&in);
+	bool opEquals(const unordered_map_iterator<T_key,T_value>&in);
+	bool IsEnd();
+	bool IsValid();
+}
+class CProfiler{
+	void ZoneBegin(const string&in, uint = 0);
+	void ZoneText(const string&in);
+	void ZoneEnd();
+}
+class CSetupManager{
+	void SetWaterHarmful(bool);
+	dictionary@ GetModOptions();
+	const CCircuitDef@ commChoice;
+}
+class AIFloat3{
+	AIFloat3();
+	AIFloat3(const AIFloat3&in);
+	AIFloat3(float);
+	AIFloat3(float, float, float);
+	AIFloat3 opAdd(const AIFloat3&in) const;
+	AIFloat3 opAdd(float) const;
+	AIFloat3& opAddAssign(const AIFloat3&in);
+	AIFloat3 opSub(const AIFloat3&in) const;
+	AIFloat3 opSub(float) const;
+	void opSubAssign(const AIFloat3&in);
+	AIFloat3 opNeg() const;
+	AIFloat3 opMul(const AIFloat3&in) const;
+	AIFloat3 opMul(float) const;
+	AIFloat3 opMul_r(float) const;
+	void opMulAssign(const AIFloat3&in);
+	AIFloat3& opMulAssign(float);
+	AIFloat3 opDiv(const AIFloat3&in) const;
+	AIFloat3 opDiv(float) const;
+	void opDivAssign(const AIFloat3&in);
+	void opDivAssign(float);
+	bool opEquals(const AIFloat3&in) const;
+	float& opIndex(int);
+	const float& opIndex(int) const;
+	bool equals(const AIFloat3&in, const AIFloat3&in) const;
+	bool same(const AIFloat3&in) const;
+	bool binarySame(const AIFloat3&in) const;
+	float dot(const AIFloat3&in) const;
+	float dot2D(const AIFloat3&in) const;
+	AIFloat3 cross(const AIFloat3&in) const;
+	AIFloat3 rotate(float, const AIFloat3&in) const;
+	AIFloat3 rotateByUpVector(const AIFloat3&in, const AIFloat3&in) const;
+	AIFloat3 rotate2D(const AIFloat3&in) const;
+	AIFloat3 snapToAxis() const;
+	float distance(const AIFloat3&in) const;
+	float distance2D(const AIFloat3&in) const;
+	float SqDistance(const AIFloat3&in) const;
+	float SqDistance2D(const AIFloat3&in) const;
+	float Length() const;
+	float Length2D() const;
+	float SqLength() const;
+	float SqLength2D() const;
+	float LengthNormalize();
+	float LengthNormalize2D();
+	AIFloat3& Normalize();
+	AIFloat3& Normalize2D();
+	AIFloat3& SafeNormalize();
+	AIFloat3& SafeNormalize2D();
+	AIFloat3 PickNonParallel() const;
+	bool Normalized() const;
+	bool CheckNaNs() const;
+	bool IsInMap() const;
+	void ClampInMap();
+	string str() const;
+	string ToString() const;
+	string opImplConv() const;
+	bool IsInRange(const AIFloat3&in, float) const;
+	float x;
+	float y;
+	float z;
+}
+class CPolygon{
+	int GetRefCount() const;
+	AIFloat3[]@ GetVerts() const;
+	bool ContainsPoint(const AIFloat3&in) const;
+	AIFloat3 Random() const;
+	void Scale(float);
+	void Extend(float);
+	const float area;
+}
+class IStream{
+	IStream& opShr(bool&out);
+	IStream& opShr(int8&out);
+	IStream& opShr(int16&out);
+	IStream& opShr(int&out);
+	IStream& opShr(int64&out);
+	IStream& opShr(uint8&out);
+	IStream& opShr(uint16&out);
+	IStream& opShr(uint&out);
+	IStream& opShr(uint64&out);
+	IStream& opShr(float&out);
+	IStream& opShr(double&out);
+}
+class OStream{
+	OStream& opShl(const bool&in);
+	OStream& opShl(const int8&in);
+	OStream& opShl(const int16&in);
+	OStream& opShl(const int&in);
+	OStream& opShl(const int64&in);
+	OStream& opShl(const uint8&in);
+	OStream& opShl(const uint16&in);
+	OStream& opShl(const uint&in);
+	OStream& opShl(const uint64&in);
+	OStream& opShl(const float&in);
+	OStream& opShl(const double&in);
+}
+class SIntent{
+	const float opIndex(uint) const;
+	int GetKey(uint) const;
+	float GetValue(uint) const;
+	const int topic;
+	const int objId;
+	const float value;
+	const uint size;
+}
+class TypeMask{
+	int type;
+	uint mask;
+}
+class CCircuitAI{
+	CCircuitDef@ GetCircuitDef(const string&in);
+	CCircuitDef@ GetCircuitDef(int);
+	int GetDefCount() const;
+	CCircuitUnit@ GetTeamUnit(int);
+	string GetMapName() const;
+	int GetEnemyTeamSize() const;
+	bool IsLoadSave() const;
+	int GetBindedRole(int) const;
+	int GetLeadTeamId() const;
+	int GetSideId() const;
+	const string& GetSideName() const;
+	int[]@ GetTeamIds() const;
+	void GiveUnits(const CCircuitUnit@[]@, int);
+	bool UnitControl(CCircuitUnit@, bool);
+	bool UnitControl(int, bool);
+	CCircuitUnit@ GetUnitInRange(const AIFloat3&in, float, int, int, int);
+	string CallRules(const string&in);
+	string CallUI(const string&in);
+	float GetGameRulesParam(const string&in, float) const;
+	string GetGameRulesParam(const string&in, const string&in) const;
+	float GetTeamRulesParam(const string&in, float) const;
+	string GetTeamRulesParam(const string&in, const string&in) const;
+	const int frame;
+	const int skirmishAIId;
+	const int teamId;
+	const int allyTeamId;
+}
+class CCircuitDef{
+	void SetMainRole(int);
+	int GetMainRole() const;
+	bool IsRespRoleAny(uint) const;
+	bool IsRoleAny(uint) const;
+	void AddAttribute(int);
+	void DelAttribute(int);
+	void TglAttribute(int);
+	bool IsAttrAny(uint) const;
+	const string GetName() const;
+	bool IsAvailable(int);
+	float GetMaxRange(int) const;
+	float GetMaxRange() const;
+	void SetRange(int, float);
+	void SetRange(float);
+	float GetAirThreat() const;
+	float GetSurfThreat() const;
+	float GetWaterThreat() const;
+	bool IsAbleToFly() const;
+	bool IsMobile() const;
+	bool IsAssist() const;
+	void SetIgnore(bool);
+	bool IsIgnore() const;
+	void SetThreatKernel(float);
+	void SetFireState(int);
+	int GetFireState() const;
+	bool CanBuild(int) const;
+	const int id;
+	const int count;
+	const float health;
+	const float speed;
+	const float losRadius;
+	const float sonarRadius;
+	const float costM;
+	const float costE;
+	const float threat;
+	const float power;
+	const float defDmg;
+	const float pwrDmg;
+	const float airThrDmg;
+	const float surfThrDmg;
+	const float waterThrDmg;
+	const float minRange;
+	int maxThisUnit;
+	int sinceFrame;
+	int cooldown;
+}
+class CCircuitUnit{
+	const AIFloat3& GetPos(int);
+	void AddAttribute(int);
+	void DelAttribute(int);
+	void TglAttribute(int);
+	bool IsAttrAny(uint) const;
+	void SetFireState(int);
+	void SetMoveState(int);
+	void SelfDestruct(bool);
+	float GetRulesParam(const string&in, float) const;
+	string GetRulesParam(const string&in, const string&in) const;
+	const int id;
+	const CCircuitDef@ circuitDef;
+	IUnitTask@const task;
+	int tag;
+}
+class IUnitTask{
+	int GetRefCount() const;
+	int GetType() const;
+	CCircuitUnit@[]@ GetUnits() const;
+	int GetUnitCount() const;
+	void Abort();
+	void Done();
+	bool ReplaceBy(IUnitTask@);
+	IBuilderTask@ opCast();
+	const IBuilderTask@ opCast() const;
+	CRecruitTask@ opCast();
+	const CRecruitTask@ opCast() const;
+	IFighterTask@ opCast();
+	const IFighterTask@ opCast() const;
+	ISquadTask@ opCast();
+	const ISquadTask@ opCast() const;
+	CDefendTask@ opCast();
+	const CDefendTask@ opCast() const;
+	CSuperTask@ opCast();
+	const CSuperTask@ opCast() const;
+	const int id;
+	int tag;
+}
+class IBuilderTask{
+	int GetRefCount() const;
+	int GetType() const;
+	CCircuitUnit@[]@ GetUnits() const;
+	int GetUnitCount() const;
+	void Abort();
+	void Done();
+	bool ReplaceBy(IUnitTask@);
+	IUnitTask@ opImplCast();
+	const IUnitTask@ opImplCast() const;
+	int GetBuildType() const;
+	const AIFloat3& GetBuildPos() const;
+	CRecruitTask@ opCast();
+	const CRecruitTask@ opCast() const;
+	const int id;
+	int tag;
+	CCircuitDef@const buildDef;
+	CCircuitUnit@const target;
+	bool canAutoAbort;
+}
+class CRecruitTask{
+	int GetRefCount() const;
+	int GetType() const;
+	CCircuitUnit@[]@ GetUnits() const;
+	int GetUnitCount() const;
+	void Abort();
+	void Done();
+	bool ReplaceBy(IUnitTask@);
+	IUnitTask@ opImplCast();
+	const IUnitTask@ opImplCast() const;
+	int GetBuildType() const;
+	const AIFloat3& GetBuildPos() const;
+	IBuilderTask@ opImplCast();
+	const IBuilderTask@ opImplCast() const;
+	const int id;
+	int tag;
+	CCircuitDef@const buildDef;
+	CCircuitUnit@const target;
+	bool canAutoAbort;
+	bool isSingleBuilder;
+}
+class IFighterTask{
+	int GetRefCount() const;
+	int GetType() const;
+	CCircuitUnit@[]@ GetUnits() const;
+	int GetUnitCount() const;
+	void Abort();
+	void Done();
+	bool ReplaceBy(IUnitTask@);
+	IUnitTask@ opImplCast();
+	const IUnitTask@ opImplCast() const;
+	int GetFightType() const;
+	void SetTargetPos(const AIFloat3&in);
+	const AIFloat3& GetTargetPos() const;
+	ISquadTask@ opCast();
+	const ISquadTask@ opCast() const;
+	CDefendTask@ opCast();
+	const CDefendTask@ opCast() const;
+	CSuperTask@ opCast();
+	const CSuperTask@ opCast() const;
+	const int id;
+	int tag;
+	bool isScripted;
+	bool isMergeAllowed;
+	bool isRegroupAllowed;
+	float range;
+	float retreat;
+}
+class ISquadTask{
+	int GetRefCount() const;
+	int GetType() const;
+	CCircuitUnit@[]@ GetUnits() const;
+	int GetUnitCount() const;
+	void Abort();
+	void Done();
+	bool ReplaceBy(IUnitTask@);
+	IUnitTask@ opImplCast();
+	const IUnitTask@ opImplCast() const;
+	int GetFightType() const;
+	void SetTargetPos(const AIFloat3&in);
+	const AIFloat3& GetTargetPos() const;
+	IFighterTask@ opImplCast();
+	const IFighterTask@ opImplCast() const;
+	CDefendTask@ opCast();
+	const CDefendTask@ opCast() const;
+	const int id;
+	int tag;
+	bool isScripted;
+	bool isMergeAllowed;
+	bool isRegroupAllowed;
+	float range;
+	float retreat;
+}
+class CDefendTask{
+	int GetRefCount() const;
+	int GetType() const;
+	CCircuitUnit@[]@ GetUnits() const;
+	int GetUnitCount() const;
+	void Abort();
+	void Done();
+	bool ReplaceBy(IUnitTask@);
+	IUnitTask@ opImplCast();
+	const IUnitTask@ opImplCast() const;
+	int GetFightType() const;
+	void SetTargetPos(const AIFloat3&in);
+	const AIFloat3& GetTargetPos() const;
+	IFighterTask@ opImplCast();
+	const IFighterTask@ opImplCast() const;
+	ISquadTask@ opImplCast();
+	const ISquadTask@ opImplCast() const;
+	const int id;
+	int tag;
+	bool isScripted;
+	bool isMergeAllowed;
+	bool isRegroupAllowed;
+	float range;
+	float retreat;
+}
+class CSuperTask{
+	int GetRefCount() const;
+	int GetType() const;
+	CCircuitUnit@[]@ GetUnits() const;
+	int GetUnitCount() const;
+	void Abort();
+	void Done();
+	bool ReplaceBy(IUnitTask@);
+	IUnitTask@ opImplCast();
+	const IUnitTask@ opImplCast() const;
+	int GetFightType() const;
+	void SetTargetPos(const AIFloat3&in);
+	const AIFloat3& GetTargetPos() const;
+	IFighterTask@ opImplCast();
+	const IFighterTask@ opImplCast() const;
+	const int id;
+	int tag;
+	bool isScripted;
+	bool isMergeAllowed;
+	bool isRegroupAllowed;
+	float range;
+	float retreat;
+}
+class CMaskHandler{
+	TypeMask GetTypeMask(const string&in);
+}
+class SArmorInfo{
+	~SArmorInfo();
+	SArmorInfo();
+	SArmorInfo(const SArmorInfo&in);
+	SArmorInfo& opAssign(const SArmorInfo&in);
+	void AddAir(int);
+	void AddSurface(int);
+	void AddWater(int);
+}
+class SCategoryInfo{
+	~SCategoryInfo();
+	SCategoryInfo();
+	SCategoryInfo(const SCategoryInfo&in);
+	SCategoryInfo& opAssign(const SCategoryInfo&in);
+	string air;
+	string land;
+	string water;
+	string bad;
+	string good;
+}
+class SInitInfo{
+	~SInitInfo();
+	SInitInfo();
+	SInitInfo(const SInitInfo&in);
+	SArmorInfo armor;
+	SCategoryInfo category;
+	string[]@ profile;
+}
+class SResourceInfo{
+	const float current;
+	const float storage;
+	const float pull;
+	const float income;
+}
+class CEconomyManager{
+	float GetMetalMake(const CCircuitDef@) const;
+	float GetEnergyMake(const CCircuitDef@) const;
+	const SResourceInfo metal;
+	const SResourceInfo energy;
+	bool isMetalEmpty;
+	bool isMetalFull;
+	bool isEnergyStalling;
+	bool isEnergyEmpty;
+	bool isEnergyFull;
+	float reclConvertEff;
+	float reclEnergyEff;
+	float startMexTravel;
+}
+class SRecruitTask{
+	uint8 type;
+	uint8 priority;
+	CCircuitDef@ buildDef;
+	AIFloat3 position;
+	float radius;
+}
+class SServSTask{
+	uint8 type;
+	uint8 priority;
+	AIFloat3 position;
+	CCircuitUnit@ target;
+	float radius;
+	bool stop;
+	int timeout;
+}
+class CFactoryManager{
+	CCircuitDef@ DefaultGetFactoryToBuild(const AIFloat3&in, bool, bool);
+	IUnitTask@ DefaultMakeTask(CCircuitUnit@);
+	IUnitTask@ SelectFactoryTask(CCircuitUnit@);
+	IUnitTask@ CreateFactoryTask(CCircuitUnit@);
+	IUnitTask@ Enqueue(const SRecruitTask&in);
+	IUnitTask@ Enqueue(const SServSTask&in);
+	CCircuitDef@ GetRoleDef(const CCircuitDef@, int) const;
+	int GetFactoryCount() const;
+	void SetIsActiveFactory(int, bool);
+	IUnitTask@ GetTaskById(int) const;
+	void AssignTask(CCircuitUnit@, IUnitTask@);
+	void SetTierWeights(const CCircuitDef@, int, int, float[]@);
+	float[]@ GetTierWeights(const CCircuitDef@, int, int) const;
+	void SetImportance(const CCircuitDef@, float[]@);
+	float[]@ GetImportance(const CCircuitDef@) const;
+	bool isAssistRequired;
+	float buildpowerRatio;
+	float responseWeight;
+}
+class SResource{
+	SResource(float, float);
+	float metal;
+	float energy;
+}
+class SBuildTask{
+	uint8 type;
+	uint8 priority;
+	CCircuitDef@ buildDef;
+	AIFloat3 position;
+	SResource cost;
+	CCircuitDef@ reprDef;
+	CCircuitUnit@ target;
+	int pointId;
+	int spotId;
+	float shake;
+	float radius;
+	bool isPlop;
+	bool isMetal;
+	bool isActive;
+	int timeout;
+}
+class SServBTask{
+	uint8 type;
+	uint8 priority;
+	AIFloat3 position;
+	CCircuitUnit@ target;
+	float powerMod;
+	bool isInterrupt;
+	int timeout;
+}
+class CBuilderManager{
+	IUnitTask@ DefaultMakeTask(CCircuitUnit@);
+	IUnitTask@ Enqueue(const SBuildTask&in);
+	IUnitTask@ Enqueue(const SServBTask&in);
+	IUnitTask@ EnqueueRetreat();
+	uint GetWorkerCount() const;
+	IUnitTask@ GetTaskById(int) const;
+	void AssignTask(CCircuitUnit@, IUnitTask@);
+	int dangerHysteresis;
+}
+class SFightTask{
+	uint8 type;
+	uint8 check;
+	uint8 promote;
+	float power;
+	CCircuitUnit@ vip;
+}
+class CMilitaryManager{
+	IUnitTask@ DefaultMakeTask(CCircuitUnit@);
+	IUnitTask@ Enqueue(const SFightTask&in);
+	IUnitTask@ EnqueueRetreat();
+	void DefaultMakeDefence(int, const AIFloat3&in);
+	uint GetGuardTaskNum() const;
+	IUnitTask@ GetTaskById(int) const;
+	void AssignTask(CCircuitUnit@, IUnitTask@);
+	SResponseInfo@ GetResponseInfo(int) const;
+	const float armyCost;
+	SQuotaMilitary quota;
+}
+class SQuotaMilitary{
+	uint scout;
+	float attack;
+	SRaidQuota raid;
+}
+class SRaidQuota{
+	float min;
+	float avg;
+}
+class SResponseInfo{
+	SVsInfo@ GetVsInfo(int) const;
+	float maxPercent;
+	float factor;
+}
+class SVsInfo{
+	int role;
+	float ratio;
+	float importance;
+}
+class CTerrainManager{
+	bool IsWaterAVoid() const;
+	float GetLandPercent() const;
+	float SetAllyZoneRange(float);
+}
+class CEnemyManager{
+	float GetEnemyThreat(int) const;
+	float GetEnemyCost(int) const;
+	const float mobileThreat;
+	float maxAAThreat;
+}
+class CThreatMap{
+	void ApplyRange(CCircuitDef@);
+}
+uint scan(const string&in str, ?&out...);
+string format(const string&in fmt, const ?&in...);
+string formatInt(int64 val, const string&in options = "", uint width = 0);
+string formatUInt(uint64 val, const string&in options = "", uint width = 0);
+string formatFloat(double val, const string&in options = "", uint width = 0, uint precision = 0);
+int64 parseInt(const string&in, uint base = 10, uint&out byteCount = 0);
+uint64 parseUInt(const string&in, uint base = 10, uint&out byteCount = 0);
+double parseFloat(const string&in, uint&out byteCount = 0);
+string join(const string[]&in, const string&in);
+float fpFromIEEE(uint);
+uint fpToIEEE(float);
+double fpFromIEEE(uint64);
+uint64 fpToIEEE(double);
+bool closeTo(float, float, float = 0.00001f);
+bool closeTo(double, double, double = 0.0000000001);
+float cos(float);
+float sin(float);
+float tan(float);
+float acos(float);
+float asin(float);
+float atan(float);
+float atan2(float, float);
+float cosh(float);
+float sinh(float);
+float tanh(float);
+float log(float);
+float log10(float);
+float pow(float, float);
+float sqrt(float);
+float ceil(float);
+float abs(float);
+float floor(float);
+float fraction(float);
+uint64 aatc_Hashfunc_djb2(string&in);
+AIFloat3 AiMin(const AIFloat3, const AIFloat3);
+AIFloat3 AiMax(const AIFloat3, const AIFloat3);
+AIFloat3 AiFabs(const AIFloat3);
+AIFloat3 AiSign(const AIFloat3);
+void AiLog(const string&in);
+void AiAddPoint(const AIFloat3&in, const string&in);
+void AiDelPoint(const AIFloat3&in);
+void AiAddLine(const AIFloat3&in, const AIFloat3&in);
+void AiPause(bool, const string&in);
+int AiDice(const float[]@);
+int AiNearestPointIdx(const AIFloat3&in, const AIFloat3[]@);
+int AiMin(int, int);
+float AiMin(float, float);
+int AiMax(int, int);
+float AiMax(float, float);
+int AiRandom(int, int);
+void AiSendMessage(const string&in, int = -1);
+void AiRun(AiExec@, dictionary@);
+void AiSleep(uint64);
+TypeMask AiAddRole(const string&in, int);
+int AiTerrainWidth();
+int AiTerrainHeight();
+float AiTerrainDiagonal();
+AIFloat3 AiTerrainCenter();
+CProfiler tracy;
+CSetupManager aiSetupMgr;
+CCircuitAI ai;
+CMaskHandler aiSideMasker;
+CMaskHandler aiRoleMasker;
+CMaskHandler aiAttrMasker;
+CEconomyManager aiEconomyMgr;
+CFactoryManager aiFactoryMgr;
+CBuilderManager aiBuilderMgr;
+CMilitaryManager aiMilitaryMgr;
+CTerrainManager aiTerrainMgr;
+CEnemyManager aiEnemyMgr;
+CThreatMap aiThreat;
+typedef aatc_hash_t aatc_hash_t;
+typedef int Id;
+typedef int Type;
+typedef uint Mask;

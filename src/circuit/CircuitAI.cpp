@@ -696,6 +696,9 @@ int CCircuitAI::Init(int skirmishAIId, const SSkirmishAICallback* sAICallback)
 		Release(RELEASE_SCRIPT);
 		return ERROR_INIT;
 	}
+#ifdef DEBUG_LOG
+//	script->DumpASPredefined();
+#endif
 
 	// Delay threat ranges initialization from allyTeam->Init()
 	// so cdef.SetRange() in AiMain() could make an effect.

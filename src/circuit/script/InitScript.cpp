@@ -30,6 +30,9 @@
 // FIXME: MinGW didn't like asbind20
 //#include "asbind20/asbind.hpp"
 //#include "asbind20/operators.hpp"  // _this, const_this, param<T>, ->return<T>()
+#ifdef DEBUG_LOG
+#include "util/generate_as_predefined.h"
+#endif
 
 #include "spring/SpringMap.h"
 
@@ -970,7 +973,10 @@ void CInitScript::RegisterIFighterTask(asIScriptEngine* engine, const char* cls)
 	r = engine->RegisterObjectProperty(cls, "bool isScripted", asOFFSET(T, isScripted)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty(cls, "bool isMergeAllowed", asOFFSET(T, isMergeAllowed)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty(cls, "bool isRegroupAllowed", asOFFSET(T, isRegroupAllowed)); ASSERT(r >= 0);
-	r = engine->RegisterObjectMethod(cls, "void SetPosition(const AIFloat3& in)", asMETHOD(T, SetPosition), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod(cls, "void SetTargetPos(const AIFloat3& in)", asMETHOD(T, SetTargetPos), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod(cls, "const AIFloat3& GetTargetPos() const", asMETHOD(T, GetTargetPos), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty(cls, "float range", asOFFSET(T, range)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty(cls, "float retreat", asOFFSET(T, retreat)); ASSERT(r >= 0);
 }
 
 template <class T>
@@ -992,16 +998,14 @@ void CInitScript::RegisterCDefendTask(asIScriptEngine* engine)
 {
 	RegisterISquadTask<CDefendTask>(engine, "CDefendTask");
 	RegisterCast<ISquadTask, CDefendTask>(engine, "ISquadTask", "CDefendTask");
-	int r;
-	r = engine->RegisterObjectProperty("CDefendTask", "float range", asOFFSET(CDefendTask, range)); ASSERT(r >= 0);
-	r = engine->RegisterObjectProperty("CDefendTask", "bool isRetreat", asOFFSET(CDefendTask, isRetreat)); ASSERT(r >= 0);
+//	int r;
 }
 
 void CInitScript::RegisterCSuperTask(asIScriptEngine* engine)
 {
 	RegisterIFighterTask<CSuperTask>(engine, "CSuperTask");
 	RegisterCast<IFighterTask, CSuperTask>(engine, "IFighterTask", "CSuperTask");
-	int r = engine->RegisterObjectMethod("CSuperTask", "void SetTargetPos(const AIFloat3& in)", asMETHOD(CSuperTask, SetTargetPos), asCALL_THISCALL); ASSERT(r >= 0);
+//	int r;
 }
 
 void CInitScript::RegisterUnitTasks(asIScriptEngine* engine)
@@ -1159,5 +1163,13 @@ void CInitScript::Run(asIScriptFunction* exec, CScriptDictionary* arg)
 		});
 	}));
 }
+
+#ifdef DEBUG_LOG
+void CInitScript::DumpASPredefined()
+{
+	asIScriptEngine* engine = script->GetEngine();
+	GenerateScriptPredefined(engine, "as.predefined");
+}
+#endif  // DEBUG_LOG
 
 } // namespace circuit

@@ -272,6 +272,7 @@ function CreateSquad(squadID, pos, range, composition)
         [intent.param.SQUAD_GATHER_RANGE] = range,
         [intent.param.SQUAD_ATTACK_RANGE] = 512,
         [intent.param.SQUAD_IS_REPEAT] = true,
+        [intent.param.SQUAD_RETREAT] = 0,  -- -1 or 0 or (0.0..1.0]
     })
     Spring.AiIntentUnitDefs(teamID, intent.topic.AI_REQ_COMPOSE, squadID, composition)
 --     tracy.ZoneEnd()
@@ -346,31 +347,44 @@ function widget:SendCompose3Squad2()
 end
 
 function widget:SendTaskDefend()
-    Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, squadID1, intent.task.TASK_DEFEND);
+    if dm_handle.selectedWave then
+        Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, dm_handle.selectedWave, intent.task.TASK_DEFEND);
+    end
 end
 function widget:SendTaskScout()
-    Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, squadID1, intent.task.TASK_SCOUT);
+    if dm_handle.selectedWave then
+        Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, dm_handle.selectedWave, intent.task.TASK_SCOUT);
+    end
 end
 function widget:SendTaskRaid()
-    Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, squadID1, intent.task.TASK_RAID);
+    if dm_handle.selectedWave then
+        Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, dm_handle.selectedWave, intent.task.TASK_RAID);
+    end
 end
 function widget:SendTaskAttack()
-    Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, squadID1, intent.task.TASK_ATTACK);
+    if dm_handle.selectedWave then
+        Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, dm_handle.selectedWave, intent.task.TASK_ATTACK);
+    end
 end
 function widget:SendTaskBomb()
-    Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, squadID1, intent.task.TASK_BOMB);
+    if dm_handle.selectedWave then
+        Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, dm_handle.selectedWave, intent.task.TASK_BOMB);
+    end
 end
 function widget:SendTaskArty()
-    Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, squadID1, intent.task.TASK_ARTY);
+    if dm_handle.selectedWave then
+        Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, dm_handle.selectedWave, intent.task.TASK_ARTY);
+    end
 end
 function widget:SendTaskAA()
-    Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, squadID1, intent.task.TASK_AA);
+    if dm_handle.selectedWave then
+        Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, dm_handle.selectedWave, intent.task.TASK_AA);
+    end
 end
 function widget:SendTaskSupport()
-    Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, squadID1, intent.task.TASK_SUPPORT);
-end
-function widget:SendTaskRetreat()
-    Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, squadID1, intent.task.TASK_RETREAT);
+    if dm_handle.selectedWave then
+        Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, dm_handle.selectedWave, intent.task.TASK_SUPPORT);
+    end
 end
 
 -- function widget:SendArmyAAIntent()

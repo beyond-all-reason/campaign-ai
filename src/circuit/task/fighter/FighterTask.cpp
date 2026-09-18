@@ -30,6 +30,7 @@ IFighterTask::IFighterTask(ITaskModule* mgr, FightType type, float powerMod, int
 		: IUnitTask(mgr, Priority::NORMAL, Type::FIGHTER, timeout)
 		, fightType(type)
 		, position(-RgtVector)
+		, targetPos(-RgtVector)
 		, attackPower(.0f)
 		, powerMod(powerMod)
 		, attackFrame(-1)
@@ -106,6 +107,10 @@ void IFighterTask::OnUnitIdle(CCircuitUnit* unit)
 
 void IFighterTask::OnUnitDamaged(CCircuitUnit* unit, CEnemyInfo* attacker)
 {
+	if (retreat == 0.f) {
+		return;
+	}
+
 	CCircuitAI* circuit = manager->GetCircuit();
 	const int frame = circuit->GetLastFrame();
 	CCircuitDef* cdef = unit->GetCircuitDef();
@@ -117,16 +122,17 @@ void IFighterTask::OnUnitDamaged(CCircuitUnit* unit, CEnemyInfo* attacker)
 	}
 
 	const float healthPerc = unit->GetHealthPercent();
+	const float retreatPerc = (retreat < 0.f) ? cdef->GetRetreat() : retreat;
 
 	if (unit->HasShield()) {
 		const float minShield = circuit->GetSetupManager()->GetEmptyShield();
-		if ((healthPerc > cdef->GetRetreat()) && unit->IsShieldCharged(minShield)) {
+		if ((healthPerc > retreatPerc) && unit->IsShieldCharged(minShield)) {
 			if (cdef->IsRoleHeavy() && (healthPerc < 0.9f) && !unit->IsAttrNoRepair()) {
 				circuit->GetBuilderManager()->Enqueue(TaskB::Repair(IBuilderTask::Priority::NOW, unit));
 			}
 			return;
 		}
-	} else if ((healthPerc > cdef->GetRetreat()) && !unit->IsDisarmed(frame)) {
+	} else if ((healthPerc > retreatPerc) && !unit->IsDisarmed(frame)) {
 		if (cdef->IsRoleHeavy() && (healthPerc < 0.9f) && !unit->IsAttrNoRepair()) {
 			circuit->GetBuilderManager()->Enqueue(TaskB::Repair(IBuilderTask::Priority::NOW, unit));
 		}

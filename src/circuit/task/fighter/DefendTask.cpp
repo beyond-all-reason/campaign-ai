@@ -38,7 +38,7 @@ CDefendTask::CDefendTask(ITaskModule* mgr, const AIFloat3& position,
 		, check(check)
 		, promote(promote)
 		, maxPower(maxPower * powerMod)
-		, targetPos(position)
+		, foundPos(position)
 {
 	this->position = position;
 	isRegroupAllowed = false;
@@ -177,8 +177,8 @@ void CDefendTask::Update()
 	const AIFloat3& startPos = leader->GetPos(frame);
 	state = State::ROAM;
 	if ((GetTarget() != nullptr) || isTargetsFound) {
-		const float slack = (circuit->GetInflMap()->GetAllyDefendInflAt(targetPos) > INFL_EPS) ? 500.f : 300.f;
-		if (targetPos.SqDistance2D(startPos) < SQUARE(highestRange + slack)) {
+		const float slack = (circuit->GetInflMap()->GetAllyDefendInflAt(foundPos) > INFL_EPS) ? 500.f : 300.f;
+		if (geom::is_in_range(foundPos, startPos, highestRange + slack)) {
 			state = State::ENGAGE;
 			Attack(frame);
 			return;
@@ -209,11 +209,10 @@ void CDefendTask::Update()
 	});
 }
 
-void CDefendTask::OnUnitDamaged(CCircuitUnit* unit, CEnemyInfo* attacker)
+void CDefendTask::SetTargetPos(const AIFloat3& pos)
 {
-	if (isRetreat) {  // TODO: retreat level
-		ISquadTask::OnUnitDamaged(unit, attacker);
-	}
+	targetPos = pos;
+	position = pos;
 }
 
 void CDefendTask::Merge(ISquadTask* task)
@@ -333,7 +332,7 @@ bool CDefendTask::FindTarget()
 
 	if (bestTarget != nullptr) {
 		SetTarget(bestTarget);
-		targetPos = GetTarget()->GetPos();
+		foundPos = GetTarget()->GetPos();
 	}
 	if (enemyPositions.empty()) {
 		return false;
@@ -422,7 +421,7 @@ bool CDefendTask::FindTargetScripted()
 
 	if (bestTarget != nullptr) {
 		SetTarget(bestTarget);
-		targetPos = GetTarget()->GetPos();
+		foundPos = GetTarget()->GetPos();
 	}
 	if (enemyPositions.empty()) {
 		return false;

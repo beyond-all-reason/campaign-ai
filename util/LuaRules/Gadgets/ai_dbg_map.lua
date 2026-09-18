@@ -52,66 +52,10 @@ else  -- Unsynced
 local LuaShader = gl.LuaShader
 local InstanceVBOTable = gl.InstanceVBOTable
 
-local isGL4Way = false
 local circleInstanceVBOthr = nil
 local circleShaderThr = nil
 local circleInstanceVBOmrk = nil
 local circleShaderMrk = nil
-
-local function makeConeVBO(numSegments, height, radius)
-	-- make a cone that points up, (y = height), with radius specified
-	-- returns the VBO object, and the number of elements in it (usually ==  numvertices)
-	-- needs GL.TRIANGLES
-	if not height then height = 1 end
-	if not radius then radius = 1 end
-	local coneVBO = gl.GetVBO(GL.ARRAY_BUFFER,true)
-	if coneVBO == nil then return nil end
-
-	local VBOData = {}
-
-	for i = 1, numSegments do
-		-- center vertex
-		VBOData[#VBOData+1] = 0
-		VBOData[#VBOData+1] = 0
-		VBOData[#VBOData+1] = 0
-		VBOData[#VBOData+1] = (i - 1) / numSegments
-
-		--- second cone flat
-		VBOData[#VBOData+1] = math.sin(math.pi*2* (i - 0) / numSegments) * radius-- X
-		VBOData[#VBOData+1] = 0
-		VBOData[#VBOData+1] = -1* math.cos(math.pi*2* (i - 0) / numSegments) * radius -- Y
-		VBOData[#VBOData+1] =(i - 0) / numSegments
-
-		--- first cone flat
-		VBOData[#VBOData+1] = math.sin(math.pi*2* (i - 1) / numSegments) * radius -- X
-		VBOData[#VBOData+1] = 0
-		VBOData[#VBOData+1] = -1* math.cos(math.pi*2* (i - 1) / numSegments) * radius-- Y
-		VBOData[#VBOData+1] = (i - 1) / numSegments
-	end
-	for i = 1, numSegments do
-		-- top vertex
-		VBOData[#VBOData+1] = 0
-		VBOData[#VBOData+1] = height
-		VBOData[#VBOData+1] = 0
-		VBOData[#VBOData+1] = (i - 1) / numSegments
-
-		--- first cone flat
-		VBOData[#VBOData+1] = math.sin(math.pi*2* (i - 0) / numSegments) * radius -- X
-		VBOData[#VBOData+1] = 0
-		VBOData[#VBOData+1] = -1*math.cos(math.pi*2* (i - 0) / numSegments) * radius -- Y
-		VBOData[#VBOData+1] =(i - 0) / numSegments
-
-		--- second cone flat
-		VBOData[#VBOData+1] = math.sin(math.pi*2* (i - 1) / numSegments) * radius -- X
-		VBOData[#VBOData+1] = 0
-		VBOData[#VBOData+1] = -1*math.cos(math.pi*2* (i - 1) / numSegments) * radius -- Y
-		VBOData[#VBOData+1] =(i - 1) / numSegments
-	end
-
-	coneVBO:Define(#VBOData/4,	{{id = 0, name = "localpos_progress", size = 4}})
-	coneVBO:Upload(VBOData)
-	return coneVBO, #VBOData/4
-end
 
 local function MakeCircleGL4(LuaShader, goodbye)
 	local circleShader = nil
@@ -319,7 +263,7 @@ local function MakeConeGL4(LuaShader, goodbye)
 	)
 	shaderCompiled = circleShader:Initialize()
 	if not shaderCompiled then goodbye("Failed to compile AI DBG cone shader") end
-	local circleVBO,numVertices = makeConeVBO(circleSegments + 1, coneHeight)
+	local circleVBO,numVertices = InstanceVBOTable.makeConeVBO(circleSegments + 1, coneHeight)
 	local circleInstanceVBOLayout = {
 		{id = 1, name = 'centerposxyz_radius', size = 4}, -- the start pos + radius
 		{id = 2, name = 'color', size = 4}, --- color
@@ -336,7 +280,7 @@ local function MakeConeGL4(LuaShader, goodbye)
 end
 
 local function InitGL4()
-	SpringShared.Echo("Initializing GL4")
+	SpringShared.Echo("AI DBG Initializing GL4")
 
 	local goodbye = function(reason)
 		SpringShared.Echo("AI DBG widget exiting with reason: "..reason)
@@ -345,7 +289,6 @@ local function InitGL4()
 
 	circleInstanceVBOthr, circleShaderThr = MakeCircleGL4(gl.LuaShader, goodbye)
 	circleInstanceVBOmrk, circleShaderMrk = MakeConeGL4(gl.LuaShader, goodbye)
-	isGL4Way = true
 end
 ----  END GL4 THINGS --------------
 
@@ -429,96 +372,6 @@ local spGetGroundHeight  = SpringShared.GetGroundHeight
 
 local lastupdateframe = 0
 
-local function drawThrOldWay()
-	local width = aiData.width
-	local height = aiData.height
-	local size = aiData.size
-	local div = aiData.div
-	local base = aiData.base
-	local threatMap = aiData.map
-
-	if aiData.isDraw then
-		for x = 1, width do
-			px = (x - 1) * size
-			for z = 0, height - 1 do
-				value = threatMap[z * width + x] - base
-				draw = (value ~= 0)
-				local mycolor = {0.0, 0.0, 0.0, 0.6} -- alpha defined here!
-
-				if value > 0 then
-					pz = z * size
-					value = value / div
-					mycolor[1] = value
-				elseif value < 0 then
-					pz = z * size
-					value = -value / div
-					mycolor[3] = value
-				end
-				if draw then
-					-- could create DrawList and update it on aiData.mapChanged. But old way will be deprecated anyway
-					gl.Color(mycolor)
-					gl.DrawGroundQuad(px, pz, px + size, pz + size)
-				end
-			end
-		end
-	end
-
-	if aiData.isPrint then
-		local halfSize = size / 2;
---		local cx, cy, cz = SpringUnsynced.GetCameraDirection()
---		local dir = ((math.atan2(cx, cz) / math.pi) + 1) * 180
-
-		for x = 1, width do
-			px = (x - 1) * size + halfSize
-			for z = 0, height - 1 do
-				value = threatMap[z * width + x]
-				if value ~= base then
-					pz = z * size + halfSize
-
-					local py = spGetGroundHeight(px, pz)
-					if SpringUnsynced.IsSphereInView(px, py, pz, size) then
-						if py < 0 then py = 0 end
-
-						gl.PushMatrix()
-
-						gl.Translate(px, py, pz)
-						gl.Rotate(-90, 1, 0, 0)
---						gl.Rotate(dir, 0, 0, 1)
-						gl.Text(("%.2f"):format(value), 0.0, 0.0, 14, "cno")
-
-						gl.PopMatrix()
-					end
-				end
-			end
-		end
-	end
-
-	gl.Color(1,1,1,1)
-end
-
-local function drawMrkOldWay()
-	if #aiData.marks > 0 then
-		for k, v in pairs(aiData.marks) do
-			local halfSize = v[3]
-			gl.Color(v[4], v[5], v[6], v[7])
-			gl.DrawGroundQuad(v[1] - halfSize, v[2] - halfSize, v[1] + halfSize, v[2] + halfSize)
-			if v[8] then
-				local py = spGetGroundHeight(v[1], v[2])
-				if SpringUnsynced.IsSphereInView(v[1], py, v[2], halfSize) then
-					if py < 0 then py = 0 end
-					gl.PushMatrix()
-					gl.Translate(v[1], py, v[2])
-					gl.Rotate(-90, 1, 0, 0)
-					gl.Text(("%i"):format(v[8]), 0.0, 0.0, 10, "cno")
-					gl.PopMatrix()
-				end
-			end
-		end
-	end
-
-	gl.Color(1,1,1,1)
-end
-
 local function drawThrGL4Way()
 	local width = aiData.width
 	local height = aiData.height
@@ -597,8 +450,8 @@ local function drawThrGL4Way()
 						gl.Translate(px, py, pz)
 						gl.Rotate(-90, 1, 0, 0)
 --						gl.Rotate(dir, 0, 0, 1)
--- 						gl.Text(("%.2f"):format(value), 0.0, 0.0, 14, "cno")
-						gl.Text(("%.0f"):format(value), 0.0, 0.0, 6, "cno")
+						gl.Text(("%.2f"):format(value), 0.0, 0.0, 14, "cno")
+-- 						gl.Text(("%.0f"):format(value), 0.0, 0.0, 6, "cno")
 
 						gl.PopMatrix()
 					end
@@ -671,19 +524,11 @@ function gadget:DrawWorldPreUnit()
 --	SpringShared.Echo(aiData.map[0 * width + 1])
 --	SpringShared.Echo(aiData.map[(height - 1) * width + width])
 
-	if isGL4Way then
-		drawThrGL4Way()
-	else
-		drawThrOldWay()
-	end
+	drawThrGL4Way()
 end
 
 function gadget:DrawWorld()
-	if isGL4Way then
-		drawMrkGL4Way()
-	else
-		drawMrkOldWay()
-	end
+	drawMrkGL4Way()
 end
 
 function gadget:Initialize()

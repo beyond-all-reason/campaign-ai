@@ -30,7 +30,6 @@ using namespace springai;
 CSuperTask::CSuperTask(ITaskModule* mgr)
 		: IFighterTask(mgr, IFighterTask::FightType::SUPER, 1.f)
 		, targetFrame(0)
-		, targetPos(-RgtVector)
 		, isTargetOverride(false)
 {
 }

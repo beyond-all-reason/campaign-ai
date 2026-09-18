@@ -63,7 +63,6 @@
                     <button onclick="widget:SendTaskArty()">arty</button>
                     <button onclick="widget:SendTaskAA()">AA</button>
                     <button onclick="widget:SendTaskSupport()">support</button>
-                    <button onclick="widget:SendTaskRetreat()">retreat</button>
                 </div>
                 <div class="grid commands">
                     <button onclick="widget:SendDeactivateFactoryIntent()">Deactivate Factory</button>

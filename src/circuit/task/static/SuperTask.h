@@ -24,13 +24,12 @@ public:
 	virtual void Update() override;
 
 	// Script API
-	void SetTargetPos(const springai::AIFloat3& pos);
+	virtual void SetTargetPos(const springai::AIFloat3& pos) override;
 
 private:
 	void ExecuteAttack(CCircuitUnit* unit);
 
 	int targetFrame;
-	springai::AIFloat3 targetPos;
 	bool isTargetOverride;
 };
 

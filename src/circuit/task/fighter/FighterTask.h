@@ -40,7 +40,10 @@ public:
 
 	FightType GetFightType() const { return fightType; }
 	const springai::AIFloat3& GetPosition() const { return position; }
-	void SetPosition(const springai::AIFloat3& pos) { position = pos; }  // Script API
+
+	// Script API
+	const springai::AIFloat3& GetTargetPos() const { return targetPos; }
+	virtual void SetTargetPos(const springai::AIFloat3& pos) { targetPos = pos; }
 
 	float GetAttackPower() const { return attackPower; }
 	CEnemyInfo* GetTarget() const { return target; }
@@ -54,6 +57,7 @@ protected:
 
 	FightType fightType;
 	springai::AIFloat3 position;  // attack/scout position
+	springai::AIFloat3 targetPos;  // Script API
 
 	float attackPower;
 	float powerMod;
@@ -66,6 +70,8 @@ protected:
 
 	int attackFrame;
 
+	float range = 0.f;  // Script API
+	float retreat = -1.f;  // Script API
 	bool isScripted = false;  // Script API
 	bool isMergeAllowed = true;  // Script API
 	bool isRegroupAllowed = true;  // Script API

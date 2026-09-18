@@ -1,5 +1,6 @@
 #include "../../define.as"
 #include "../../unit.as"
+#include "../misc/squad.as"
 
 
 namespace Military {
@@ -27,6 +28,7 @@ void AiUnitAdded(CCircuitUnit@ unit, Unit::UseAs usage)
 
 void AiUnitRemoved(CCircuitUnit@ unit, Unit::UseAs usage)
 {
+	Squad::mgr.SquadUnitDestroyed(unit);
 }
 
 void AiLoad(IStream& istream)
