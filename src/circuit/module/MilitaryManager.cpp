@@ -669,6 +669,12 @@ CRetreatTask* CMilitaryManager::EnqueueRetreat()
 	return task;
 }
 
+void CMilitaryManager::ResignTask(CCircuitUnit* unit)
+{
+	ITaskModule::ResignTask(unit);
+	static_cast<CMilitaryScript*>(script)->TaskResigned(unit);
+}
+
 void CMilitaryManager::DequeueTask(IUnitTask* task, bool done)
 {
 	switch (task->GetType()) {

@@ -77,6 +77,7 @@ bool CMilitaryScript::Init()
 	int r = mod->SetDefaultNamespace("Military"); ASSERT(r >= 0);
 	InitModule(mod);
 	militaryInfo.makeDefence = script->GetFunc(mod, "void AiMakeDefence(int, const AIFloat3& in)");
+	militaryInfo.taskResigned = script->GetFunc(mod, "void AiTaskResigned(CCircuitUnit@)");
 	return true;
 }
 
@@ -89,6 +90,17 @@ void CMilitaryScript::MakeDefence(int cluster, const AIFloat3& pos)
 	asIScriptContext* ctx = script->PrepareContext(militaryInfo.makeDefence);
 	ctx->SetArgDWord(0, cluster);
 	ctx->SetArgAddress(1, &const_cast<AIFloat3&>(pos));
+	script->Exec(ctx);
+	script->ReturnContext(ctx);
+}
+
+void CMilitaryScript::TaskResigned(CCircuitUnit* unit)
+{
+	if (militaryInfo.taskResigned == nullptr) {
+		return;
+	}
+	asIScriptContext* ctx = script->PrepareContext(militaryInfo.taskResigned);
+	ctx->SetArgObject(0, unit);
 	script->Exec(ctx);
 	script->ReturnContext(ctx);
 }

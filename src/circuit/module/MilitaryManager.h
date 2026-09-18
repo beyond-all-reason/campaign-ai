@@ -110,6 +110,7 @@ public:
 
 	IFighterTask* Enqueue(const TaskF::SFightTask& ti);
 	virtual CRetreatTask* EnqueueRetreat() override;
+	virtual void ResignTask(CCircuitUnit* unit) override;
 private:
 	virtual void DequeueTask(IUnitTask* task, bool done = false) override;
 

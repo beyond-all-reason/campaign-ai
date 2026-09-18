@@ -274,7 +274,6 @@ class Manager {
 			if (am.amount > am.assignedCount) {
 				// NOTE: Actual assignment takes place in C++ after return from AiMakeTask
 				am.assignedCount++;
-				unit.tag = req.squadId;
 				return req;
 			}
 		}
@@ -422,11 +421,11 @@ class Manager {
 	// Invoked by Military::AiUnitRemoved
 	bool SquadUnitDestroyed(CCircuitUnit@ unit) {
 		bool success;
-		Squad@ squad = squads.find(unit.tag, success);
+		Squad@ squad = taskToSquad.find(unit.task.id, success);
 		if (!success)
 			return false;
 
-		CheckSquadFinished(squad);
+		// NOTE: Alternative is to create build-task; and decrease am.assignedCount
 		squad.req.unitNum--;
 		return true;
 	}

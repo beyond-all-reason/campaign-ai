@@ -26,12 +26,14 @@ public:
 
 public:
 	void MakeDefence(int cluster, const springai::AIFloat3& pos);
+	void TaskResigned(CCircuitUnit* unit);
 
 private:
 	static CMilitaryManager::SRoleInfo::SVsInfo* GetVsInfo(CMilitaryManager::SRoleInfo* info, CCircuitDef::RoleT vsType);
 
 	struct SScriptInfo {
 		asIScriptFunction* makeDefence = nullptr;
+		asIScriptFunction* taskResigned = nullptr;
 	} militaryInfo;
 };
 

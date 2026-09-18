@@ -22,13 +22,17 @@ void AiTaskRemoved(IUnitTask@ task, bool done)
 	Squad::mgr.SquadTaskDestroyed(task);
 }
 
+void AiTaskResigned(CCircuitUnit@ unit)
+{
+	Squad::mgr.SquadUnitDestroyed(unit);
+}
+
 void AiUnitAdded(CCircuitUnit@ unit, Unit::UseAs usage)
 {
 }
 
 void AiUnitRemoved(CCircuitUnit@ unit, Unit::UseAs usage)
 {
-	Squad::mgr.SquadUnitDestroyed(unit);
 }
 
 void AiLoad(IStream& istream)

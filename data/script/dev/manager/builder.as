@@ -9,15 +9,6 @@ CCircuitUnit@ energizer2 = null;
 // AIFloat3 lastPos;
 // int gPauseCnt = 0;
 
-void AiTaskAssigned(CCircuitUnit@ unit)
-{
-// 	if (unit.task.GetType() == Task::Type::BUILDER) {
-// 		IBuilderTask@ taskB = cast<IBuilderTask>(unit.task);  // omit "!is null" check because of GetType() check
-// 		AiLog("build-task for " + unit.circuitDef.GetName() + ", buildType=" + taskB.GetBuildType());
-// 	} else
-// 		AiLog("Not a build-task for " + unit.circuitDef.GetName() + ", type=" + unit.task.GetType());
-}
-
 IUnitTask@ AiMakeTask(CCircuitUnit@ unit)
 {
 // 	AiDelPoint(lastPos);
@@ -121,6 +112,15 @@ void AiTaskRemoved(IUnitTask@ task, bool done)
 // 	default:
 // 		break;
 // 	}
+}
+
+void AiTaskAssigned(CCircuitUnit@ unit)
+{
+// 	if (unit.task.GetType() == Task::Type::BUILDER) {
+// 		IBuilderTask@ taskB = cast<IBuilderTask>(unit.task);  // omit "!is null" check because of GetType() check
+// 		AiLog("build-task for " + unit.circuitDef.GetName() + ", buildType=" + taskB.GetBuildType());
+// 	} else
+// 		AiLog("Not a build-task for " + unit.circuitDef.GetName() + ", type=" + unit.task.GetType());
 }
 
 void AiUnitAdded(CCircuitUnit@ unit, Unit::UseAs usage)

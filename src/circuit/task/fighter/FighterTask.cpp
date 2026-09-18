@@ -67,6 +67,8 @@ void IFighterTask::AssignTo(CCircuitUnit* unit)
 
 void IFighterTask::RemoveAssignee(CCircuitUnit* unit)
 {
+	manager->ResignTask(unit);
+
 	IUnitTask::RemoveAssignee(unit);
 
 	attackPower -= unit->GetCircuitDef()->GetPower();
