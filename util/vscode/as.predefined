@@ -582,6 +582,7 @@ class CCircuitDef{
 	const float surfThrDmg;
 	const float waterThrDmg;
 	const float minRange;
+	float retreat;
 	int maxThisUnit;
 	int sinceFrame;
 	int cooldown;
@@ -1017,7 +1018,7 @@ CMilitaryManager aiMilitaryMgr;
 CTerrainManager aiTerrainMgr;
 CEnemyManager aiEnemyMgr;
 CThreatMap aiThreat;
-typedef aatc_hash_t aatc_hash_t;
+typedef uint64 aatc_hash_t;
 typedef int Id;
 typedef int Type;
 typedef uint Mask;

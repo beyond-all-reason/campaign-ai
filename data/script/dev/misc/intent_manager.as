@@ -1,4 +1,5 @@
 #include "squad.as"
+#include "../manager/factory.as"
 #include "../../intent.as"
 #include "../../define.as"
 
@@ -14,6 +15,10 @@ class Manager {
 
 		case AI_ENABLE: {  // SFloatIntent
 			AiLog("SFloatIntent: AI_ENABLE, objID: " + intent.objId + ", Value: " + intent.value);
+		} break;
+
+		case AI_UNITDEF_RETREAT: {  // SDictFloatIntent
+			SetUnitDefRetreat(intent);
 		} break;
 
 		case AI_BASE_CREATE: {  // SDictFloatIntent
@@ -85,6 +90,15 @@ class Manager {
 		default:
 			AiLog("Unhandled intent topic: " + intent.topic);
 			break;
+		}
+	}
+
+	void SetUnitDefRetreat(const SIntent& in intent) {
+		for (uint i = 0; i < intent.size; ++i) {
+			CCircuitDef@ cdef = ai.GetCircuitDef(intent.GetKey(i));
+			if (cdef is null)
+				continue;
+			cdef.retreat = intent.GetValue(i);
 		}
 	}
 
