@@ -9,6 +9,7 @@
 #define SRC_CIRCUIT_TASK_FIGHTER_FIGHTERTASK_H_
 
 #include "task/UnitTask.h"
+#include "unit/CoreUnit.h"
 #include "util/Defines.h"
 
 namespace circuit {
@@ -57,7 +58,6 @@ protected:
 
 	FightType fightType;
 	springai::AIFloat3 position;  // attack/scout position
-	springai::AIFloat3 targetPos;  // Script API
 
 	float attackPower;
 	float powerMod;
@@ -70,11 +70,14 @@ protected:
 
 	int attackFrame;
 
-	float range = 0.f;  // Script API
-	float retreat = -1.f;  // Script API
-	bool isScripted = false;  // Script API
-	bool isMergeAllowed = true;  // Script API
-	bool isRegroupAllowed = true;  // Script API
+	// Script API
+	float range = 0.f;
+	float retreat = -1.f;
+	bool isScripted = false;
+	bool isMergeAllowed = true;
+	bool isRegroupAllowed = true;
+	springai::AIFloat3 targetPos;
+	ICoreUnit::Id vipTargetId = -1;
 
 private:  // NOTE: Never assign directly, use SetTarget() to avoid access to a dead target
 	CEnemyInfo* target;

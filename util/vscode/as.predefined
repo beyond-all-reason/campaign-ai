@@ -691,6 +691,7 @@ class IFighterTask{
 	bool isScripted;
 	bool isMergeAllowed;
 	bool isRegroupAllowed;
+	int vipTargetId;
 	float range;
 	float retreat;
 }
@@ -716,6 +717,7 @@ class ISquadTask{
 	bool isScripted;
 	bool isMergeAllowed;
 	bool isRegroupAllowed;
+	int vipTargetId;
 	float range;
 	float retreat;
 }
@@ -741,6 +743,7 @@ class CDefendTask{
 	bool isScripted;
 	bool isMergeAllowed;
 	bool isRegroupAllowed;
+	int vipTargetId;
 	float range;
 	float retreat;
 }
@@ -764,6 +767,7 @@ class CSuperTask{
 	bool isScripted;
 	bool isMergeAllowed;
 	bool isRegroupAllowed;
+	int vipTargetId;
 	float range;
 	float retreat;
 }

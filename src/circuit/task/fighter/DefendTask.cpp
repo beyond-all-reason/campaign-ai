@@ -172,7 +172,7 @@ void CDefendTask::Update()
 	/*
 	 * Update target
 	 */
-	const bool isTargetsFound = isScripted ? FindTargetScripted() : FindTarget();
+	const bool isTargetsFound = isScripted ? FindTargetVIP() : FindTarget();
 
 	const AIFloat3& startPos = leader->GetPos(frame);
 	state = State::ROAM;
@@ -427,6 +427,64 @@ bool CDefendTask::FindTargetScripted()
 		return false;
 	}
 
+	return true;
+	// Return: target, startPos=leader->pos, enemyPositions
+}
+
+bool CDefendTask::FindTargetVIP()
+{
+	CCircuitAI* circuit = manager->GetCircuit();
+	CMap* map = circuit->GetMap();
+	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
+	SArea* area = leader->GetArea();
+	CCircuitDef* cdef = leader->GetCircuitDef();
+	const float weaponRange = cdef->GetMaxRange() * 0.9f;
+	const int canTargetCat = cdef->GetTargetCategory();
+
+	CEnemyInfo* enemy = (vipTargetId >= 0) ? circuit->GetEnemyInfo(vipTargetId) : nullptr;
+	if ((enemy == nullptr) || enemy->IsHidden()) {
+		return FindTargetScripted();
+	}
+	const AIFloat3& ePos = enemy->GetPos();
+	if (!terrainMgr->CanMoveToPos(area, ePos)) {
+		return FindTargetScripted();
+	}
+
+	const float elevation = map->GetElevationAt(ePos.x, ePos.z);
+	const bool IsInWater = cdef->IsPredictInWater(elevation);
+	CCircuitDef* edef = enemy->GetCircuitDef();
+	if (edef != nullptr) {
+		if (((edef->GetCategory() & canTargetCat) == 0)
+			|| (edef->IsAbleToFly() && !(IsInWater ? cdef->HasSubToAir() : cdef->HasSurfToAir())))  // notAA
+		{
+			return FindTargetScripted();
+		}
+		float elevation = map->GetElevationAt(ePos.x, ePos.z);
+		if (edef->IsInWater(elevation, ePos.y)) {
+			if (!(IsInWater ? cdef->HasSubToWater() : cdef->HasSurfToWater())) {  // notAW
+				return FindTargetScripted();
+			}
+		} else {
+			if (!(IsInWater ? cdef->HasSubToLand() : cdef->HasSurfToLand())) {  // notAL
+				return FindTargetScripted();
+			}
+		}
+		if (ePos.y - elevation > weaponRange) {
+			return FindTargetScripted();
+		}
+	} else {
+		if (!(IsInWater ? cdef->HasSubToWater() : cdef->HasSurfToWater()) && (ePos.y < -SQUARE_SIZE * 5)) {  // notAW
+			return FindTargetScripted();
+		}
+	}
+
+	enemyPositions.clear();
+	enemyPositions.push_back(ePos);
+
+	SetTarget(enemy);
+	foundPos = ePos;
+
+	circuit->GetThreatMap()->SetThreatType(leader);
 	return true;
 	// Return: target, startPos=leader->pos, enemyPositions
 }
