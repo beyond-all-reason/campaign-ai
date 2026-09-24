@@ -11,8 +11,8 @@ class Manager {
 		luaMsgHandlers = {
 			{formatInt(ELuaMsg::ENABLE_UNITDEFS), LuaMsgFunc(this.EnableUnitDefs)},
 			{formatInt(ELuaMsg::DISABLE_UNITDEFS), LuaMsgFunc(this.DisableUnitDefs)},
-			{formatInt(ELuaMsg::ENABLE_UNIT_CONTROL), LuaMsgFunc(this.EnableUnitControl)},
-			{formatInt(ELuaMsg::DISABLE_UNIT_CONTROL), LuaMsgFunc(this.DisableUnitControl)},
+			{formatInt(ELuaMsg::ENABLE_UNITS_CONTROL), LuaMsgFunc(this.EnableUnitsControl)},
+			{formatInt(ELuaMsg::DISABLE_UNITS_CONTROL), LuaMsgFunc(this.DisableUnitsControl)},
 			{formatInt(ELuaMsg::REQUEST_SQUAD), LuaMsgFunc(this.RequestSquad)},
 			{formatInt(ELuaMsg::SET_SCRIPTED_RECRUIT), LuaMsgFunc(this.SetScriptedRecruit)}
 		};
@@ -53,11 +53,11 @@ class Manager {
 		}
 	}
 
-	void EnableUnitControl(const array<string>& in unitIds) {
-		UnitControl(unitIds, true);
+	void EnableUnitsControl(const array<string>& in unitIds) {
+		UnitsControl(unitIds, true);
 	}
-	void DisableUnitControl(const array<string>& in unitIds) {
-		UnitControl(unitIds, false);
+	void DisableUnitsControl(const array<string>& in unitIds) {
+		UnitsControl(unitIds, false);
 	}
 
 	void RequestSquad(const array<string>& in params) {
@@ -71,7 +71,7 @@ class Manager {
 	/*
 	 * Helpers
 	 */
-	private void UnitControl(const array<string>@ ids, bool isEnable) {
+	private void UnitsControl(const array<string>@ ids, bool isEnable) {
 		for (uint i = 0; i < ids.length(); ++i)
 			ai.UnitControl(parseInt(ids[i]), isEnable);
 	}

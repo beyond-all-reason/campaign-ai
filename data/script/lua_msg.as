@@ -17,8 +17,8 @@ enum ELuaMsg {
 	SET_AI_ACTIVE                    =   1,  // boolean
 	ENABLE_UNITDEFS                  =   2,  // array of unitDefIDs
 	DISABLE_UNITDEFS                 =   3,  // array of unitDefIDs
-	ENABLE_UNIT_CONTROL              =   4,  // array of unitIDs
-	DISABLE_UNIT_CONTROL             =   5,  // array of unitIDs
+	ENABLE_UNITS_CONTROL             =   4,  // array of unitIDs
+	DISABLE_UNITS_CONTROL            =   5,  // array of unitIDs
 
 	// Base starts at 100
 	BASE_CREATE                      = 101,
