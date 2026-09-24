@@ -1430,10 +1430,17 @@ IUnitTask* CFactoryManager::DefaultMakeTask(CCircuitUnit* unit)
 
 IUnitTask* CFactoryManager::SelectFactoryTask(CCircuitUnit* unit)
 {
-	for (const CRecruitTask* candy : factoryTasks) {
-		if (candy->CanAssignTo(unit)) {
-			return const_cast<CRecruitTask*>(candy);
+	decltype(factoryTasks) tmpTasks = factoryTasks;
+	for (CRecruitTask* candy : tmpTasks) {
+		if (!candy->CanAssignTo(unit)) {
+			continue;
 		}
+		if (!candy->GetBuildDef()->IsAvailable(circuit->GetLastFrame())) {
+			// With dynamic UnitDef availability script can queue more than it can build
+			AbortTask(candy);
+			continue;
+		}
+		return const_cast<CRecruitTask*>(candy);
 	}
 	return nullptr;
 }

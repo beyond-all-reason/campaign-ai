@@ -3,6 +3,7 @@
 #include "manager/factory.as"
 #include "manager/economy.as"
 #include "misc/intent_manager.as"
+#include "misc/lua_msg_manager.as"
 #include "misc/squad.as"
 
 
@@ -49,6 +50,8 @@ void AiMain()
 	names = {Factory::armshltx, Factory::corgant};
 	for (uint i = 0; i < names.length(); ++i)
 		Factory::userData[ai.GetCircuitDef(names[i]).id].attr |= Factory::Attr::T3;
+
+	LuaMsg::mgr.InitHandlers();
 }
 
 void AiUpdate()  // SlowUpdate, every 30 frames with initial offset of skirmishAIId
@@ -57,10 +60,11 @@ void AiUpdate()  // SlowUpdate, every 30 frames with initial offset of skirmishA
 
 void AiLuaMessage(const string& in data)  // Spring.SendSkirmishAIMessage(teamID, msg) from unsynced lua
 {
-	if (data.findLast("DISABLE_CONTROL:", 0) == 0)
-		UnitControl(data.substr(16), false);
-	else if (data.findLast("ENABLE_CONTROL:", 0) == 0)
-		UnitControl(data.substr(15), true);
+	array<string>@ packets = data.split(LuaMsg::SEP_PACKET);
+	if (packets[0] != LuaMsg::VERSION)
+		return;
+	for (uint i = 1; i < packets.length(); ++i)
+		LuaMsg::mgr.HandleLuaMsg(packets[i]);
 }
 
 void AiMessage(const string& in data, int fromTeamId)  // AiSendMessage(msg, toTeamId = -1)
@@ -87,11 +91,3 @@ void AiHandleIntent(const SIntent& in intent)
 }
 
 }  // namespace Main
-
-
-void UnitControl(const string& in idList, bool isEnable)
-{
-	const array<string>@ ids = idList.split(",");
-	for (uint i = 0; i < ids.length(); ++i)
-		ai.UnitControl(parseInt(ids[i]), isEnable);
-}
