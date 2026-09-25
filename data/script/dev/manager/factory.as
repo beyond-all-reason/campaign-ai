@@ -1,7 +1,8 @@
 #include "../../define.as"
 #include "../../unit.as"
 #include "../../task.as"
-#include "../misc/commander.as"
+// #include "../misc/commander.as"
+#include "../misc/squad.as"
 #include "economy.as"
 
 
@@ -47,9 +48,9 @@ bool isRecruitScripted = false;
 
 IUnitTask@ AiMakeTask(CCircuitUnit@ unit)
 {
-	if (unit.circuitDef.IsAssist())  // construction turret
+	if (unit.circuitDef.IsAssist() || !isRecruitScripted)  // construction turret
 		return aiFactoryMgr.DefaultMakeTask(unit);
-	return isRecruitScripted ? aiFactoryMgr.SelectFactoryTask(unit) : aiFactoryMgr.DefaultMakeTask(unit);
+	return aiFactoryMgr.SelectFactoryTask(unit);
 }
 
 void AiTaskAdded(IUnitTask@ task)

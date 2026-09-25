@@ -60,6 +60,7 @@ local retreatThreshold = 2.2
 local isRecruitScripted = false
 
 local intent = VFS.Include("luarules/utilities/ai_lib/intent.lua")
+local luaMsg = VFS.Include("luarules/utilities/ai_lib/lua_msg.lua")
 
 --------------------------------------------------------------------------------
 
@@ -294,12 +295,9 @@ function widget:SendNewSquad2()
     })
 end
 function widget:SendNewSquad3()
-    -- Only 1 corlab: {4500, 1800}
-    CreateSquad(squadID3, {4500, 1800}, 710, {
-        ["corstorm"] = 1,
-        ["corthud"]  = 1,
-        ["corak"]    = 1,
-        ["corcrash"] = 1,
+    -- Only 1 corlab: {4500, 1800}, range=710
+    CreateSquad(squadID3, {4500, 1800}, 7100, {
+        ["corhurc"]  = 10,
     })
 end
 function widget:SendSelectSquad1()
@@ -387,6 +385,17 @@ function widget:SendTaskSupport()
     end
 end
 
+function widget:SendDozenSquads()
+    local squadID = 11
+    for i = 1, 10 do
+        squadID = squadID + 1
+        CreateSquad(squadID, {4155, 1854}, 710, {
+            ["corstorm"] = 3,
+            ["corthud"]  = 10,
+        })
+    end
+end
+
 function widget:SendPriorityTarget()
     local units = Spring.GetSelectedUnits()
     if #units > 0 then
@@ -441,29 +450,34 @@ function widget:SendActivateFactoryIntent()
         Spring.AiIntentArray(teamID, intent.topic.AI_FACTORY_ENABLE, 1, units)
     end
 end
-function widget:SendDisableUnitsIntent()
-    tracy.ZoneBeginN("AI_ENABLED_UNITS")
-    -- Alias for:
---     Spring.AiIntentDict(teamID, AI_ENABLED_UNITS, -1, {
---         [nameToDefID["corstorm"]] = 1,
---         [nameToDefID["corck"]]    = 0,
---         [nameToDefID["cornecro"]] = 0,
---     })
-    -- String alternative:
---     Spring.SendSkirmishAIMessage(teamID, "AI_kekw_UNITS:"..
---         nameToDefID["corstorm"].."=1:"..
---         nameToDefID["corck"]   .."=0:"..
---         nameToDefID["cornecro"].."=0")
-    Spring.AiIntentUnitDefs(teamID, intent.topic.AI_ENABLED_UNITS, -1, {
-        ["corstorm"] = 1,
-        ["corck"]    = 0,
-        ["cornecro"] = 0,
+function widget:SendEnableUnitsMsg()
+--     tracy.ZoneBeginN("ENABLE_UNITDEFS")
+    local msg = luaMsg.BuildArray(luaMsg.topic.ENABLE_UNITDEFS, {
+        nameToDefID["corthud"],
+        nameToDefID["corck"],
+        nameToDefID["cornecro"],
+        nameToDefID["coravp"],
+        nameToDefID["coralab"],
+        nameToDefID["coradvsol"],
     })
-    tracy.ZoneEnd()
+    Spring.SendSkirmishAIMessage(teamID, msg)
+--     tracy.ZoneEnd()
+end
+function widget:SendDisableUnitsMsg()
+    local msg = luaMsg.BuildArray(luaMsg.topic.DISABLE_UNITDEFS, {
+        nameToDefID["corthud"],
+        nameToDefID["corck"],
+        nameToDefID["cornecro"],
+        nameToDefID["coravp"],
+        nameToDefID["coralab"],
+        nameToDefID["coradvsol"],
+    })
+    Spring.SendSkirmishAIMessage(teamID, msg)
 end
 function widget:ToggleScriptedRectruit()
     isRecruitScripted = not isRecruitScripted
-    Spring.AiIntentFloat(teamID, intent.topic.AI_RECRUIT_SCRIPT, isRecruitScripted and 1 or 0);
+    local msg = luaMsg.BuildValue(luaMsg.topic.SET_SCRIPTED_RECRUIT, isRecruitScripted and 1 or 0)
+    Spring.SendSkirmishAIMessage(teamID, msg)
 end
 
 
@@ -501,8 +515,7 @@ function widget:SelectionChanged(selectedUnits)
 end
 
 function widget:GameStart()
-    isRecruitScripted = true
-    Spring.AiIntentFloat(teamID, intent.topic.AI_RECRUIT_SCRIPT, isRecruitScripted and 1 or 0);
+    ToggleScriptedRectruit()
 end
 
 function widget:RecvLuaMsg(message, playerID)
