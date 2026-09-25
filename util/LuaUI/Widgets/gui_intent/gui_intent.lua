@@ -272,7 +272,7 @@ function CreateSquad(squadID, pos, range, composition)
         [intent.param.SQUAD_GATHER_RANGE] = range,
         [intent.param.SQUAD_ATTACK_RANGE] = 512,
         [intent.param.SQUAD_IS_REPEAT] = true,
-        [intent.param.SQUAD_RETREAT] = 0,  -- -1 or 0 or (0.0..1.0]
+        [intent.param.SQUAD_RETREAT] = -1,  -- -1 or 0 or (0.0..1.0]
     })
     Spring.AiIntentUnitDefs(teamID, intent.topic.AI_REQ_COMPOSE, squadID, composition)
 --     tracy.ZoneEnd()
@@ -387,6 +387,18 @@ function widget:SendTaskSupport()
     end
 end
 
+function widget:SendPriorityTarget()
+    local units = Spring.GetSelectedUnits()
+    if #units > 0 then
+        Spring.AiIntentDict(teamID, intent.topic.AI_REQ_PARAMS, dm_handle.selectedWave, {
+            [intent.param.SQUAD_PRIO_TARGET] = units[1],
+        });
+        Spring.AiIntentDict(teamID, intent.topic.AI_SQUAD_PARAMS, dm_handle.selectedWave, {
+            [intent.param.SQUAD_PRIO_TARGET] = units[1],
+        });
+    end
+end
+
 -- function widget:SendArmyAAIntent()
 --     -- FIXME: According corlab's array in factory.json
 --     Spring.AiIntentArray(teamID, intent.topic.AI_UNIT_WEIGHTS, squadID1, {
@@ -405,6 +417,18 @@ end
 --         0, 1, 0, 0, 0, 0
 --     })
 -- end
+function widget:SendUnitDefRetreat1Intent()
+    Spring.AiIntentUnitDefs(teamID, intent.topic.AI_UNITDEF_RETREAT, -1, {
+        ["corstorm"] = 0.5,
+        ["corthud"] = 0.5,
+    })
+end
+function widget:SendUnitDefRetreat2Intent()
+    Spring.AiIntentUnitDefs(teamID, intent.topic.AI_UNITDEF_RETREAT, -1, {
+        ["corstorm"] = 1.0,
+        ["corthud"] = 1.0,
+    })
+end
 function widget:SendDeactivateFactoryIntent()
     local units = Spring.GetSelectedUnits()
     if #units > 0 then

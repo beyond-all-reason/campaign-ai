@@ -582,6 +582,7 @@ class CCircuitDef{
 	const float surfThrDmg;
 	const float waterThrDmg;
 	const float minRange;
+	float retreat;
 	int maxThisUnit;
 	int sinceFrame;
 	int cooldown;
@@ -690,6 +691,7 @@ class IFighterTask{
 	bool isScripted;
 	bool isMergeAllowed;
 	bool isRegroupAllowed;
+	int vipTargetId;
 	float range;
 	float retreat;
 }
@@ -715,6 +717,7 @@ class ISquadTask{
 	bool isScripted;
 	bool isMergeAllowed;
 	bool isRegroupAllowed;
+	int vipTargetId;
 	float range;
 	float retreat;
 }
@@ -740,6 +743,7 @@ class CDefendTask{
 	bool isScripted;
 	bool isMergeAllowed;
 	bool isRegroupAllowed;
+	int vipTargetId;
 	float range;
 	float retreat;
 }
@@ -763,6 +767,7 @@ class CSuperTask{
 	bool isScripted;
 	bool isMergeAllowed;
 	bool isRegroupAllowed;
+	int vipTargetId;
 	float range;
 	float retreat;
 }
@@ -1017,7 +1022,7 @@ CMilitaryManager aiMilitaryMgr;
 CTerrainManager aiTerrainMgr;
 CEnemyManager aiEnemyMgr;
 CThreatMap aiThreat;
-typedef aatc_hash_t aatc_hash_t;
+typedef uint64 aatc_hash_t;
 typedef int Id;
 typedef int Type;
 typedef uint Mask;

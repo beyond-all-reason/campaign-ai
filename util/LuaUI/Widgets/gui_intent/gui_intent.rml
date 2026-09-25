@@ -65,6 +65,11 @@
                     <button onclick="widget:SendTaskSupport()">support</button>
                 </div>
                 <div class="grid commands">
+                    <button onclick="widget:SendPriorityTarget()">target</button>
+                </div>
+                <div class="grid commands">
+                    <button onclick="widget:SendUnitDefRetreat1Intent()">retreat0.5</button>
+                    <button onclick="widget:SendUnitDefRetreat2Intent()">retreat1.0</button>
                     <button onclick="widget:SendDeactivateFactoryIntent()">Deactivate Factory</button>
                     <button onclick="widget:SendActivateFactoryIntent()">Activate Factory</button>
                     <button onclick="widget:SendDisableUnitsIntent()">Disable Units</button>

@@ -13,6 +13,7 @@ local topic = {
 	AI_SQUAD_TASK      = 213,
 	AI_SQUAD_PARAMS    = 214,
 
+	AI_UNITDEF_RETREAT =  11,
 	AI_REGION_AVOID    =  12,
 	AI_FACTORY_ENABLE  =  13,
 	AI_ENABLED_UNITS   =  14,
@@ -27,6 +28,7 @@ local param = {
 	SQUAD_ATTACK_RANGE = 4,
 	SQUAD_IS_REPEAT    = 5,
 	SQUAD_RETREAT      = 6,
+	SQUAD_PRIO_TARGET  = 7,
 
 	BASE_POS_X = 101,
 	BASE_POS_Z = 102,

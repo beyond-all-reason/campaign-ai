@@ -11,6 +11,7 @@ enum ESquadParams {
 	SQUAD_ATTACK_RANGE = 4,
 	SQUAD_IS_REPEAT    = 5,
 	SQUAD_RETREAT      = 6,
+	SQUAD_PRIO_TARGET  = 7,
 }
 
 enum ESquadTasks {
@@ -100,6 +101,11 @@ class Squad {
 			cast<IFighterTask>(task).retreat = value;
 	}
 
+	void SetPriorityTarget(Id enemyId) {
+		if (task.GetType() == Task::Type::FIGHTER && state == ESquadState::FINISHED)
+			cast<IFighterTask>(task).vipTargetId = enemyId;
+	}
+
 	Id id;
 	Request@ req;
 	IUnitTask@ task = null;  // military IFighterTask
@@ -137,6 +143,7 @@ class Request {
 		defendTask.isMergeAllowed = false;
 		defendTask.isRegroupAllowed = false;
 		defendTask.SetTargetPos(this.pos);
+		defendTask.vipTargetId = -1;
 		defendTask.range = this.attackRange;
 		defendTask.retreat = this.retreat;
 		return task;
@@ -149,6 +156,7 @@ class Request {
 	map<Id, Amount@> unitDefs;  // UnitDefId: amount
 	set<Id> recruitTasks;  // CRecruitTask.id for cleanup
 	AIFloat3 pos;
+	Id vipTargetId = -1;
 	float gatherRange = 64.f;
 	float attackRange = 300.f;
 	float retreat = 0.f;
@@ -187,6 +195,9 @@ class Manager {
 			} break;
 			case ESquadParams::SQUAD_RETREAT: {
 				req.retreat = intent.GetValue(i);
+			} break;
+			case ESquadParams::SQUAD_PRIO_TARGET: {
+				req.vipTargetId = int(intent.GetValue(i));
 			} break;
 			default: break;
 			}
@@ -292,6 +303,7 @@ class Manager {
 		if (squad.req.unitNum == squad.task.GetUnitCount() + 1 && squad.state == ESquadState::CREATED) {
 			IFighterTask@ fighterTask = cast<IFighterTask>(squad.task);
 			fighterTask.isRegroupAllowed = true;
+			fighterTask.vipTargetId = squad.req.vipTargetId;
 			squad.state = ESquadState::FINISHED;
 			ai.CallRules(SIG_SQUAD_FINISHED + squad.req.squadId);
 		}
@@ -345,8 +357,6 @@ class Manager {
 		Request@ req = squad.req;
 		if (squad.task !is null) {
 			taskToSquad.erase(squad.task.id);
-// 			IUnitTask@ newTask = aiMilitaryMgr.Enqueue(TaskF::Defend(Task::FightType::ATTACK, MAX_POWER));
-// 			squad.task.ReplaceBy(newTask);
 			squad.task.Abort();
 			@squad.task = null;
 		}
@@ -453,6 +463,9 @@ class Manager {
 			} break;
 			case ESquadParams::SQUAD_RETREAT: {
 				squad.SetRetreat(intent.GetValue(i));
+			} break;
+			case ESquadParams::SQUAD_PRIO_TARGET: {
+				squad.SetPriorityTarget(int(intent.GetValue(i)));
 			} break;
 			default: break;
 			}

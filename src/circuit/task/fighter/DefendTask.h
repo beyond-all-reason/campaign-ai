@@ -42,6 +42,7 @@ private:
 	virtual void Merge(ISquadTask* task) override;
 	bool FindTarget();
 	bool FindTargetScripted();
+	bool FindTargetVIP();
 	void ApplyTargetPath(const CQueryPathMulti* query);
 	void FallbackFrontPos();
 	void ApplyFrontPos(const CQueryPathMulti* query);

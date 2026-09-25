@@ -30,10 +30,10 @@ IFighterTask::IFighterTask(ITaskModule* mgr, FightType type, float powerMod, int
 		: IUnitTask(mgr, Priority::NORMAL, Type::FIGHTER, timeout)
 		, fightType(type)
 		, position(-RgtVector)
-		, targetPos(-RgtVector)
 		, attackPower(.0f)
 		, powerMod(powerMod)
 		, attackFrame(-1)
+		, targetPos(-RgtVector)
 		, target(nullptr)
 {
 }

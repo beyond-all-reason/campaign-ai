@@ -768,6 +768,7 @@ void CInitScript::RegisterCore()
 	r = engine->RegisterObjectProperty("CCircuitDef", "const float surfThrDmg", asOFFSET(CCircuitDef, surfThrDmg)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CCircuitDef", "const float waterThrDmg", asOFFSET(CCircuitDef, waterThrDmg)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CCircuitDef", "const float minRange", asOFFSET(CCircuitDef, minRange)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("CCircuitDef", "float retreat", asOFFSET(CCircuitDef, retreat)); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CCircuitDef", "float GetMaxRange(Type) const", asMETHODPR(CCircuitDef, GetMaxRange, (CCircuitDef::RangeType) const, float), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CCircuitDef", "float GetMaxRange() const", asMETHODPR(CCircuitDef, GetMaxRange, () const, float), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CCircuitDef", "void SetRange(Type, float)", asMETHODPR(CCircuitDef, SetRange, (CCircuitDef::RangeType, float), void), asCALL_THISCALL); ASSERT(r >= 0);
@@ -975,6 +976,7 @@ void CInitScript::RegisterIFighterTask(asIScriptEngine* engine, const char* cls)
 	r = engine->RegisterObjectProperty(cls, "bool isRegroupAllowed", asOFFSET(T, isRegroupAllowed)); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod(cls, "void SetTargetPos(const AIFloat3& in)", asMETHOD(T, SetTargetPos), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod(cls, "const AIFloat3& GetTargetPos() const", asMETHOD(T, GetTargetPos), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty(cls, "Id vipTargetId", asOFFSET(T, vipTargetId)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty(cls, "float range", asOFFSET(T, range)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty(cls, "float retreat", asOFFSET(T, retreat)); ASSERT(r >= 0);
 }

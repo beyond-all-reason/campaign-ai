@@ -18,6 +18,8 @@ enum EIntents {
 	AI_SQUAD_TASK      = 213,
 	AI_SQUAD_PARAMS    = 214,
 
+	AI_UNITDEF_RETREAT =  11,
+
 	AI_REGION_AVOID    =  12,
 
 	AI_FACTORY_ENABLE  =  13,

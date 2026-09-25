@@ -130,9 +130,8 @@ namespace
             if (not type) continue;
             const std::string_view ns = type->GetNamespace();
             if (not ns.empty()) stream << std::format("namespace {} {{\n", ns);
-            // FIXME: type->GetTypedefTypeId() deprecated in 2.39.0
             stream << std::format(
-                "typedef {} {};\n", engine->GetTypeDeclaration(type->GetTypeId()), type->GetName());
+                "typedef {} {};\n", engine->GetTypeDeclaration(type->GetUnderlyingTypeId()), type->GetName());
             if (not ns.empty()) stream << "}\n";
         }
     }
