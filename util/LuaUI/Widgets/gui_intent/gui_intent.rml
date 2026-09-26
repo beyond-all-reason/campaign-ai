@@ -65,6 +65,7 @@
                     <button onclick="widget:SendTaskSupport()">support</button>
                 </div>
                 <div class="grid commands">
+                    <button onclick="widget:SendDozenSquads()">10 squads</button>
                     <button onclick="widget:SendPriorityTarget()">target</button>
                 </div>
                 <div class="grid commands">
@@ -72,7 +73,8 @@
                     <button onclick="widget:SendUnitDefRetreat2Intent()">retreat1.0</button>
                     <button onclick="widget:SendDeactivateFactoryIntent()">Deactivate Factory</button>
                     <button onclick="widget:SendActivateFactoryIntent()">Activate Factory</button>
-                    <button onclick="widget:SendDisableUnitsIntent()">Disable Units</button>
+                    <button onclick="widget:SendEnableUnitsMsg()">Enable Units</button>
+                    <button onclick="widget:SendDisableUnitsMsg()">Disable Units</button>
                     <button onclick="widget:ToggleScriptedRectruit()">Scripted recruit</button>
                 </div>
                 <div class="grid commands">

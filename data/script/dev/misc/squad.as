@@ -223,6 +223,7 @@ class Manager {
 		Request@ req = squad.req;
 		req.unitNum += am.amount;
 
+		bool isAvail = cdef.IsAvailable(ai.frame);
 		Task::Priority priority = Task::Priority::NORMAL;
 		Task::RecruitType recruit = Task::RecruitType::FIREPOWER;
 		for (int j = 0; j < am.amount; ++j) {
@@ -235,10 +236,15 @@ class Manager {
 				continue;
 			}
 
-			IUnitTask@ task = aiFactoryMgr.Enqueue(TaskS::Recruit(recruit, priority, cdef, req.pos, req.gatherRange));
-			cast<CRecruitTask>(task).isSingleBuilder = true;
-			@buildTaskToReq[task.id] = req;
-			req.recruitTasks.insert(task.id);
+			if (isAvail) {
+				IUnitTask@ task = aiFactoryMgr.Enqueue(TaskS::Recruit(recruit, priority, cdef, req.pos, req.gatherRange));
+				cast<CRecruitTask>(task).isSingleBuilder = true;
+				@buildTaskToReq[task.id] = req;
+				req.recruitTasks.insert(task.id);
+			} else {
+				req.unitNum--;
+				am.assignedCount++;
+			}
 		}
 	}
 
@@ -267,6 +273,9 @@ class Manager {
 		}
 		if (squad.task !is null) {
 			CheckSquadFinished(squad);
+		} else if (req.unitNum == 0) {
+			DestroyRequest(squad);
+			return false;
 		}
 		return true;
 	}
@@ -341,6 +350,11 @@ class Manager {
 		}
 	}
 
+	private void DestroyRequest(Squad@ squad) {
+		RemoveRequest(squad.req);
+		RemoveSquad(squad);
+	}
+
 	// Invoked by Intent::Manager::HandleIntent
 	bool DestroyRequest(int squadId) {
 		bool success;
@@ -348,8 +362,7 @@ class Manager {
 		if (!success)
 			return false;
 
-		RemoveRequest(squad.req);
-		RemoveSquad(squad);
+		DestroyRequest(squad);
 		return true;
 	}
 
