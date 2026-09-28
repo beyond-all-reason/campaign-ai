@@ -2,7 +2,6 @@
 #include "manager/builder.as"
 #include "manager/factory.as"
 #include "manager/economy.as"
-#include "misc/intent_manager.as"
 #include "misc/lua_msg_manager.as"
 #include "misc/squad.as"
 
@@ -60,6 +59,7 @@ void AiUpdate()  // SlowUpdate, every 30 frames with initial offset of skirmishA
 
 void AiLuaMessage(const string& in data)  // Spring.SendSkirmishAIMessage(teamID, msg) from unsynced lua
 {
+AiLog(data);
 	array<string>@ packets = data.split(LuaMsg::SEP_PACKET);
 	if (packets[0] != LuaMsg::VERSION)
 		return;
@@ -83,11 +83,6 @@ void AiUnitDestroyed(CCircuitUnit@ unit)
 	// NOTE: Experimental. May be deprecated
 	// Duplicates module's AiUnitRemoved, but for any unit.
 	units.erase(unit.id);
-}
-
-void AiHandleIntent(const SIntent& in intent)
-{
-	Intent::mgr.HandleIntent(intent);
 }
 
 }  // namespace Main

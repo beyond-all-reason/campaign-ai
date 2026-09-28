@@ -498,15 +498,6 @@ class OStream{
 	OStream& opShl(const float&in);
 	OStream& opShl(const double&in);
 }
-class SIntent{
-	const float opIndex(uint) const;
-	int GetKey(uint) const;
-	float GetValue(uint) const;
-	const int topic;
-	const int objId;
-	const float value;
-	const uint size;
-}
 class TypeMask{
 	int type;
 	uint mask;

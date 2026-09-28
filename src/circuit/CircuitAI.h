@@ -20,9 +20,6 @@
 #include <vector>
 
 struct SSkirmishAICallback;
-struct SFloatIntent;
-struct SArrayFloatIntent;
-struct SDictFloatIntent;
 
 namespace circuit {
 
@@ -98,7 +95,6 @@ public:
 // >>> AI Event handler ---- BEGIN
 public:
 	int HandleEvent(int topic, const void* data);
-	int HandleIntent(int topic, const void* data);
 	void NotifyGameEnd();
 	void NotifyResign();
 	void Resign(int newTeamId);
@@ -111,7 +107,6 @@ private:
 	int HandleGameIntent(int topic, const void* data);
 	int HandleEndIntent(int topic, const void* data);
 	EventHandlerPtr eventHandler;
-	EventHandlerPtr intentHandler;
 
 	int ownerTeamId;
 	springai::Economy* economy;
@@ -145,9 +140,6 @@ private:
 	int Load(std::istream& is);
 	int Save(std::ostream& os);
 	int LuaMessage(const char* inData);
-	int HandleIntent(const SFloatIntent* intent);
-	int HandleIntent(const SArrayFloatIntent* intent);
-	int HandleIntent(const SDictFloatIntent* intent);
 
 	bool InitSide();
 public:

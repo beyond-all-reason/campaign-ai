@@ -1,28 +1,28 @@
 #include "../../task.as"
+#include "../../lua_msg.as"
 
 
 namespace Squad {
 
 // Has to be same as Lua's defines
-enum ESquadParams {
-	SQUAD_POS_X        = 1,
-	SQUAD_POS_Z        = 2,
-	SQUAD_GATHER_RANGE = 3,
-	SQUAD_ATTACK_RANGE = 4,
-	SQUAD_IS_REPEAT    = 5,
-	SQUAD_RETREAT      = 6,
-	SQUAD_PRIO_TARGET  = 7,
+enum ESquadParam {
+	POSITION           = 1,
+	SQUAD_GATHER_RANGE = 2,
+	SQUAD_ATTACK_RANGE = 3,
+	SQUAD_REBUILD      = 4,
+	SQUAD_RETREAT      = 5,
+	SQUAD_PRIO_TARGET  = 6,
 }
 
-enum ESquadTasks {
-	TASK_DEFEND  = 1,
-	TASK_SCOUT   = 2,
-	TASK_RAID    = 3,
-	TASK_ATTACK  = 4,
-	TASK_BOMB    = 5,
-	TASK_ARTY    = 6,
-	TASK_AA      = 7,
-	TASK_SUPPORT = 8,
+enum ESquadTask {
+	DEFEND  = 1,
+	SCOUT   = 2,
+	RAID    = 3,
+	ATTACK  = 4,
+	BOMB    = 5,
+	ARTY    = 6,
+	AA      = 7,
+	SUPPORT = 8,
 }
 
 enum ESquadState {CREATED, FINISHED}
@@ -58,28 +58,28 @@ class Squad {
 
 	void SetTask(int type) {
 		switch (type) {
-		case ESquadTasks::TASK_DEFEND: {
+		case ESquadTask::DEFEND: {
 			ChangeTask(TaskF::Defend(Task::FightType::ATTACK, MAX_POWER));
 		} break;
-		case ESquadTasks::TASK_SCOUT: {
+		case ESquadTask::SCOUT: {
 			ChangeTask(TaskF::Common(Task::FightType::SCOUT));
 		} break;
-		case ESquadTasks::TASK_RAID: {
+		case ESquadTask::RAID: {
 			ChangeTask(TaskF::Common(Task::FightType::RAID));
 		} break;
-		case ESquadTasks::TASK_ATTACK: {
+		case ESquadTask::ATTACK: {
 			ChangeTask(TaskF::Common(Task::FightType::ATTACK));
 		} break;
-		case ESquadTasks::TASK_BOMB: {
+		case ESquadTask::BOMB: {
 			ChangeTask(TaskF::Common(Task::FightType::BOMB));
 		} break;
-		case ESquadTasks::TASK_ARTY: {
+		case ESquadTask::ARTY: {
 			ChangeTask(TaskF::Common(Task::FightType::ARTY));
 		} break;
-		case ESquadTasks::TASK_AA: {
+		case ESquadTask::AA: {
 			ChangeTask(TaskF::Common(Task::FightType::AA));
 		} break;
-		case ESquadTasks::TASK_SUPPORT: {
+		case ESquadTask::SUPPORT: {
 			ChangeTask(TaskF::Common(Task::FightType::SUPPORT));
 		} break;
 		default: break;
@@ -116,7 +116,6 @@ class Squad {
 class Request {
 	Request(Id p_id) {
 		squadId = p_id;
-// 		id = p_id;
 		pos = AiTerrainCenter();
 	}
 
@@ -132,7 +131,7 @@ class Request {
 	void ClearForCompose(map<Id, Request@>& buildTaskToReq) {
 		ClearForRepeat(buildTaskToReq);
 		unitDefs.clear();
-// 		power = 0.f;
+		// power = 0.f;
 	}
 
 	IUnitTask@ InitialTask() {
@@ -150,8 +149,6 @@ class Request {
 	}
 
 	Id squadId;
-// 	Id id;
-// 	set<Id> squads;
 
 	map<Id, Amount@> unitDefs;  // UnitDefId: amount
 	set<Id> recruitTasks;  // CRecruitTask.id for cleanup
@@ -160,11 +157,11 @@ class Request {
 	float gatherRange = 64.f;
 	float attackRange = 300.f;
 	float retreat = 0.f;
-// 	float power = 0.f;  // FIXME: power or unit number?
+	// float power = 0.f;  // FIXME: power or unit number?
 	int unitNum = 0;
 
 	bool isRepeat = false;  // re-create on squad killed
-// 	bool isInfinite = false;  // constantly produce squads
+	// bool isInfinite = false;  // constantly produce squads
 }
 
 
@@ -179,49 +176,53 @@ class Amount {
 
 
 class Manager {
-	private void ParseRequestParams(const SIntent& in intent, Request@ req) {
-		for (uint i = 0; i < intent.size; ++i) {
-			switch (intent.GetKey(i)) {
-			case ESquadParams::SQUAD_POS_X: { req.pos.x = intent.GetValue(i); } break;
-			case ESquadParams::SQUAD_POS_Z: { req.pos.z = intent.GetValue(i); } break;
-			case ESquadParams::SQUAD_GATHER_RANGE: {
-				req.gatherRange = intent.GetValue(i);
+	private void ParseRequestParams(const array<string>& in params, Request@ req) {
+		for (uint i = 0; i < params.length(); ++i) {
+			const array<string>@ kv = params[i].split(LuaMsg::SEP_KEY_VALUE);
+			switch (parseInt(kv[0])) {
+			case ESquadParam::POSITION: {
+				const array<string>@ values = kv[1].split(LuaMsg::SEP_SUBPARAM);
+				req.pos.x = parseFloat(values[0]);
+				req.pos.z = parseFloat(values[1]);
 			} break;
-			case ESquadParams::SQUAD_ATTACK_RANGE: {
-				req.attackRange = intent.GetValue(i);
+			case ESquadParam::SQUAD_GATHER_RANGE: {
+				req.gatherRange = parseFloat(kv[1]);
 			} break;
-			case ESquadParams::SQUAD_IS_REPEAT: {
-				req.isRepeat = intent.GetValue(i) != 0.f;
+			case ESquadParam::SQUAD_ATTACK_RANGE: {
+				req.attackRange = parseFloat(kv[1]);
 			} break;
-			case ESquadParams::SQUAD_RETREAT: {
-				req.retreat = intent.GetValue(i);
+			case ESquadParam::SQUAD_REBUILD: {
+				req.isRepeat = kv[1] != "0";
 			} break;
-			case ESquadParams::SQUAD_PRIO_TARGET: {
-				req.vipTargetId = int(intent.GetValue(i));
+			case ESquadParam::SQUAD_RETREAT: {
+				req.retreat = parseFloat(kv[1]);
+			} break;
+			case ESquadParam::SQUAD_PRIO_TARGET: {
+				req.vipTargetId = parseInt(kv[1]);
 			} break;
 			default: break;
 			}
 		}
 	}
 
-	// Invoked by Intent::Manager::HandleIntent
-	bool CreateRequest(const SIntent& in intent) {
-		if (squads.contains(intent.objId))
-			return false;
-
-		Request req(intent.objId);
-		ParseRequestParams(intent, req);
-		requests.insertLast(@req);
-
-		Squad squad(req);
-		squads.insert(squad.id, @squad);
-		return true;
+	// Invoked by LuaMsg::Manager::SelectSquadRequestId / SelectSquadId
+	void SelectSquad(Id squadId) {
+		bool success;
+		Squad@ squad = squads.find(squadId, success);
+		if (!success) {
+			Request req(squadId);
+			requests.insertLast(@req);
+			@squad = Squad(req);
+			squads.insert(squad.id, @squad);
+		}
+		@selSquad = squad;
 	}
 
 	// Check for existing units. Place build-order if not enough found.
 	private void PlaceOrder(Squad@ squad, CCircuitDef@ cdef, Amount@ am) {
 		Request@ req = squad.req;
 		req.unitNum += am.amount;
+		// req.power += cdef.power * am.amount;
 
 		bool isAvail = cdef.IsAvailable(ai.frame);
 		Task::Priority priority = Task::Priority::NORMAL;
@@ -248,33 +249,29 @@ class Manager {
 		}
 	}
 
-	// Invoked by Intent::Manager::HandleIntent
-	bool ComposeRequest(const SIntent& in intent) {
-		// intent has {unitDefId: amount} dictionary
-		bool success;
-		Squad@ squad = squads.find(intent.objId, success);
-		if (!success)
+	// Invoked by LuaMsg::Manager::SquadRequestCompose
+	bool ComposeRequest(const array<string>& in params) {
+		// message contains {unitDefId: amount} dictionary
+		if (selSquad is null)
 			return false;
 
-		Request@ req = squad.req;
+		Request@ req = selSquad.req;
 		req.ClearForCompose(buildTaskToReq);
-		DestroySquad(squad);
-		for (uint i = 0; i < intent.size; ++i) {
-			CCircuitDef@ cdef = ai.GetCircuitDef(intent.GetKey(i));
+		DestroySquad(selSquad);
+		for (uint i = 0; i < params.length(); ++i) {
+			const array<string>@ kv = params[i].split(LuaMsg::SEP_KEY_VALUE);
+			CCircuitDef@ cdef = ai.GetCircuitDef(parseInt(kv[0]));
 			if (cdef is null)
 				continue;
-			float num = intent.GetValue(i);
-			int inum = int(num);
-			Amount@ am = Amount(inum);
+			Amount@ am = Amount(parseInt(kv[1]));
 			req.unitDefs.insert(cdef.id, am);
-// 			req.power += cdef.power * num;
 
-			PlaceOrder(squad, cdef, am);
+			PlaceOrder(selSquad, cdef, am);
 		}
-		if (squad.task !is null) {
-			CheckSquadFinished(squad);
+		if (selSquad.task !is null) {
+			CheckSquadFinished(selSquad);
 		} else if (req.unitNum == 0) {
-			DestroyRequest(squad);
+			DestroyRequest(selSquad);
 			return false;
 		}
 		return true;
@@ -355,8 +352,8 @@ class Manager {
 		RemoveSquad(squad);
 	}
 
-	// Invoked by Intent::Manager::HandleIntent
-	bool DestroyRequest(int squadId) {
+	// Invoked by LuaMsg::Manager::SquadRequestCancel
+	bool DestroyRequest(Id squadId) {
 		bool success;
 		Squad@ squad = squads.find(squadId, success);
 		if (!success)
@@ -393,8 +390,8 @@ class Manager {
 		}
 	}
 
-	// Invoked by Intent::Manager::HandleIntent
-	bool DestroySquadId(int squadId) {
+	// Invoked by LuaMsg::Manager::SquadDisband
+	bool DestroySquadId(Id squadId) {
 		bool success;
 		Squad@ squad = squads.find(squadId, success);
 		if (!success)
@@ -453,62 +450,57 @@ class Manager {
 		return true;
 	}
 
-	// Invoked by Intent::Manager::HandleIntent
-	bool SetRequestParams(const SIntent& in intent) {
-		bool success;
-		Squad@ squad = squads.find(intent.objId, success);
-		if (!success)
+	// Invoked by LuaMsg::Manager::SquadRequestParams
+	bool SetRequestParams(const array<string>& in params) {
+		if (selSquad is null)
 			return false;
 
-		ParseRequestParams(intent, squad.req);
+		ParseRequestParams(params, selSquad.req);
 		return true;
 	}
 
-	private void ParseSquadParams(const SIntent& in intent, Squad@ squad) {
-		AIFloat3 pos(-RgtVector);
-
-		for (uint i = 0; i < intent.size; ++i) {
-			switch (intent.GetKey(i)) {
-			case ESquadParams::SQUAD_POS_X: { pos.x = intent.GetValue(i); } break;
-			case ESquadParams::SQUAD_POS_Z: { pos.z = intent.GetValue(i); } break;
-			case ESquadParams::SQUAD_ATTACK_RANGE: {
-				squad.SetAttackRange(intent.GetValue(i));
+	private void ParsESquadParam(const array<string>& in params, Squad@ squad) {
+		for (uint i = 0; i < params.length(); ++i) {
+			const array<string>@ kv = params[i].split(LuaMsg::SEP_KEY_VALUE);
+			switch (parseInt(kv[0])) {
+			case ESquadParam::POSITION: {
+				const array<string>@ values = kv[1].split(LuaMsg::SEP_SUBPARAM);
+				AIFloat3 pos;
+				pos.x = parseFloat(values[0]);
+				pos.z = parseFloat(values[1]);
+				squad.SetPosition(pos);
 			} break;
-			case ESquadParams::SQUAD_RETREAT: {
-				squad.SetRetreat(intent.GetValue(i));
+			case ESquadParam::SQUAD_ATTACK_RANGE: {
+				squad.SetAttackRange(parseFloat(kv[1]));
 			} break;
-			case ESquadParams::SQUAD_PRIO_TARGET: {
-				squad.SetPriorityTarget(int(intent.GetValue(i)));
+			case ESquadParam::SQUAD_RETREAT: {
+				squad.SetRetreat(parseFloat(kv[1]));
+			} break;
+			case ESquadParam::SQUAD_PRIO_TARGET: {
+				squad.SetPriorityTarget(parseInt(kv[1]));
 			} break;
 			default: break;
 			}
 		}
-
-		if (pos.x >= 0.f)
-			squad.SetPosition(pos);
 	}
 
-	// Invoked by Intent::Manager::HandleIntent
-	bool SetSquadParams(const SIntent& in intent) {
-		bool success;
-		Squad@ squad = squads.find(intent.objId, success);
-		if (!success || squad.task is null)
+	// Invoked by LuaMsg::Manager::SquadParams
+	bool SetSquadParams(const array<string>& in params) {
+		if (selSquad is null)
 			return false;
 
-		ParseSquadParams(intent, squad);
+		ParsESquadParam(params, selSquad);
 		return true;
 	}
 
-	// Invoked by Intent::Manager::HandleIntent
-	bool SetSquadTask(const SIntent& in intent) {
-		bool success;
-		Squad@ squad = squads.find(intent.objId, success);
-		if (!success || squad.task is null)
+	// Invoked by LuaMsg::Manager::SquadTask
+	bool SetSquadTask(int type) {
+		if (selSquad is null || selSquad.task is null)
 			return false;
 
-		taskToSquad.erase(squad.task.id);
-		squad.SetTask(int(intent.value));
-		@taskToSquad[squad.task.id] = squad;
+		taskToSquad.erase(selSquad.task.id);
+		selSquad.SetTask(type);
+		@taskToSquad[selSquad.task.id] = selSquad;
 		return true;
 	}
 
@@ -516,6 +508,8 @@ class Manager {
 	private array<Request@> requests;  // owner
 	private map<Id, Request@> buildTaskToReq;  // CRecruitTask.id => Request
 	private map<Id, Squad@> taskToSquad;  // ISquadTask.id => Squad
+
+	private Squad@ selSquad;  // Selected state
 }
 
 Manager mgr;

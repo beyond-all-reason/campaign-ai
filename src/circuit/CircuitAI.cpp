@@ -38,7 +38,6 @@
 
 #include "AISEvents.h"
 #include "AISCommands.h"
-#include "AISIntents.h"
 #include "Log.h"
 #include "Game.h"
 #include "Lua.h"
@@ -92,7 +91,6 @@ std::set<ICoreUnit::Id> destroyed;  // in current frame, between Update events
 
 CCircuitAI::CCircuitAI(OOAICallback* clb)
 		: eventHandler(&CCircuitAI::HandleGameEvent)
-		, intentHandler(&CCircuitAI::HandleGameIntent)
 		, economy(nullptr)
 		, metalRes(nullptr)
 		, energyRes(nullptr)
@@ -147,15 +145,9 @@ int CCircuitAI::HandleEvent(int topic, const void* data)
 	return (this->*eventHandler)(topic, data);
 }
 
-int CCircuitAI::HandleIntent(int topic, const void* data)
-{
-	return (this->*intentHandler)(topic, data);
-}
-
 void CCircuitAI::NotifyGameEnd()
 {
 	eventHandler = &CCircuitAI::HandleEndEvent;
-	intentHandler = &CCircuitAI::HandleEndIntent;
 }
 
 void CCircuitAI::NotifyResign()
@@ -164,7 +156,6 @@ void CCircuitAI::NotifyResign()
 	metalRes = callback->GetResourceByName(RES_NAME_METAL);
 	energyRes = callback->GetResourceByName(RES_NAME_ENERGY);
 	eventHandler = &CCircuitAI::HandleResignEvent;
-	intentHandler = &CCircuitAI::HandleEndIntent;
 }
 
 void CCircuitAI::Resign(int newTeamId)
@@ -518,32 +509,6 @@ int CCircuitAI::HandleResignEvent(int topic, const void* data)
 		default: break;
 	}
 	return 0;
-}
-
-int CCircuitAI::HandleGameIntent(int topic, const void* data)
-{
-	int ret = ERROR_INTENT;
-
-	switch (topic) {
-		case INTENT_FLOAT: {
-			TRACY_TOPIC("INTENT_FLOAT", IntentFloat);
-
-			ret = this->HandleIntent((struct SFloatIntent*)data);
-		} break;
-		case INTENT_ARRAY_FLOAT: {
-			TRACY_TOPIC("INTENT_ARRAY_FLOAT", IntentArrayFloat);
-
-			ret = this->HandleIntent((struct SArrayFloatIntent*)data);
-		} break;
-		case INTENT_DICT_FLOAT: {
-			TRACY_TOPIC("INTENT_DICT_FLOAT", IntentDictFloat);
-
-			ret = this->HandleIntent((struct SDictFloatIntent*)data);
-		} break;
-		default: break;
-	}
-
-	return ret;
 }
 
 int CCircuitAI::HandleEndIntent(int topic, const void* data)
@@ -1466,24 +1431,6 @@ int CCircuitAI::LuaMessage(const char* inData)
 {
 	script->LuaMessage(inData);
 	return 0;  // signaling: OK
-}
-
-int CCircuitAI::HandleIntent(const SFloatIntent* intent)
-{
-	script->HandleIntent(intent);
-	return 0;
-}
-
-int CCircuitAI::HandleIntent(const SArrayFloatIntent* intent)
-{
-	script->HandleIntent(intent);
-	return 0;
-}
-
-int CCircuitAI::HandleIntent(const SDictFloatIntent* intent)
-{
-	script->HandleIntent(intent);
-	return 0;
 }
 
 bool CCircuitAI::InitSide()

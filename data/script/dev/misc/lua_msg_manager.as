@@ -9,12 +9,25 @@ namespace LuaMsg {
 class Manager {
 	void InitHandlers() {
 		luaMsgHandlers = {
+			{formatInt(ELuaMsg::SET_AI_ACTIVE), LuaMsgFunc(this.SetAiActive)},
 			{formatInt(ELuaMsg::ENABLE_UNITDEFS), LuaMsgFunc(this.EnableUnitDefs)},
 			{formatInt(ELuaMsg::DISABLE_UNITDEFS), LuaMsgFunc(this.DisableUnitDefs)},
 			{formatInt(ELuaMsg::ENABLE_UNITS_CONTROL), LuaMsgFunc(this.EnableUnitsControl)},
 			{formatInt(ELuaMsg::DISABLE_UNITS_CONTROL), LuaMsgFunc(this.DisableUnitsControl)},
-			{formatInt(ELuaMsg::REQUEST_SQUAD), LuaMsgFunc(this.RequestSquad)},
-			{formatInt(ELuaMsg::SET_SCRIPTED_RECRUIT), LuaMsgFunc(this.SetScriptedRecruit)}
+
+			{formatInt(ELuaMsg::UNITDEF_RETREAT), LuaMsgFunc(this.SetUnitDefRetreat)},
+			{formatInt(ELuaMsg::SET_FACTORY_ACTIVE), LuaMsgFunc(this.SetFactoryActive)},
+			{formatInt(ELuaMsg::SET_SCRIPTED_RECRUIT), LuaMsgFunc(this.SetScriptedRecruit)},
+
+			{formatInt(ELuaMsg::SQUAD_REQUEST_ID), LuaMsgFunc(this.SelectSquadRequestId)},
+			{formatInt(ELuaMsg::SQUAD_REQUEST_COMPOSE), LuaMsgFunc(this.SquadRequestCompose)},
+			{formatInt(ELuaMsg::SQUAD_REQUEST_CANCEL), LuaMsgFunc(this.SquadRequestCancel)},
+			{formatInt(ELuaMsg::SQUAD_REQUEST_PARAMS), LuaMsgFunc(this.SquadRequestParams)},
+
+			{formatInt(ELuaMsg::SQUAD_ID), LuaMsgFunc(this.SelectSquadId)},
+			{formatInt(ELuaMsg::SQUAD_DISBAND), LuaMsgFunc(this.SquadDisband)},
+			{formatInt(ELuaMsg::SQUAD_TASK), LuaMsgFunc(this.SquadTask)},
+			{formatInt(ELuaMsg::SQUAD_PARAMS), LuaMsgFunc(this.SquadParams)}
 		};
 	}
 
@@ -24,14 +37,18 @@ class Manager {
 		if (!luaMsgHandlers.get(command[0], @func))
 			return;
 		array<string>@ params = command[1].split(SEP_PARAM);
-		if (!params.isEmpty() && params[params.length() - 1].isEmpty())
-			params.removeLast();  // ignore trailing SEP_PARAM
+		// if (!params.isEmpty() && params[params.length() - 1].isEmpty())
+		// 	params.removeLast();  // ignore trailing SEP_PARAM
 		func(params);
 	}
 
 	/*
 	 * LuaMsg handlers
 	 */
+	void SetAiActive(const array<string>& in params) {
+		// TODO
+	}
+
 	void EnableUnitDefs(const array<string>& in unitDefIds) {
 		for (uint i = 0; i < unitDefIds.length(); ++i) {
 			CCircuitDef@ cdef = ai.GetCircuitDef(parseInt(unitDefIds[i]));
@@ -60,12 +77,60 @@ class Manager {
 		UnitsControl(unitIds, false);
 	}
 
-	void RequestSquad(const array<string>& in params) {
-		// TODO
+	void SetUnitDefRetreat(const array<string>& in params) {
+		for (uint i = 0; i < params.length(); ++i) {
+			const array<string>@ kv = params[i].split(SEP_KEY_VALUE);
+			CCircuitDef@ cdef = ai.GetCircuitDef(parseInt(kv[0]));
+			if (cdef is null)
+				continue;
+			cdef.retreat = parseFloat(kv[1]);
+		}
+	}
+
+	void SetFactoryActive(const array<string>& in params) {
+		const array<string>@ kv = params[0].split(SEP_KEY_VALUE);
+		const array<string>@ unitIds = kv[1].split(SEP_SUBPARAM);
+		bool isActive = kv[0] != "0";
+		for (uint i = 0; i < unitIds.length(); ++i)
+			aiFactoryMgr.SetIsActiveFactory(parseInt(unitIds[i]), isActive);
 	}
 
 	void SetScriptedRecruit(const array<string>& in params) {
 		Factory::isRecruitScripted = params[0] != "0";
+	}
+
+	// Squad Request
+	void SelectSquadRequestId(const array<string>& in params) {
+		Squad::mgr.SelectSquad(parseInt(params[0]));
+	}
+
+	void SquadRequestCompose(const array<string>& in params) {
+		Squad::mgr.ComposeRequest(params);
+	}
+
+	void SquadRequestCancel(const array<string>& in params) {
+		Squad::mgr.DestroyRequest(parseInt(params[0]));
+	}
+
+	void SquadRequestParams(const array<string>& in params) {
+		Squad::mgr.SetRequestParams(params);
+	}
+
+	// Squad
+	void SelectSquadId(const array<string>& in params) {
+		Squad::mgr.SelectSquad(parseInt(params[0]));
+	}
+
+	void SquadDisband(const array<string>& in params) {
+		Squad::mgr.DestroySquadId(parseInt(params[0]));
+	}
+
+	void SquadTask(const array<string>& in params) {
+		Squad::mgr.SetSquadTask(parseInt(params[0]));
+	}
+
+	void SquadParams(const array<string>& in params) {
+		Squad::mgr.SetSquadParams(params);
 	}
 
 	/*
