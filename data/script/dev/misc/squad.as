@@ -224,7 +224,6 @@ class Manager {
 		req.unitNum += am.amount;
 		// req.power += cdef.power * am.amount;
 
-		bool isAvail = cdef.IsAvailable(ai.frame);
 		Task::Priority priority = Task::Priority::NORMAL;
 		Task::RecruitType recruit = Task::RecruitType::FIREPOWER;
 		for (int j = 0; j < am.amount; ++j) {
@@ -237,15 +236,10 @@ class Manager {
 				continue;
 			}
 
-			if (isAvail) {
-				IUnitTask@ task = aiFactoryMgr.Enqueue(TaskS::Recruit(recruit, priority, cdef, req.pos, req.gatherRange));
-				cast<CRecruitTask>(task).isSingleBuilder = true;
-				@buildTaskToReq[task.id] = req;
-				req.recruitTasks.insert(task.id);
-			} else {
-				req.unitNum--;
-				am.assignedCount++;
-			}
+			IUnitTask@ task = aiFactoryMgr.Enqueue(TaskS::Recruit(recruit, priority, cdef, req.pos, req.gatherRange));
+			cast<CRecruitTask>(task).isSingleBuilder = true;
+			@buildTaskToReq[task.id] = req;
+			req.recruitTasks.insert(task.id);
 		}
 	}
 
@@ -257,7 +251,8 @@ class Manager {
 
 		Request@ req = selSquad.req;
 		req.ClearForCompose(buildTaskToReq);
-		DestroySquad(selSquad);
+		if (selSquad.task !is null)
+			DestroySquad(selSquad);
 		for (uint i = 0; i < params.length(); ++i) {
 			const array<string>@ kv = params[i].split(LuaMsg::SEP_KEY_VALUE);
 			CCircuitDef@ cdef = ai.GetCircuitDef(parseInt(kv[0]));
@@ -268,12 +263,8 @@ class Manager {
 
 			PlaceOrder(selSquad, cdef, am);
 		}
-		if (selSquad.task !is null) {
-			CheckSquadFinished(selSquad);
-		} else if (req.unitNum == 0) {
-			DestroyRequest(selSquad);
-			return false;
-		}
+		if (selSquad.task !is null)
+			CheckSquadFinished(selSquad, selSquad.task.GetUnitCount());
 		return true;
 	}
 
@@ -305,8 +296,8 @@ class Manager {
 		}
 	}
 
-	private void CheckSquadFinished(Squad@ squad) {
-		if (squad.req.unitNum == squad.task.GetUnitCount() + 1 && squad.state == ESquadState::CREATED) {
+	private void CheckSquadFinished(Squad@ squad, int taskUnitNum) {
+		if (squad.req.unitNum == taskUnitNum && squad.state == ESquadState::CREATED) {
 			IFighterTask@ fighterTask = cast<IFighterTask>(squad.task);
 			fighterTask.isRegroupAllowed = true;
 			fighterTask.vipTargetId = squad.req.vipTargetId;
@@ -323,7 +314,7 @@ class Manager {
 
 		Squad@ squad = squads[req.squadId];
 		UpdateSquadTask(squad);
-		CheckSquadFinished(squad);
+		CheckSquadFinished(squad, squad.task.GetUnitCount() + 1);
 
 		return squad.task;
 	}
@@ -410,8 +401,16 @@ class Manager {
 
 		buildTaskToReq.erase(task.id);
 		req.recruitTasks.erase(task.id);
+
 		// NOTE: Alternative is to re-create task; Not invoked on exit.
 		req.unitNum--;
+		req.unitDefs[cast<IBuilderTask>(task).buildDef.id].assignedCount++;
+		Squad@ squad = squads[req.squadId];
+		if (squad.task is null) {
+			if (req.unitNum == 0)
+				DestroyRequest(squad);
+		} else
+			CheckSquadFinished(squad, squad.task.GetUnitCount());
 	}
 
 	// Invoked by Factory::AiTaskRemoved done=true

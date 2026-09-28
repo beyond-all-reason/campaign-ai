@@ -12,6 +12,8 @@
 
 namespace circuit {
 
+class CCircuitDef;
+
 class CDefendTask final: public ISquadTask {
 public:
 	friend class CInitScript;
@@ -40,6 +42,7 @@ protected:
 
 private:
 	virtual void Merge(ISquadTask* task) override;
+	bool CanAttackTarget(CCircuitDef* cdef, CEnemyInfo* enemy, CMap* map, float weaponRange, int canTargetCat) const;
 	bool FindTarget();
 	bool FindTargetScripted();
 	bool FindTargetVIP();

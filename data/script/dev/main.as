@@ -59,7 +59,6 @@ void AiUpdate()  // SlowUpdate, every 30 frames with initial offset of skirmishA
 
 void AiLuaMessage(const string& in data)  // Spring.SendSkirmishAIMessage(teamID, msg) from unsynced lua
 {
-AiLog(data);
 	array<string>@ packets = data.split(LuaMsg::SEP_PACKET);
 	if (packets[0] != LuaMsg::VERSION)
 		return;
