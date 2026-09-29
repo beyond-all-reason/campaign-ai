@@ -20,7 +20,7 @@ enum ELuaMsg {
 	ENABLE_UNITS_CONTROL             =   4,  // array of unitIDs
 	DISABLE_UNITS_CONTROL            =   5,  // array of unitIDs
 
-	UNITDEF_RETREAT                  =  11,
+	SET_UNITDEF_RETREAT_HP           =  11,
 
 	REGION_AVOID                     =  12,
 

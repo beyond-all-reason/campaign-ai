@@ -15,14 +15,14 @@ enum ESquadParam {
 }
 
 enum ESquadTask {
-	DEFEND  = 1,
-	SCOUT   = 2,
-	RAID    = 3,
-	ATTACK  = 4,
-	BOMB    = 5,
-	ARTY    = 6,
-	AA      = 7,
-	SUPPORT = 8,
+	DEFEND    = 1,
+	SCOUT     = 2,
+	RAID      = 3,
+	ATTACK    = 4,
+	BOMBER    = 5,
+	ARTILLERY = 6,
+	ANTI_AIR  = 7,
+	SUPPORT   = 8,
 }
 
 enum ESquadState {CREATED, FINISHED}
@@ -70,13 +70,13 @@ class Squad {
 		case ESquadTask::ATTACK: {
 			ChangeTask(TaskF::Common(Task::FightType::ATTACK));
 		} break;
-		case ESquadTask::BOMB: {
+		case ESquadTask::BOMBER: {
 			ChangeTask(TaskF::Common(Task::FightType::BOMB));
 		} break;
-		case ESquadTask::ARTY: {
+		case ESquadTask::ARTILLERY: {
 			ChangeTask(TaskF::Common(Task::FightType::ARTY));
 		} break;
-		case ESquadTask::AA: {
+		case ESquadTask::ANTI_AIR: {
 			ChangeTask(TaskF::Common(Task::FightType::AA));
 		} break;
 		case ESquadTask::SUPPORT: {

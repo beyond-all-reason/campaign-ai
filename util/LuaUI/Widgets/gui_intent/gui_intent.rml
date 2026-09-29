@@ -66,6 +66,7 @@
                 </div>
                 <div class="grid commands">
                     <button onclick="widget:SendDozenSquads()">10 squads</button>
+                    <button onclick="widget:CancelDozenSquads()">del squads</button>
                     <button onclick="widget:SendPriorityTarget()">target</button>
                 </div>
                 <div class="grid commands">
@@ -76,12 +77,6 @@
                     <button onclick="widget:SendEnableUnitsMsg()">Enable Units</button>
                     <button onclick="widget:SendDisableUnitsMsg()">Disable Units</button>
                     <button onclick="widget:ToggleScriptedRectruit()">Scripted recruit</button>
-                </div>
-                <div class="grid commands">
-                    <button onclick="widget:SendArmyAAIntent()">Anti-Air</button>
-                    <button onclick="widget:SendArmySquadIntent()">Attack Squad</button>
-                    <button onclick="widget:SendArmyRaidIntent()">Raid</button>
-                    <button onclick="widget:SendIntent('order_66')">Order 66</button>
                 </div>
             </div>
             <div class="collapse-button" data-event-click="toggleCollapse()" title="Minimize" data-class-collapsed="isCollapsed"></div>
