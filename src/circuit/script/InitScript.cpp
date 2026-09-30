@@ -908,6 +908,10 @@ void CInitScript::RegisterIFighterTask(asIScriptEngine* engine, const char* cls)
 	r = engine->RegisterObjectProperty(cls, "Id vipTargetId", asOFFSET(T, vipTargetId)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty(cls, "float range", asOFFSET(T, range)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty(cls, "float retreat", asOFFSET(T, retreat)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty(cls, "float goalRange", asOFFSET(T, goalRange)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty(cls, "float ignoreThreat", asOFFSET(T, ignoreThreat)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty(cls, "float avoidThreat", asOFFSET(T, avoidThreat)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty(cls, "bool isEndPosOnly", asOFFSET(T, isEndPosOnly)); ASSERT(r >= 0);
 }
 
 template <class T>

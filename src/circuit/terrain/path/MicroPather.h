@@ -243,7 +243,8 @@ namespace NSMicroPather {
 
 			void SetMapData(const float* canMoveArray, const float* threatArray,
 					const CostFunc& moveFun, const CostFunc& threatFun, const terrain::SAreaData* areaData);
-			int FindBestPathToAnyGivenPoint(void* startNode, VoidVec& endNodes, VoidVec& targets, float maxThreat,
+			int FindBestPathToAnyGivenPoint(void* startNode, VoidVec& endNodes, VoidVec& targets,
+					float minThreat, float maxThreat,
 					IndexVec* path, float* cost);
 			int FindBestPathToPointOnRadius(void* startNode, void* endNode, int radius,
 					float minThreat, float maxThreat, HitFunc hitTest,

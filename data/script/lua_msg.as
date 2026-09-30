@@ -42,6 +42,7 @@ enum ELuaMsg {
 	SQUAD_DISBAND                    = 212,
 	SQUAD_TASK                       = 213,
 	SQUAD_PARAMS                     = 214,
+	SQUAD_PATH_PARAMS                = 215,
 }
 
 }  // namespace LuaMsg

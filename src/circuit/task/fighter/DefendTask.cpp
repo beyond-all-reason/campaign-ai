@@ -196,12 +196,15 @@ void CDefendTask::Update()
 
 	CThreatMap* threatMap = circuit->GetThreatMap();
 	const float eps = threatMap->GetSquareSize() * 2.f;
-	const float pathRange = std::max(highestRange - eps, eps);
+	const float pathRange = (goalRange >= 0.f)
+			? std::max<float>(goalRange, threatMap->GetSquareSize())
+			: std::max(highestRange - eps, eps);
 
 	CPathFinder* pathfinder = circuit->GetPathfinder();
 	std::shared_ptr<IPathQuery> query = pathfinder->CreatePathMultiQuery(
 			leader, threatMap,
-			startPos, pathRange, enemyPositions);
+			startPos, pathRange, enemyPositions,
+			nullptr, false, ignoreThreat, avoidThreat, isEndPosOnly);
 	pathQueries[leader] = query;
 
 	pathfinder->RunQuery(circuit->GetScheduler().get(), query, [this](const IPathQuery* query) {
@@ -528,15 +531,19 @@ void CDefendTask::FallbackBasePos()
 {
 	CCircuitAI* circuit = manager->GetCircuit();
 	CSetupManager* setupMgr = circuit->GetSetupManager();
+	CThreatMap* threatMap = circuit->GetThreatMap();
 
 	const AIFloat3& startPos = leader->GetPos(circuit->GetLastFrame());
 	const AIFloat3& endPos = isScripted ? position : setupMgr->GetBasePos();
-	const float pathRange = DEFAULT_SLACK * 4;
+	const float pathRange = (goalRange >= 0.f)
+			? std::max<float>(goalRange, threatMap->GetSquareSize())
+			: DEFAULT_SLACK * 4;
 
 	CPathFinder* pathfinder = circuit->GetPathfinder();
 	std::shared_ptr<IPathQuery> query = pathfinder->CreatePathSingleQuery(
-			leader, circuit->GetThreatMap(),
-			startPos, endPos, pathRange);
+			leader, threatMap,
+			startPos, endPos, pathRange,
+			nullptr, ignoreThreat, avoidThreat, isEndPosOnly);
 	pathQueries[leader] = query;
 
 	pathfinder->RunQuery(circuit->GetScheduler().get(), query, [this](const IPathQuery* query) {

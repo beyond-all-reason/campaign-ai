@@ -600,7 +600,7 @@ int CMicroPather::Solve(void* startNode, void* endNode, VoidVec* path, float* co
 */
 
 int CMicroPather::FindBestPathToAnyGivenPoint(void* startNode, VoidVec& endNodes,
-		VoidVec& targets, float maxThreat, IndexVec* path, float* cost)
+		VoidVec& targets, float minThreat, float maxThreat, IndexVec* path, float* cost)
 {
 	assert(!isRunning);
 	isRunning = true;
@@ -725,7 +725,8 @@ int CMicroPather::FindBestPathToAnyGivenPoint(void* startNode, VoidVec& endNodes
 				#endif
 
 				float newCost = nodeCostFromStart;
-				const float nodeCost = canMoveArray[indexEnd] + moveFun(index2) + threatFun(index2);
+				const float nodeCost = canMoveArray[indexEnd] + moveFun(index2)
+						+ std::max(threatFun(index2) - minThreat, THREAT_BASE);
 
 				#ifdef USE_ASSERTIONS
 				assert(nodeCost > 0.f);  // > 1.f for speed

@@ -685,6 +685,9 @@ class IFighterTask{
 	int vipTargetId;
 	float range;
 	float retreat;
+	float ignoreThreat;
+	float avoidThreat;
+	bool isEndPosOnly;
 }
 class ISquadTask{
 	int GetRefCount() const;
@@ -711,6 +714,9 @@ class ISquadTask{
 	int vipTargetId;
 	float range;
 	float retreat;
+	float ignoreThreat;
+	float avoidThreat;
+	bool isEndPosOnly;
 }
 class CDefendTask{
 	int GetRefCount() const;
@@ -737,6 +743,9 @@ class CDefendTask{
 	int vipTargetId;
 	float range;
 	float retreat;
+	float ignoreThreat;
+	float avoidThreat;
+	bool isEndPosOnly;
 }
 class CSuperTask{
 	int GetRefCount() const;
@@ -761,6 +770,9 @@ class CSuperTask{
 	int vipTargetId;
 	float range;
 	float retreat;
+	float ignoreThreat;
+	float avoidThreat;
+	bool isEndPosOnly;
 }
 class CMaskHandler{
 	TypeMask GetTypeMask(const string&in);

@@ -270,7 +270,9 @@ std::shared_ptr<IPathQuery> CPathFinder::CreatePathSingleQuery(
 	CQueryPathSingle* query = static_cast<CQueryPathSingle*>(pQuery.get());
 
 	FillMapData(query, unit, threatMap, startPos.y);
-	query->InitQuery(startPos, endPos, maxRange, std::move(hitTest), minThreat, maxThreat, endPosOnly);
+	// FIXME: CPathFinder::GetThreatFun has hidden 2.f multiplier
+	query->InitQuery(startPos, endPos, maxRange, std::move(hitTest),
+			2.f * minThreat, maxThreat, endPosOnly);
 
 	return pQuery;
 }
@@ -278,13 +280,15 @@ std::shared_ptr<IPathQuery> CPathFinder::CreatePathSingleQuery(
 std::shared_ptr<IPathQuery> CPathFinder::CreatePathMultiQuery(
 		CCircuitUnit* unit, CThreatMap* threatMap,  // SetMapData
 		const AIFloat3& startPos, float maxRange, const F3Vec& possibleTargets,
-		NSMicroPather::HitFunc&& hitTest, bool withGoal, float maxThreat, bool endPosOnly)
+		NSMicroPather::HitFunc&& hitTest, bool withGoal, float minThreat, float maxThreat, bool endPosOnly)
 {
 	std::shared_ptr<IPathQuery> pQuery = std::make_shared<CQueryPathMulti>(*this, MakeQueryId());
 	CQueryPathMulti* query = static_cast<CQueryPathMulti*>(pQuery.get());
 
 	FillMapData(query, unit, threatMap, startPos.y);
-	query->InitQuery(startPos, maxRange, possibleTargets, std::move(hitTest), withGoal, maxThreat, endPosOnly);
+	// FIXME: CPathFinder::GetThreatFun has hidden 2.f multiplier
+	query->InitQuery(startPos, maxRange, possibleTargets, std::move(hitTest), withGoal,
+			2.f * minThreat, maxThreat, endPosOnly);
 
 	return pQuery;
 }
@@ -677,6 +681,7 @@ void CPathFinder::FindBestPath(IPathQuery* query, NSMicroPather::CMicroPather* m
 	const NSMicroPather::HitFunc& hitTest = q->GetHitTest();
 	const bool isWithGoal = q->IsWithGoal();
 	const float maxThreat = q->GetMaxThreat();
+	const float minThreat = q->GetMinThreat();
 
 	CPathInfo& iPath = q->GetPathInfoRef();
 	float& pathCost = q->GetPathCostRef();
@@ -802,7 +807,7 @@ void CPathFinder::FindBestPath(IPathQuery* query, NSMicroPather::CMicroPather* m
 
 	micropather->SetMapData(canMoveArray, threatArray, moveFun, threatFun, areaData);
 	if (micropather->FindBestPathToAnyGivenPoint(Pos2MoveNode(startPos), endNodes, nodeTargets,
-			maxThreat, &iPath.path, &pathCost) == CMicroPather::SOLVED)
+			minThreat, maxThreat, &iPath.path, &pathCost) == CMicroPather::SOLVED)
 	{
 		micropather->FillPathInfo(iPath);
 	}

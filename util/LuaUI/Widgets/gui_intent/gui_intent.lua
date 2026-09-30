@@ -415,6 +415,35 @@ function widget:SendTaskSupport()
     end
 end
 
+function widget:SetPathParamThreat()
+    if dm_handle.selectedWave then
+        local msg = aiMsg.MsgBuilder.new()
+            :cmdValue(aiMsg.Topic.SQUAD_ID, dm_handle.selectedWave)
+            :cmdDict(aiMsg.Topic.SQUAD_PATH_PARAMS, {
+--                 [aiMsg.Path.GOAL_RANGE] = 1.0,
+                [aiMsg.Path.IGNORE_THREAT] = 320.0,
+--                 [aiMsg.Path.AVOID_THREAT] = 1000.0,
+--                 [aiMsg.Path.USE_END_POS] = false and 1 or 0,
+            })
+            :toString()
+        Spring.SendSkirmishAIMessage(teamID, msg)
+    end
+end
+function widget:ClearPathParamThreat()
+    if dm_handle.selectedWave then
+        local msg = aiMsg.MsgBuilder.new()
+            :cmdValue(aiMsg.Topic.SQUAD_ID, dm_handle.selectedWave)
+            :cmdDict(aiMsg.Topic.SQUAD_PATH_PARAMS, {
+--                 [aiMsg.Path.GOAL_RANGE] = -1.0,
+                [aiMsg.Path.IGNORE_THREAT] = 0.0,
+--                 [aiMsg.Path.AVOID_THREAT] = 1e38,
+--                 [aiMsg.Path.USE_END_POS] = false and 1 or 0,
+            })
+            :toString()
+        Spring.SendSkirmishAIMessage(teamID, msg)
+    end
+end
+
 function widget:SendDozenSquads()
     local squadID = 10
     for i = 1, 10 do

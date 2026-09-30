@@ -145,7 +145,8 @@ void CScoutTask::Execute(CCircuitUnit* unit, bool isUpdating)
 	CPathFinder* pathfinder = circuit->GetPathfinder();
 	std::shared_ptr<IPathQuery> query = pathfinder->CreatePathMultiQuery(
 			unit, threatMap,
-			pos, range * 0.5f, enemyPositions, nullptr, false, attackPower);
+			pos, range * 0.5f, enemyPositions,
+			nullptr, false, THREAT_BASE, attackPower);
 	pathQueries[unit] = query;
 
 	pathfinder->RunQuery(circuit->GetScheduler().get(), query, [this, isUpdating](const IPathQuery* query) {

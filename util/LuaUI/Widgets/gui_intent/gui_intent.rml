@@ -65,6 +65,10 @@
                     <button onclick="widget:SendTaskSupport()">support</button>
                 </div>
                 <div class="grid commands">
+                    <button onclick="widget:SetPathParamThreat()">set path param</button>
+                    <button onclick="widget:ClearPathParamThreat()">clear path param</button>
+                </div>
+                <div class="grid commands">
                     <button onclick="widget:SendDozenSquads()">10 squads</button>
                     <button onclick="widget:CancelDozenSquads()">del squads</button>
                     <button onclick="widget:SendPriorityTarget()">target</button>
