@@ -37,8 +37,6 @@ class Manager {
 		if (!luaMsgHandlers.get(command[0], @func))
 			return;
 		array<string>@ params = command[1].split(SEP_PARAM);
-		// if (!params.isEmpty() && params[params.length() - 1].isEmpty())
-		// 	params.removeLast();  // ignore trailing SEP_PARAM
 		func(params);
 	}
 
@@ -79,6 +77,7 @@ class Manager {
 
 	void SetUnitDefRetreat(const array<string>& in params) {
 		for (uint i = 0; i < params.length(); ++i) {
+			// params contains "<unitDefId>=<retreat_HP_percent>" pairs
 			const array<string>@ kv = params[i].split(SEP_KEY_VALUE);
 			CCircuitDef@ cdef = ai.GetCircuitDef(parseInt(kv[0]));
 			if (cdef is null)
@@ -88,6 +87,7 @@ class Manager {
 	}
 
 	void SetFactoryActive(const array<string>& in params) {
+		// params is "<isActive>=<unitId1>,<unitId2>,<unitId3>,..."
 		const array<string>@ kv = params[0].split(SEP_KEY_VALUE);
 		const array<string>@ unitIds = kv[1].split(SEP_SUBPARAM);
 		bool isActive = kv[0] != "0";

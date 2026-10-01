@@ -119,19 +119,18 @@ class Request {
 		pos = AiTerrainCenter();
 	}
 
-	void ClearForRepeat(map<Id, Request@>& buildTaskToReq) {
-		unitNum = 0;  // TODO: also power?
+	void ClearForRepeat() {
+		unitNum = 0;
 		for (auto it = recruitTasks.begin(); it++;) {
-			buildTaskToReq.erase(it.current());
+			mgr.ClearBuildTaskToReq(it.current());
 			aiFactoryMgr.GetTaskById(it.current()).Abort();
 		}
 		recruitTasks.clear();
 	}
 
-	void ClearForCompose(map<Id, Request@>& buildTaskToReq) {
-		ClearForRepeat(buildTaskToReq);
+	void ClearForCompose() {
+		ClearForRepeat();
 		unitDefs.clear();
-		// power = 0.f;
 	}
 
 	IUnitTask@ InitialTask() {
@@ -157,11 +156,9 @@ class Request {
 	float gatherRange = 64.f;
 	float attackRange = 300.f;
 	float retreat = 0.f;
-	// float power = 0.f;  // FIXME: power or unit number?
 	int unitNum = 0;
 
 	bool isRepeat = false;  // re-create on squad killed
-	// bool isInfinite = false;  // constantly produce squads
 }
 
 
@@ -178,12 +175,13 @@ class Amount {
 class Manager {
 	private void ParseRequestParams(const array<string>& in params, Request@ req) {
 		for (uint i = 0; i < params.length(); ++i) {
+			// params contains "<ESquadParam>=<values>" pairs
 			const array<string>@ kv = params[i].split(LuaMsg::SEP_KEY_VALUE);
 			switch (parseInt(kv[0])) {
-			case ESquadParam::POSITION: {
-				const array<string>@ values = kv[1].split(LuaMsg::SEP_SUBPARAM);
-				req.pos.x = parseFloat(values[0]);
-				req.pos.z = parseFloat(values[1]);
+			case ESquadParam::POSITION: {  // "<posX>,<posZ>"
+				const array<string>@ posStr = kv[1].split(LuaMsg::SEP_SUBPARAM);
+				req.pos.x = parseFloat(posStr[0]);
+				req.pos.z = parseFloat(posStr[1]);
 			} break;
 			case ESquadParam::SQUAD_GATHER_RANGE: {
 				req.gatherRange = parseFloat(kv[1]);
@@ -222,7 +220,6 @@ class Manager {
 	private void PlaceOrder(Squad@ squad, CCircuitDef@ cdef, Amount@ am) {
 		Request@ req = squad.req;
 		req.unitNum += am.amount;
-		// req.power += cdef.power * am.amount;
 
 		Task::Priority priority = Task::Priority::NORMAL;
 		Task::RecruitType recruit = Task::RecruitType::FIREPOWER;
@@ -245,15 +242,18 @@ class Manager {
 
 	// Invoked by LuaMsg::Manager::SquadRequestCompose
 	bool ComposeRequest(const array<string>& in params) {
-		// message contains {unitDefId: amount} dictionary
 		if (selSquad is null)
 			return false;
 
 		Request@ req = selSquad.req;
-		req.ClearForCompose(buildTaskToReq);
-		if (selSquad.task !is null)
+		req.ClearForCompose();
+		bool isNewReq = selSquad.task is null;
+		// NOTE: SQUAD_REQUEST_COMPOSE is a standalone message and can arrive multiple times at any time.
+		//       If squad is in the middle of compositing - disband and start anew.
+		if (!isNewReq && selSquad.state != ESquadState::FINISHED)
 			DestroySquad(selSquad);
 		for (uint i = 0; i < params.length(); ++i) {
+			// params contains "<unitDefId>=<amount>" pairs
 			const array<string>@ kv = params[i].split(LuaMsg::SEP_KEY_VALUE);
 			CCircuitDef@ cdef = ai.GetCircuitDef(parseInt(kv[0]));
 			if (cdef is null)
@@ -261,9 +261,10 @@ class Manager {
 			Amount@ am = Amount(parseInt(kv[1]));
 			req.unitDefs.insert(cdef.id, am);
 
-			PlaceOrder(selSquad, cdef, am);
+			if (isNewReq)
+				PlaceOrder(selSquad, cdef, am);
 		}
-		if (selSquad.task !is null)
+		if (selSquad.task !is null)  // PlaceOrder could add existing unit and a task
 			CheckSquadFinished(selSquad, selSquad.task.GetUnitCount());
 		return true;
 	}
@@ -324,7 +325,7 @@ class Manager {
 		if (idx < 0)
 			return;
 
-		req.ClearForRepeat(buildTaskToReq);
+		req.ClearForRepeat();
 		requests.removeAt(idx);
 
 		ai.CallRules(SIG_SQUAD_DESTROYED + req.squadId);
@@ -460,13 +461,14 @@ class Manager {
 
 	private void ParsESquadParam(const array<string>& in params, Squad@ squad) {
 		for (uint i = 0; i < params.length(); ++i) {
+			// params contains "<ESquadParam>=<values>" pairs
 			const array<string>@ kv = params[i].split(LuaMsg::SEP_KEY_VALUE);
 			switch (parseInt(kv[0])) {
 			case ESquadParam::POSITION: {
-				const array<string>@ values = kv[1].split(LuaMsg::SEP_SUBPARAM);
+				const array<string>@ posStr = kv[1].split(LuaMsg::SEP_SUBPARAM);
 				AIFloat3 pos;
-				pos.x = parseFloat(values[0]);
-				pos.z = parseFloat(values[1]);
+				pos.x = parseFloat(posStr[0]);
+				pos.z = parseFloat(posStr[1]);
 				squad.SetPosition(pos);
 			} break;
 			case ESquadParam::SQUAD_ATTACK_RANGE: {
@@ -501,6 +503,10 @@ class Manager {
 		selSquad.SetTask(type);
 		@taskToSquad[selSquad.task.id] = selSquad;
 		return true;
+	}
+
+	void ClearBuildTaskToReq(Id taskId) {
+		buildTaskToReq.erase(taskId);
 	}
 
 	private map<Id, Squad@> squads;  // owner
