@@ -250,8 +250,10 @@ class Manager {
 		bool isNewReq = selSquad.task is null;
 		// NOTE: SQUAD_REQUEST_COMPOSE is a standalone message and can arrive multiple times at any time.
 		//       If squad is in the middle of compositing - disband and start anew.
-		if (!isNewReq && selSquad.state != ESquadState::FINISHED)
+		if (!isNewReq && selSquad.state != ESquadState::FINISHED) {
 			DestroySquad(selSquad);
+			isNewReq = true;
+		}
 		for (uint i = 0; i < params.length(); ++i) {
 			// params contains "<unitDefId>=<amount>" pairs
 			const array<string>@ kv = params[i].split(LuaMsg::SEP_KEY_VALUE);
