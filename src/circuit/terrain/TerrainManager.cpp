@@ -23,9 +23,9 @@
 #include "util/Profiler.h"
 #include "json/json.h"
 
+#include "spring/SpringCallback.h"
 #include "spring/SpringMap.h"
 
-#include "OOAICallback.h"
 #include "WeaponDef.h"
 #include "Pathing.h"
 #include "MoveData.h"
@@ -781,6 +781,11 @@ const SBlockingMap& CTerrainManager::GetBlockingMap()
 		MarkAllyBuildings();
 	}
 	return blockingMap;
+}
+
+std::vector<Feature*> CTerrainManager::GetWrecks() const
+{
+	return circuit->GetCallback()->GetFeatures();
 }
 
 bool CTerrainManager::IsZoneAlly(const AIFloat3& pos) const

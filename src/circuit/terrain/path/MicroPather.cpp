@@ -725,8 +725,8 @@ int CMicroPather::FindBestPathToAnyGivenPoint(void* startNode, VoidVec& endNodes
 				#endif
 
 				float newCost = nodeCostFromStart;
-				const float nodeCost = canMoveArray[indexEnd] + moveFun(index2)
-						+ std::max(threatFun(index2) - minThreat, THREAT_BASE);
+				const float nodeCost = canMoveArray[indexEnd] * 10.f + moveFun(index2)
+						+ std::max(threatFun(index2) - minThreat, THREAT_BASE) * 0.1f;
 
 				#ifdef USE_ASSERTIONS
 				assert(nodeCost > 0.f);  // > 1.f for speed
@@ -894,8 +894,8 @@ int CMicroPather::FindBestPathToPointOnRadius(void* startNode, void* endNode,
 				#endif
 
 				float newCost = nodeCostFromStart;
-				const float nodeCost = canMoveArray[indexEnd] + moveFun(index2)
-						+ std::max(threatFun(index2) - minThreat, THREAT_BASE);
+				const float nodeCost = canMoveArray[indexEnd] * 10.f + moveFun(index2)
+						+ std::max(threatFun(index2) - minThreat, THREAT_BASE) * 0.1f;
 
 				#ifdef USE_ASSERTIONS
 				assert(nodeCost > 0.f);  // > 1.f for speed

@@ -875,6 +875,7 @@ int CCircuitAI::Message(int playerId, const char* message)
 
 	const char cmdArea[]    = "~area";
 	const char cmdPath[]    = "~path";
+	const char cmdMvCost[]  = "~mvcost";
 	const char cmdKnn[]     = "~knn";
 	const char cmdLog[]     = "~log";
 	const char cmdBTask[]   = "~btask";
@@ -941,7 +942,10 @@ int CCircuitAI::Message(int playerId, const char* message)
 		gameAttribute->GetTerrainData().ToggleVis(lastFrame);
 	}
 	else if (strncmp(message, cmdPath, 5) == 0) {
-		pathfinder->ToggleVis(this);
+		pathfinder->TogglePathVis(this);
+	}
+	else if (strncmp(message, cmdMvCost, 7) == 0) {
+		pathfinder->ToggleMoveArrayVis(this);
 	}
 	else if (strncmp(message, cmdKnn, 4) == 0) {
 		const AIFloat3 dbgPos = map->GetMousePos();

@@ -27,6 +27,9 @@
 #include "Figure.h"
 #endif
 
+#include "FeatureDef.h"
+#include "Feature.h"
+
 namespace circuit {
 
 using namespace springai;
@@ -43,14 +46,6 @@ CPathFinder::CPathFinder(CTerrainData* terrainData, int numThreads)
 		, airMoveArray(nullptr)
 		, isAreaUpdated(true)
 		, queryId(0)
-#ifdef DEBUG_VIS
-		, isVis(false)
-		, toggleFrame(-1)
-		, circuit(nullptr)
-		, dbgDef(nullptr)
-		, dbgPos(ZeroVector)
-		, dbgType(1)
-#endif
 {
 	squareSize   = terrainData->convertStoP;
 	pathMapXSize = terrainData->sectorXSize;
@@ -118,7 +113,7 @@ CPathFinder::CPathFinder(CTerrainData* terrainData, int numThreads)
 		airMoveArray[k] = COST_BLOCK;
 	}
 
-	blockArray.resize(terrainData->sectorXSize * terrainData->sectorZSize, {0, 0});
+	blockArray.resize(terrainData->sectorXSize * terrainData->sectorZSize, {0, 0, 0});
 }
 
 CPathFinder::~CPathFinder()
@@ -143,7 +138,7 @@ void CPathFinder::UpdateAreaUsers(CTerrainManager* terrainMgr)
 	}
 	isAreaUpdated = true;
 
-	std::fill(blockArray.begin(), blockArray.end(), SBlockCount{0, 0});
+	std::fill(blockArray.begin(), blockArray.end(), SBlockCount{0, 0, 0});
 	const int granularity = squareSize / (SQUARE_SIZE * 2);
 	const SBlockingMap::SM notIgnore = STRUCT_BIT(MEX) | STRUCT_BIT(GEO);
 	const SBlockingMap& blockMap = terrainMgr->GetBlockingMap();
@@ -152,11 +147,27 @@ void CPathFinder::UpdateAreaUsers(CTerrainManager* terrainMgr)
 			const int moveX = x / granularity;
 			const int moveY = z / granularity;
 			if (blockMap.IsStruct(x, z)) {
-				++blockArray[moveY * terrainData->sectorXSize + moveX].structs;
+				++blockArray[moveY * pathMapXSize + moveX].structs;
 			} else if (blockMap.IsBlocked(x, z, notIgnore)) {
-				++blockArray[moveY * terrainData->sectorXSize + moveX].reserve;
+				++blockArray[moveY * pathMapXSize + moveX].reserve;
 			}
 		}
+	}
+
+	auto features = terrainMgr->GetWrecks();
+	for (Feature* f : features) {
+		if (f == nullptr) {
+			continue;
+		}
+		FeatureDef* fDef = f->GetDef();
+		if (fDef->IsBlocking()) {
+			AIFloat3 pos = f->GetPosition();
+			int x, y;
+			Pos2PathXY(pos, &x, &y);
+			++blockArray[y * pathMapXSize + x].wrecks;
+		}
+		delete fDef;
+		delete f;
 	}
 
 	std::vector<float*>& moveArrays = GetNextMoveData()->moveArrays;
@@ -164,6 +175,7 @@ void CPathFinder::UpdateAreaUsers(CTerrainManager* terrainMgr)
 	const std::vector<SMobileType>& moveTypes = areaData->mobileType;
 	const float costStruct = COST_STRUCT / (granularity * granularity);
 	const float costReserve = COST_RESERVE / (granularity * granularity);
+	const float costWrecks = COST_WRECKS / (granularity * granularity);
 	for (unsigned j = 0; j < moveTypes.size(); ++j) {
 		const SMobileType& mt = moveTypes[j];
 		float* moveArray = moveArrays[j];
@@ -173,8 +185,14 @@ void CPathFinder::UpdateAreaUsers(CTerrainManager* terrainMgr)
 			for (int x = 1; x < moveMapXSize - 1; ++x) {
 				int index = z * moveMapXSize + x;
 				// NOTE: Not all passable sectors have area
-				moveArray[index] = (mt.sector[k].area == nullptr) ? COST_BLOCK
-						: (blockArray[k].structs * costStruct + blockArray[k].reserve * costReserve + COST_BASE);
+				if (mt.sector[k].area == nullptr) {
+					moveArray[index] = COST_BLOCK;
+				} else {
+					moveArray[index] = COST_BASE
+							+ blockArray[k].structs * costStruct
+							+ blockArray[k].reserve * costReserve
+							+ blockArray[k].wrecks * costWrecks;
+				}
 				++k;
 			}
 		}
@@ -182,6 +200,10 @@ void CPathFinder::UpdateAreaUsers(CTerrainManager* terrainMgr)
 //	micropather->Reset();
 
 	pMoveData = GetNextMoveData();
+
+#ifdef DEBUG_VIS
+	UpdateMoveArrayVis(pMoveData.load()->moveArrays[0]);
+#endif
 }
 
 void* CPathFinder::MoveXY2MoveNode(int x, int y) const
@@ -546,7 +568,7 @@ void CPathFinder::RunPathSingle(CScheduler* scheduler, const std::shared_ptr<IPa
 	std::shared_ptr<IMainJob> finish = CScheduler::PathedJob(query,
 #ifdef DEBUG_VIS
 	[this, onComplete](IPathQuery* query) {
-		this->UpdateVis(static_cast<CQueryPathSingle*>(query)->GetPathInfo()->path);
+		this->UpdatePathVis(static_cast<CQueryPathSingle*>(query)->GetPathInfo()->path);
 #else
 	[onComplete](IPathQuery* query) {
 #endif
@@ -570,7 +592,7 @@ void CPathFinder::RunPathMulti(CScheduler* scheduler, const std::shared_ptr<IPat
 	std::shared_ptr<IMainJob> finish = CScheduler::PathedJob(query,
 #ifdef DEBUG_VIS
 	[this, onComplete](IPathQuery* query) {
-		this->UpdateVis(static_cast<CQueryPathMulti*>(query)->GetPathInfo()->path);
+		this->UpdatePathVis(static_cast<CQueryPathMulti*>(query)->GetPathInfo()->path);
 #else
 	[onComplete](IPathQuery* query) {
 #endif
@@ -594,7 +616,7 @@ void CPathFinder::RunPathWide(CScheduler* scheduler, const std::shared_ptr<IPath
 	std::shared_ptr<IMainJob> finish = CScheduler::PathedJob(query,
 #ifdef DEBUG_VIS
 	[this, onComplete](IPathQuery* query) {
-		this->UpdateVis(static_cast<CQueryPathWide*>(query)->GetPathInfo()->path);
+		this->UpdatePathVis(static_cast<CQueryPathWide*>(query)->GetPathInfo()->path);
 #else
 	[onComplete](IPathQuery* query) {
 #endif
@@ -920,9 +942,9 @@ std::shared_ptr<IPathQuery> CPathFinder::CreateDbgPathQuery(CThreatMap* threatMa
 	return pQuery;
 }
 
-void CPathFinder::UpdateVis(const IndexVec& path)
+void CPathFinder::UpdatePathVis(const IndexVec& path)
 {
-	if (!isVis) {
+	if (!isPathVis) {
 		return;
 	}
 
@@ -940,15 +962,58 @@ void CPathFinder::UpdateVis(const IndexVec& path)
 	delete fig;
 }
 
-void CPathFinder::ToggleVis(CCircuitAI* circuit)
+void CPathFinder::TogglePathVis(CCircuitAI* circuit)
 {
 	if (toggleFrame >= circuit->GetLastFrame()) {
 		return;
 	}
 	toggleFrame = circuit->GetLastFrame();
 
-	isVis = !isVis;
+	isPathVis = !isPathVis;
 	this->circuit = circuit;
+}
+
+void CPathFinder::UpdateMoveArrayVis(float* moveArray)
+{
+	if (!isMoveArrayVis) {
+		return;
+	}
+
+	std::vector<float> pathArray(pathMapXSize * pathMapYSize);
+	int k = 0;
+	for (int z = 1; z < moveMapYSize - 1; ++z) {
+		for (int x = 1; x < moveMapXSize - 1; ++x) {
+			int index = z * moveMapXSize + x;
+			pathArray[k++] = moveArray[index];
+		}
+	}
+	std::ostringstream cmd;
+	cmd << "ai_thr_data:";
+	cmd.write(reinterpret_cast<const char*>(pathArray.data()), pathArray.size() * sizeof(float));
+	std::string s = cmd.str();
+	circuit->GetLua()->CallRules(s.c_str(), s.size());
+
+}
+
+void CPathFinder::ToggleMoveArrayVis(CCircuitAI* circuit)
+{
+	if (toggleFrame >= circuit->GetLastFrame()) {
+		return;
+	}
+	toggleFrame = circuit->GetLastFrame();
+	this->circuit = circuit;
+
+	std::string cmd("ai_thr_print:");
+	std::string result = circuit->GetLua()->CallRules(cmd.c_str(), cmd.size());
+
+	isMoveArrayVis = (result == "1");
+	if (isMoveArrayVis) {
+		cmd = utils::int_to_string(squareSize, "ai_thr_size:%i");
+		cmd += utils::float_to_string(THREAT_BASE, " %f");
+		circuit->GetLua()->CallRules(cmd.c_str(), cmd.size());
+
+		UpdateMoveArrayVis(pMoveData.load()->moveArrays[0]);
+	}
 }
 #endif
 

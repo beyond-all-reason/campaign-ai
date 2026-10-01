@@ -75,6 +75,7 @@
 
 #define FLT_BIG (FLT_MAX / 2.0)
 #define COST_BASE		1.0f
+#define COST_WRECKS		400.f
 #define COST_RESERVE	40.0f
 #define COST_STRUCT		400.f
 #define COST_BLOCKED	1000.f
