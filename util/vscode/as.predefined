@@ -685,6 +685,7 @@ class IFighterTask{
 	int vipTargetId;
 	float range;
 	float retreat;
+	float goalRange;
 	float ignoreThreat;
 	float avoidThreat;
 	bool isEndPosOnly;
@@ -714,6 +715,7 @@ class ISquadTask{
 	int vipTargetId;
 	float range;
 	float retreat;
+	float goalRange;
 	float ignoreThreat;
 	float avoidThreat;
 	bool isEndPosOnly;
@@ -743,6 +745,7 @@ class CDefendTask{
 	int vipTargetId;
 	float range;
 	float retreat;
+	float goalRange;
 	float ignoreThreat;
 	float avoidThreat;
 	bool isEndPosOnly;
@@ -770,6 +773,7 @@ class CSuperTask{
 	int vipTargetId;
 	float range;
 	float retreat;
+	float goalRange;
 	float ignoreThreat;
 	float avoidThreat;
 	bool isEndPosOnly;

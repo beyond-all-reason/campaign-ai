@@ -377,6 +377,7 @@ end
 
 function widget:SendTaskDefend()
     if dm_handle.selectedWave then
+        SetSquadTask(dm_handle.selectedWave, aiMsg.Task.DEFEND)
     end
 end
 function widget:SendTaskScout()
@@ -396,17 +397,17 @@ function widget:SendTaskAttack()
 end
 function widget:SendTaskBomb()
     if dm_handle.selectedWave then
-        SetSquadTask(dm_handle.selectedWave, aiMsg.Task.BOMB)
+        SetSquadTask(dm_handle.selectedWave, aiMsg.Task.BOMBER)
     end
 end
 function widget:SendTaskArty()
     if dm_handle.selectedWave then
-        SetSquadTask(dm_handle.selectedWave, aiMsg.Task.ARTY)
+        SetSquadTask(dm_handle.selectedWave, aiMsg.Task.ARTILLERY)
     end
 end
 function widget:SendTaskAA()
     if dm_handle.selectedWave then
-        SetSquadTask(dm_handle.selectedWave, aiMsg.Task.AA)
+        SetSquadTask(dm_handle.selectedWave, aiMsg.Task.ANTI_AIR)
     end
 end
 function widget:SendTaskSupport()
@@ -554,6 +555,16 @@ function widget:ToggleScriptedRectruit()
     Spring.SendSkirmishAIMessage(teamID, msg)
 end
 
+function widget:SendEscortTask()
+    local units = Spring.GetSelectedUnits()
+    if #units > 0 then
+        local msg = aiMsg.MsgBuilder.new()
+            :cmdValue(aiMsg.Topic.SQUAD_ID, squadID1)
+            :cmdValue(aiMsg.Topic.SQUAD_ESCORT, units[1])
+            :toString()
+        Spring.SendSkirmishAIMessage(teamID, msg)
+    end
+end
 
 
 function widget:Shutdown()

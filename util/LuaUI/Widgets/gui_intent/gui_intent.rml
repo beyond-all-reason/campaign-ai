@@ -82,6 +82,9 @@
                     <button onclick="widget:SendDisableUnitsMsg()">Disable Units</button>
                     <button onclick="widget:ToggleScriptedRectruit()">Scripted recruit</button>
                 </div>
+                <div class="grid commands">
+                    <button onclick="widget:SendEscortTask()">escort</button>
+                </div>
             </div>
             <div class="collapse-button" data-event-click="toggleCollapse()" title="Minimize" data-class-collapsed="isCollapsed"></div>
         </div>
