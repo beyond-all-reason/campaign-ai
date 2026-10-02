@@ -580,7 +580,7 @@ int CMilitaryManager::UnitDestroyed(CCircuitUnit* unit, CEnemyInfo* attacker)
 		UnmarkPorc(unit);
 	}
 
-	auto itgt = guardTasks.find(unit);
+	auto itgt = guardTasks.find(unit->GetId());
 	if (itgt != guardTasks.end()) {
 		AbortTask(itgt->second);
 	}
@@ -605,11 +605,11 @@ IFighterTask* CMilitaryManager::Enqueue(const TaskF::SFightTask& ti)
 			task = new CRallyTask(this, /*power*/1);  // TODO: pass enemy's threat
 		} break;
 		case IFighterTask::FightType::GUARD: {
-			auto it = guardTasks.find(ti.vip);
+			auto it = guardTasks.find(ti.vipId);
 			if (it != guardTasks.end()) {
 				return it->second;
 			}
-			task = new CFGuardTask(this, ti.vip, 1.0f);
+			task = new CFGuardTask(this, ti.vipId, 1.0f);
 		} break;
 		case IFighterTask::FightType::DEFEND: {
 			const AIFloat3& pos = circuit->GetSetupManager()->GetBasePos();
@@ -681,9 +681,6 @@ void CMilitaryManager::DequeueTask(IUnitTask* task, bool done)
 		case IUnitTask::Type::FIGHTER: {
 			IFighterTask* taskF = static_cast<IFighterTask*>(task);
 			fightTasks[static_cast<IFighterTask::FT>(taskF->GetFightType())].erase(taskF);
-			if (taskF->GetFightType() == IFighterTask::FightType::GUARD) {
-				guardTasks.erase(circuit->GetTeamUnit(static_cast<CFGuardTask*>(taskF)->GetVipId()));
-			}
 		} break;
 		default: break;
 	}
@@ -1227,7 +1224,7 @@ CCircuitUnit* CMilitaryManager::GetClosestLeader(const std::vector<IFighterTask:
 
 IFighterTask* CMilitaryManager::GetGuardTask(CCircuitUnit* unit) const
 {
-	auto it = guardTasks.find(unit);
+	auto it = guardTasks.find(unit->GetId());
 	return (it != guardTasks.end()) ? it->second : nullptr;
 }
 

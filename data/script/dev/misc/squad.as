@@ -60,7 +60,7 @@ class Squad {
 		fighterTask.isMergeAllowed = false;
 		fighterTask.isRegroupAllowed = true;
 		fighterTask.SetTargetPos(req.pos);
-		fighterTask.range = req.attackRange;
+		fighterTask.attackRange = req.attackRange;
 		fighterTask.retreat = req.retreat;
 		mgr.SetTaskToSquad(task.id, this);
 	}
@@ -95,8 +95,17 @@ class Squad {
 		}
 	}
 
-	void SetEscort(CCircuitUnit@ vip) {
- 		ChangeTask(TaskF::Guard(vip));
+	void SetInitialTask() {
+		mgr.ClearTaskToSquad(task.id);
+		IUnitTask@ newTask = req.InitialTask();
+		task.ReplaceBy(newTask);
+		task.Abort();
+		@task = newTask;
+		mgr.SetTaskToSquad(task.id, this);
+	}
+
+	void SetEscort(Id vipId) {
+ 		ChangeTask(TaskF::Guard(vipId));
 	}
 
 	void SetPosition(const AIFloat3& in pos) {
@@ -106,7 +115,7 @@ class Squad {
 
 	void SetAttackRange(float range) {
 		if (task.GetType() == Task::Type::FIGHTER)
-			cast<IFighterTask>(task).range = range;
+			cast<IFighterTask>(task).attackRange = range;
 	}
 
 	void SetRetreat(float value) {
@@ -166,7 +175,7 @@ class Request {
 		defendTask.isRegroupAllowed = false;
 		defendTask.SetTargetPos(this.pos);
 		defendTask.vipTargetId = -1;
-		defendTask.range = this.attackRange;
+		defendTask.attackRange = this.attackRange;
 		defendTask.retreat = this.retreat;
 		return task;
 	}
@@ -412,7 +421,7 @@ class Manager {
 		if (squad.req.isRepeat) {
 			RepeatRequest(squad);
 		} else {
-			RemoveSquad(squad);
+			DestroyRequest(squad);
 		}
 	}
 
@@ -459,16 +468,29 @@ class Manager {
 		req.recruitTasks.erase(task.id);
 	}
 
-	// Invoked by Military::AiTaskRemoved
-	bool SquadTaskDestroyed(IUnitTask@ task) {
+	// Invoked by Military::AiTaskRemoved done=false
+	bool SquadTaskCanceled(IUnitTask@ task) {
 		bool success;
 		Squad@ squad = taskToSquad.find(task.id, success);
 		if (!success)
 			return false;
 
-		taskToSquad.erase(task.id);
-		@squad.task = null;
 		DestroySquad(squad);
+		return true;
+	}
+
+	// Invoked by Military::AiTaskRemoved done=true
+	bool SquadTaskFinished(IUnitTask@ task) {
+		bool success;
+		Squad@ squad = taskToSquad.find(task.id, success);
+		if (!success)
+			return false;
+
+		if (cast<IFighterTask>(task).GetFightType() == Task::FightType::GUARD) {
+			// Guard target was destroyed
+			squad.SetInitialTask();
+		} else
+			DestroySquad(squad);
 		return true;
 	}
 
@@ -539,6 +561,7 @@ class Manager {
 
 	private void ParseSquadPathParam(const array<string>& in params, Squad@ squad) {
 		for (uint i = 0; i < params.length(); ++i) {
+			// params contains "<ESquadPath>=<values>" pairs
 			const array<string>@ kv = params[i].split(LuaMsg::SEP_KEY_VALUE);
 			switch (parseInt(kv[0])) {
 			case ESquadPath::GOAL_RANGE: {
@@ -573,11 +596,7 @@ class Manager {
 		if (selSquad is null)
 			return false;
 
-		CCircuitUnit@ vip = ai.GetTeamUnit(parseInt(params[0]));
-		if (vip is null)
-			return false;
-
-		selSquad.SetEscort(vip);
+		selSquad.SetEscort(parseInt(params[0]));
 		return true;
 	}
 

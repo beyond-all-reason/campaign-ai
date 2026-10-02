@@ -385,7 +385,7 @@ bool CDefendTask::FindTargetScripted()
 	CCircuitDef* cdef = leader->GetCircuitDef();
 
 	const AIFloat3& pos = leader->GetPos(circuit->GetLastFrame());
-	const float sqRange = SQUARE(range);
+	const float sqRange = SQUARE(attackRange);
 	const float weaponRange = cdef->GetMaxRange() * 0.9f;
 	const int canTargetCat = cdef->GetTargetCategory();
 	const int noChaseCat = cdef->GetNoChaseCategory();

@@ -29,7 +29,7 @@ namespace TaskF {
 		IFighterTask::FightType check;
 		IFighterTask::FightType promote;
 		float power;
-		CCircuitUnit* vip;
+		ICoreUnit::Id vipId;
 	};
 
 	static inline SFightTask Common(IFighterTask::FightType type)
@@ -40,14 +40,14 @@ namespace TaskF {
 		ti.check = type;
 		ti.promote = type;
 		ti.power = 0.f;
-		ti.vip = nullptr;
+		ti.vipId = -1;
 		return ti;
 	}
-	static inline SFightTask Guard(CCircuitUnit* vip)
+	static inline SFightTask Guard(ICoreUnit::Id vipId)
 	{
 		SFightTask ti;
 		ti.type = IFighterTask::FightType::GUARD;
-		ti.vip = vip;
+		ti.vipId = vipId;
 		return ti;
 	}
 	static inline SFightTask Defend(IFighterTask::FightType promote, float power)
@@ -115,8 +115,11 @@ private:
 	virtual void DequeueTask(IUnitTask* task, bool done = false) override;
 
 public:
-	void MarkGuardUnit(CCircuitUnit* vip, CFGuardTask* task) {
-		guardTasks[vip] = task;
+	void MarkGuardUnit(ICoreUnit::Id vipId, CFGuardTask* task) {
+		guardTasks[vipId] = task;
+	}
+	void UnmarkGuardUnit(ICoreUnit::Id vipId) {
+		guardTasks.erase(vipId);
 	}
 
 	void MakeDefence(const springai::AIFloat3& pos);
@@ -237,7 +240,7 @@ private:
 	std::set<CCircuitUnit*> army;
 	float armyCost;
 
-	std::map<CCircuitUnit*, CFGuardTask*> guardTasks;
+	std::map<ICoreUnit::Id, CFGuardTask*> guardTasks;
 
 	struct SRaidQuota {
 		float min;

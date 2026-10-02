@@ -130,7 +130,7 @@ void CBuilderManager::InitHandlers()
 			&& !unit->GetCircuitDef()->IsAbleToFly()
 			&& (militaryMgr->GetTasks(IFighterTask::FightType::GUARD).size() < militaryMgr->GetGuardTaskNum()))
 		{
-			militaryMgr->Enqueue(TaskF::Guard(unit));
+			militaryMgr->Enqueue(TaskF::Guard(unit->GetId()));
 		}
 	};
 	auto workerIdleHandler = [this](CCircuitUnit* unit) {
