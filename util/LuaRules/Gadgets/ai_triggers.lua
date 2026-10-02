@@ -30,7 +30,7 @@ end
 else  -- not gadgetHandler:IsSyncedCode()
 -----------------------------------------
 
-local intent = VFS.Include("luarules/utilities/ai_lib/intent.lua")
+local aiMsg = VFS.Include("luarules/utilities/campaign_ai_msg.lua")
 
 local triggers = {
 	["ai_squad_finished"] = function(teamID, dataStr)
@@ -38,12 +38,12 @@ local triggers = {
 		local squadID = tonumber(dataStr)
 		Spring.Echo("Squad Finished: " .. squadID)
 
--- 		Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, squadID, intent.task.TASK_ATTACK)
-
-		Spring.AiIntentDict(teamID, intent.topic.AI_SQUAD_PARAMS, squadID, {
-			[intent.param.SQUAD_POS_X] = 881,
-			[intent.param.SQUAD_POS_Z] = 6507,
-		})
+		local msg = aiMsg.MsgBuilder.new()
+			:cmdValue(aiMsg.Topic.SQUAD_ID, squadID)
+-- 			:cmdValue(aiMsg.Topic.SQUAD_TASK, aiMsg.Task.ATTACK)
+			:cmdDictArray(aiMsg.Topic.SQUAD_PARAMS, aiMsg.Param.POSITION, {881, 6507})
+			:toString()
+		Spring.SendSkirmishAIMessage(teamID, msg)
 	end,
 
 	["ai_squad_destroyed"] = function(teamID, dataStr)

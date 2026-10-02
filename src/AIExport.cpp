@@ -82,14 +82,3 @@ EXPORT(int) handleEvent(int skirmishAIId, int topic, const void* data) {
 
 	return ret; // (ret != 0) => error
 }
-
-EXPORT(int) handleIntent(int skirmishAIId, int topic, const void* data) {
-
-	int ret = ERROR_SHIFT + 1;
-
-	try {
-		ret = myAIs[skirmishAIId]->HandleIntent(topic, data);
-	} CATCH_CPP_AI_EXCEPTION(ret);
-
-	return ret; // (ret != 0) => error
-}

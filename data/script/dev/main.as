@@ -2,7 +2,6 @@
 #include "manager/builder.as"
 #include "manager/factory.as"
 #include "manager/economy.as"
-#include "misc/intent_manager.as"
 #include "misc/lua_msg_manager.as"
 #include "misc/squad.as"
 
@@ -83,11 +82,6 @@ void AiUnitDestroyed(CCircuitUnit@ unit)
 	// NOTE: Experimental. May be deprecated
 	// Duplicates module's AiUnitRemoved, but for any unit.
 	units.erase(unit.id);
-}
-
-void AiHandleIntent(const SIntent& in intent)
-{
-	Intent::mgr.HandleIntent(intent);
 }
 
 }  // namespace Main

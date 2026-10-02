@@ -242,6 +242,54 @@ void CDefendTask::Merge(ISquadTask* task)
 	}
 }
 
+bool CDefendTask::CanAttackTarget(CCircuitDef* cdef, CEnemyInfo* enemy, CMap* map, float weaponRange, int canTargetCat) const
+{
+	CCircuitDef* edef = enemy->GetCircuitDef();
+
+	if (edef != nullptr) {
+		if ((edef->GetCategory() & canTargetCat) == 0) {
+			return false;
+		}
+
+		const AIFloat3& ePos = enemy->GetPos();
+		const float elevation = map->GetElevationAt(ePos.x, ePos.z);
+		const bool isInWater = cdef->IsPredictInWater(elevation);
+
+		const bool hasAntiAir = isInWater ? cdef->HasSubToAir() : cdef->HasSurfToAir();
+		if (edef->IsAbleToFly() && !hasAntiAir) {
+			return false;
+		}
+
+		if (edef->IsInWater(elevation, ePos.y)) {
+			const bool hasAntiWater = isInWater ? cdef->HasSubToWater() : cdef->HasSurfToWater();
+			if (!hasAntiWater) {
+				return false;
+			}
+		} else {
+			const bool hasAntiLand = isInWater ? cdef->HasSubToLand() : cdef->HasSurfToLand();
+			if (!hasAntiLand) {
+				return false;
+			}
+		}
+
+		if (ePos.y - elevation > weaponRange) {
+			return false;
+		}
+	} else {
+		const AIFloat3& ePos = enemy->GetPos();
+		if (ePos.y < -SQUARE_SIZE * 5) {
+			const float elevation = map->GetElevationAt(ePos.x, ePos.z);
+			const bool isInWater = cdef->IsPredictInWater(elevation);
+			const bool hasAntiWater = isInWater ? cdef->HasSubToWater() : cdef->HasSurfToWater();
+			if (!hasAntiWater) {
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
 bool CDefendTask::FindTarget()
 {
 	CCircuitAI* circuit = manager->GetCircuit();
@@ -260,6 +308,7 @@ bool CDefendTask::FindTarget()
 	const AIFloat3& basePos = circuit->GetSetupManager()->GetBasePos();
 	const float baseRange = circuit->GetMilitaryManager()->GetBaseDefRange();
 	const float sqBaseRange = SQUARE(baseRange);
+	const float invSqBaseRange = 1.0f / sqBaseRange;
 
 	CEnemyInfo* bestTarget = nullptr;
 	float minSqDist = std::numeric_limits<float>::max();
@@ -268,7 +317,7 @@ bool CDefendTask::FindTarget()
 	enemyPositions.clear();
 	threatMap->SetThreatType(leader);
 	const CCircuitAI::EnemyInfos& enemies = circuit->GetEnemyInfos();
-	for (auto& kv : enemies) {
+	for (const auto& kv : enemies) {
 		CEnemyInfo* enemy = kv.second;
 		if (enemy->IsHidden() || (enemy->GetTasks().size() > 2)) {
 			continue;
@@ -284,61 +333,43 @@ bool CDefendTask::FindTarget()
 		const float sqEBDist = basePos.SqDistance2D(ePos);
 		float checkPower = maxPower;
 		if (sqEBDist < sqBaseRange) {
-			checkPower *= 4.0f - 3.0f / baseRange * sqrtf(sqEBDist);  // 400% near base
+			// Approximates the curve using sqEBDist/sqBaseRange. Non-linear.
+			// At center (0): 4.0 - 0.0 = 4.0 (400%)
+			// At edge (sqBaseRange): 4.0 - 3.0 = 1.0 (100%)
+			checkPower *= 4.0f - 3.0f * (sqEBDist * invSqBaseRange);
 		}
 		if (checkPower <= threatMap->GetThreatAt(ePos)) {
 			continue;
 		}
 
-		const float elevation = map->GetElevationAt(ePos.x, ePos.z);
-		const bool IsInWater = cdef->IsPredictInWater(elevation);
 		CCircuitDef* edef = enemy->GetCircuitDef();
 		if (edef != nullptr) {
-			if (((edef->GetCategory() & canTargetCat) == 0)
-				|| ((edef->GetCategory() & noChaseCat) != 0)
-				|| circuit->GetCircuitDef(edef->GetId())->IsIgnore()
-				|| (edef->IsAbleToFly() && !(IsInWater ? cdef->HasSubToAir() : cdef->HasSurfToAir())))  // notAA
+			if (((edef->GetCategory() & noChaseCat) != 0)
+				|| circuit->GetCircuitDef(edef->GetId())->IsIgnore())
 			{
-				continue;
-			}
-			float elevation = map->GetElevationAt(ePos.x, ePos.z);
-			if (edef->IsInWater(elevation, ePos.y)) {
-				if (!(IsInWater ? cdef->HasSubToWater() : cdef->HasSurfToWater())) {  // notAW
-					continue;
-				}
-			} else {
-				if (!(IsInWater ? cdef->HasSubToLand() : cdef->HasSurfToLand())) {  // notAL
-					continue;
-				}
-			}
-			if ((ePos.y - elevation > weaponRange)
-				/*|| enemy->IsBeingBuilt()*/)
-			{
-				continue;
-			}
-		} else {
-			if (!(IsInWater ? cdef->HasSubToWater() : cdef->HasSurfToWater()) && (ePos.y < -SQUARE_SIZE * 5)) {  // notAW
 				continue;
 			}
 		}
+
+		if (!CanAttackTarget(cdef, enemy, map, weaponRange, canTargetCat)) {
+			continue;
+		}
+
+		enemyPositions.push_back(ePos);
 
 		float sqDist = pos.SqDistance2D(ePos);
 		if (minSqDist > sqDist) {
 			minSqDist = sqDist;
 			bestTarget = enemy;
 		}
-		enemyPositions.push_back(ePos);
 	}
 
 	if (bestTarget != nullptr) {
 		SetTarget(bestTarget);
 		foundPos = GetTarget()->GetPos();
 	}
-	if (enemyPositions.empty()) {
-		return false;
-	}
 
-	return true;
+	return !enemyPositions.empty();
 	// Return: target, startPos=leader->pos, enemyPositions
 }
 
@@ -347,17 +378,17 @@ bool CDefendTask::FindTargetScripted()
 	CCircuitAI* circuit = manager->GetCircuit();
 	CMap* map = circuit->GetMap();
 	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
-	const AIFloat3& pos = leader->GetPos(circuit->GetLastFrame());
 	SArea* area = leader->GetArea();
 	CCircuitDef* cdef = leader->GetCircuitDef();
+
+	const AIFloat3& pos = leader->GetPos(circuit->GetLastFrame());
 	const float sqRange = SQUARE(range);
 	const float weaponRange = cdef->GetMaxRange() * 0.9f;
 	const int canTargetCat = cdef->GetTargetCategory();
 	const int noChaseCat = cdef->GetNoChaseCategory();
 
 	const AIFloat3& basePos = circuit->GetSetupManager()->GetBasePos();
-	const float baseRange = circuit->GetMilitaryManager()->GetBaseDefRange();
-	const float sqBaseRange = SQUARE(baseRange);
+	const float sqBaseRange = SQUARE(circuit->GetMilitaryManager()->GetBaseDefRange());
 
 	CEnemyInfo* bestTarget = nullptr;
 	float minSqDist = std::numeric_limits<float>::max();
@@ -365,10 +396,9 @@ bool CDefendTask::FindTargetScripted()
 	SetTarget(nullptr);  // make adequate enemy->GetTasks().size()
 	enemyPositions.clear();
 	circuit->GetThreatMap()->SetThreatType(leader);
-	const CCircuitAI::EnemyInfos& enemies = circuit->GetEnemyInfos();
-	for (auto& kv : enemies) {
-		CEnemyInfo* enemy = kv.second;
-		if (enemy->IsHidden() || (enemy->GetTasks().size() > 2)) {
+
+	for (const auto& [id, enemy] : circuit->GetEnemyInfos()) {
+		if (enemy->IsHidden() || enemy->GetTasks().size() > 2) {
 			continue;
 		}
 
@@ -379,103 +409,61 @@ bool CDefendTask::FindTargetScripted()
 			continue;
 		}
 
-		const float elevation = map->GetElevationAt(ePos.x, ePos.z);
-		const bool IsInWater = cdef->IsPredictInWater(elevation);
 		CCircuitDef* edef = enemy->GetCircuitDef();
 		if (edef != nullptr) {
-			if (((edef->GetCategory() & canTargetCat) == 0)
-				|| ((edef->GetCategory() & noChaseCat) != 0)
-				|| circuit->GetCircuitDef(edef->GetId())->IsIgnore()
-				|| (edef->IsAbleToFly() && !(IsInWater ? cdef->HasSubToAir() : cdef->HasSurfToAir())))  // notAA
+			if (((edef->GetCategory() & noChaseCat) != 0)
+				|| circuit->GetCircuitDef(edef->GetId())->IsIgnore())
 			{
-				continue;
-			}
-			float elevation = map->GetElevationAt(ePos.x, ePos.z);
-			if (edef->IsInWater(elevation, ePos.y)) {
-				if (!(IsInWater ? cdef->HasSubToWater() : cdef->HasSurfToWater())) {  // notAW
-					continue;
-				}
-			} else {
-				if (!(IsInWater ? cdef->HasSubToLand() : cdef->HasSurfToLand())) {  // notAL
-					continue;
-				}
-			}
-			if ((ePos.y - elevation > weaponRange)
-				/*|| enemy->IsBeingBuilt()*/)
-			{
-				continue;
-			}
-		} else {
-			if (!(IsInWater ? cdef->HasSubToWater() : cdef->HasSurfToWater()) && (ePos.y < -SQUARE_SIZE * 5)) {  // notAW
 				continue;
 			}
 		}
 
-		float sqDist = pos.SqDistance2D(ePos);
-		if (minSqDist > sqDist) {
+		if (!CanAttackTarget(cdef, enemy, map, weaponRange, canTargetCat)) {
+			continue;
+		}
+
+		enemyPositions.push_back(ePos);
+
+		const float sqDist = pos.SqDistance2D(ePos);
+		if (sqDist < minSqDist) {
 			minSqDist = sqDist;
 			bestTarget = enemy;
 		}
-		enemyPositions.push_back(ePos);
 	}
 
 	if (bestTarget != nullptr) {
 		SetTarget(bestTarget);
-		foundPos = GetTarget()->GetPos();
-	}
-	if (enemyPositions.empty()) {
-		return false;
+		foundPos = bestTarget->GetPos();
 	}
 
-	return true;
+	return !enemyPositions.empty();
 	// Return: target, startPos=leader->pos, enemyPositions
 }
 
 bool CDefendTask::FindTargetVIP()
 {
 	CCircuitAI* circuit = manager->GetCircuit();
-	CMap* map = circuit->GetMap();
-	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
-	SArea* area = leader->GetArea();
-	CCircuitDef* cdef = leader->GetCircuitDef();
-	const float weaponRange = cdef->GetMaxRange() * 0.9f;
-	const int canTargetCat = cdef->GetTargetCategory();
-
 	CEnemyInfo* enemy = (vipTargetId >= 0) ? circuit->GetEnemyInfo(vipTargetId) : nullptr;
+
 	if ((enemy == nullptr) || enemy->IsHidden()) {
 		return FindTargetScripted();
 	}
+
+	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
+	SArea* area = leader->GetArea();
 	const AIFloat3& ePos = enemy->GetPos();
+
 	if (!terrainMgr->CanMoveToPos(area, ePos)) {
 		return FindTargetScripted();
 	}
 
-	const float elevation = map->GetElevationAt(ePos.x, ePos.z);
-	const bool IsInWater = cdef->IsPredictInWater(elevation);
-	CCircuitDef* edef = enemy->GetCircuitDef();
-	if (edef != nullptr) {
-		if (((edef->GetCategory() & canTargetCat) == 0)
-			|| (edef->IsAbleToFly() && !(IsInWater ? cdef->HasSubToAir() : cdef->HasSurfToAir())))  // notAA
-		{
-			return FindTargetScripted();
-		}
-		float elevation = map->GetElevationAt(ePos.x, ePos.z);
-		if (edef->IsInWater(elevation, ePos.y)) {
-			if (!(IsInWater ? cdef->HasSubToWater() : cdef->HasSurfToWater())) {  // notAW
-				return FindTargetScripted();
-			}
-		} else {
-			if (!(IsInWater ? cdef->HasSubToLand() : cdef->HasSurfToLand())) {  // notAL
-				return FindTargetScripted();
-			}
-		}
-		if (ePos.y - elevation > weaponRange) {
-			return FindTargetScripted();
-		}
-	} else {
-		if (!(IsInWater ? cdef->HasSubToWater() : cdef->HasSurfToWater()) && (ePos.y < -SQUARE_SIZE * 5)) {  // notAW
-			return FindTargetScripted();
-		}
+	CMap* map = circuit->GetMap();
+	CCircuitDef* cdef = leader->GetCircuitDef();
+	const float weaponRange = cdef->GetMaxRange() * 0.9f;
+	const int canTargetCat = cdef->GetTargetCategory();
+
+	if (!CanAttackTarget(cdef, enemy, map, weaponRange, canTargetCat)) {
+		return FindTargetScripted();
 	}
 
 	enemyPositions.clear();

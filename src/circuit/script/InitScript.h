@@ -21,9 +21,6 @@ namespace springai {
 	class AIFloat3;
 }
 
-struct SFloatIntent;
-struct SArrayFloatIntent;
-struct SDictFloatIntent;
 class asIScriptEngine;
 class asIScriptContext;
 class asIScriptFunction;
@@ -68,9 +65,6 @@ public:
 	void LuaMessage(const char* inData);
 	void UnitFinished(CCircuitUnit* unit);
 	void UnitDestroyed(CCircuitUnit* unit);
-	void HandleIntent(const SFloatIntent* intent);
-	void HandleIntent(const SArrayFloatIntent* intent);
-	void HandleIntent(const SDictFloatIntent* intent);
 
 private:
 	void ExecArg1(asIScriptFunction* func, void* arg);
@@ -115,7 +109,6 @@ private:
 		asIScriptFunction* update = nullptr;
 		asIScriptFunction* luaMessage = nullptr;
 		asIScriptFunction* receiveMessage = nullptr;
-		asIScriptFunction* handleIntent = nullptr;
 	} mainInfo;
 
 	mutable spring::mutex mtx;

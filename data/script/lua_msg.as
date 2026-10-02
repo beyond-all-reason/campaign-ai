@@ -20,31 +20,28 @@ enum ELuaMsg {
 	ENABLE_UNITS_CONTROL             =   4,  // array of unitIDs
 	DISABLE_UNITS_CONTROL            =   5,  // array of unitIDs
 
+	SET_UNITDEF_RETREAT_HP           =  11,
+
+	REGION_AVOID                     =  12,
+
+	SET_FACTORY_ACTIVE               =  13,
+
+	SET_SCRIPTED_RECRUIT             =  16,  // boolean
+
 	// Base starts at 100
 	BASE_CREATE                      = 101,
 	BASE_REBUILD                     = 102,
 
-	UNIT_WEIGHTS                     =   9,
-
 	// Squad Request starts at 200
-	REQUEST_SQUAD                    = 201,
-	REQUEST_COMPOSE                  = 202,
-	REQUEST_CANCEL                   = 203,
-	REQUEST_PARAMS                   = 204,
+	SQUAD_REQUEST_ID                 = 201,
+	SQUAD_REQUEST_COMPOSE            = 202,
+	SQUAD_REQUEST_CANCEL             = 203,
+	SQUAD_REQUEST_PARAMS             = 204,
 	// Squad starts at 210
-	SQUAD_ASSEMBLE                   = 211,
+	SQUAD_ID                         = 211,
 	SQUAD_DISBAND                    = 212,
 	SQUAD_TASK                       = 213,
 	SQUAD_PARAMS                     = 214,
-
-	UNITDEF_RETREAT                  =  11,
-
-	REGION_AVOID                     =  12,
-
-	FACTORY_ENABLE                   =  13,
-
-	EXEC_ORDER_66                    =  15,
-	SET_SCRIPTED_RECRUIT             =  16,  // boolean
 }
 
 }  // namespace LuaMsg

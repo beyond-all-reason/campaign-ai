@@ -59,8 +59,7 @@ local power = 5.2
 local retreatThreshold = 2.2
 local isRecruitScripted = false
 
-local intent = VFS.Include("luarules/utilities/ai_lib/intent.lua")
-local luaMsg = VFS.Include("luarules/utilities/ai_lib/lua_msg.lua")
+local aiMsg = VFS.Include("luarules/utilities/campaign_ai_msg.lua")
 
 --------------------------------------------------------------------------------
 
@@ -145,10 +144,11 @@ function widget:MousePress(x, y, button)
     if wx and wy and wz then
         Spring.Echo("x: "..wx.." y: "..wy.." z: "..wz)
         if dm_handle.selectedWave then
-            Spring.AiIntentDict(teamID, intent.topic.AI_SQUAD_PARAMS, dm_handle.selectedWave, {
-                [intent.param.SQUAD_POS_X] = wx,
-                [intent.param.SQUAD_POS_Z] = wz,
-            })
+            local msg = aiMsg.MsgBuilder.new()
+                :cmdValue(aiMsg.Topic.SQUAD_ID, dm_handle.selectedWave)
+                :cmdDictArray(aiMsg.Topic.SQUAD_PARAMS, aiMsg.Param.POSITION, {wx, wz})
+                :toString()
+            Spring.SendSkirmishAIMessage(teamID, msg)
         end
     end
 end
@@ -257,47 +257,40 @@ end
 -- ["corthud"]  = 0.5,
 -- ["corcrash"] = 0.0,
 
-
-
-function widget:SendIntent(command)
-    if command == "order_66" then
-        Spring.AiIntentFloat(teamID, intent.topic.AI_EXEC_ORDER_66);
-    end
-end
-
 function CreateSquad(squadID, pos, range, composition)
---     tracy.ZoneBeginN("AI_REQUEST_SQUAD")
-    Spring.AiIntentDict(teamID, intent.topic.AI_REQUEST_SQUAD, squadID, {
-        [intent.param.SQUAD_POS_X] = pos[1],
-        [intent.param.SQUAD_POS_Z] = pos[2],
-        [intent.param.SQUAD_GATHER_RANGE] = range,
-        [intent.param.SQUAD_ATTACK_RANGE] = 512,
-        [intent.param.SQUAD_IS_REPEAT] = true,
-        [intent.param.SQUAD_RETREAT] = -1,  -- -1 or 0 or (0.0..1.0]
-    })
-    Spring.AiIntentUnitDefs(teamID, intent.topic.AI_REQ_COMPOSE, squadID, composition)
---     tracy.ZoneEnd()
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdValue(aiMsg.Topic.SQUAD_REQUEST_ID, squadID)
+        :cmdDict(aiMsg.Topic.SQUAD_REQUEST_PARAMS, {
+            [aiMsg.Param.SQUAD_GATHER_RANGE] = range,
+            [aiMsg.Param.SQUAD_ATTACK_RANGE] = 512,
+            [aiMsg.Param.SQUAD_REBUILD] = true and 1 or 0,
+            [aiMsg.Param.SQUAD_RETREAT] = -1,  -- -1 or 0 or (0.0..1.0]
+        })
+        :paramArray(aiMsg.Param.POSITION, pos)
+        :cmdDict(aiMsg.Topic.SQUAD_REQUEST_COMPOSE, composition)
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID, msg)
 end
 
 function widget:SendNewSquad1()
     -- Between 2 corlabs: {4155, 1854}
     CreateSquad(squadID1, {4155, 1854}, 710, {
-        ["corstorm"] = 3,
-        ["corthud"]  = 10,
+        [nameToDefID["corstorm"]] = 3,
+        [nameToDefID["corthud"]]  = 10,
     })
 end
 function widget:SendNewSquad2()
     -- Map center: {3072, 3584}
     -- Off-center: {3844, 3300}
     CreateSquad(squadID2, {3844, 3300}, 8000, {
-        ["corstorm"] = 10,
-        ["corthud"]  = 3,
+        [nameToDefID["corstorm"]] = 10,
+        [nameToDefID["corthud"]]  = 3,
     })
 end
 function widget:SendNewSquad3()
     -- Only 1 corlab: {4500, 1800}, range=710
     CreateSquad(squadID3, {4500, 1800}, 7100, {
-        ["corhurc"]  = 10,
+        [nameToDefID["corhurc"]]  = 10,
     })
 end
 function widget:SendSelectSquad1()
@@ -310,173 +303,225 @@ function widget:SendSelectSquad3()
     dm_handle.selectedWave = squadID3
 end
 function widget:SendCancelReq1()
-    Spring.AiIntentFloat(teamID, intent.topic.AI_REQ_CANCEL, squadID1);
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdValue(aiMsg.Topic.SQUAD_REQUEST_CANCEL, squadID1)
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID, msg)
 end
 function widget:SendCancelReq2()
-    Spring.AiIntentFloat(teamID, intent.topic.AI_REQ_CANCEL, squadID2);
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdValue(aiMsg.Topic.SQUAD_REQUEST_CANCEL, squadID2)
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID, msg)
 end
 function widget:SendCancelReq3()
-    Spring.AiIntentFloat(teamID, intent.topic.AI_REQ_CANCEL, squadID3);
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdValue(aiMsg.Topic.SQUAD_REQUEST_CANCEL, squadID3)
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID, msg)
 end
 function widget:SendCancelSquad1()
-    Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_DISBAND, squadID1);
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdValue(aiMsg.Topic.SQUAD_DISBAND, squadID1)
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID, msg)
 end
 function widget:SendCancelSquad2()
-    Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_DISBAND, squadID2);
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdValue(aiMsg.Topic.SQUAD_DISBAND, squadID2)
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID, msg)
 end
 function widget:SendCancelSquad3()
-    Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_DISBAND, squadID3);
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdValue(aiMsg.Topic.SQUAD_DISBAND, squadID3)
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID, msg)
 end
 function widget:SendCompose1Squad2()
-    Spring.AiIntentUnitDefs(teamID, intent.topic.AI_REQ_COMPOSE, squadID2, {
-        ["corak"] = 10,
-    });
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdValue(aiMsg.Topic.SQUAD_REQUEST_ID, squadID2)
+        :cmdDict(aiMsg.Topic.SQUAD_REQUEST_COMPOSE, {
+            [nameToDefID["corak"]] = 10,
+        })
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID, msg)
 end
 function widget:SendCompose2Squad2()
-    Spring.AiIntentUnitDefs(teamID, intent.topic.AI_REQ_COMPOSE, squadID2, {
-        ["corgator"] = 10,
-    });
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdValue(aiMsg.Topic.SQUAD_REQUEST_ID, squadID2)
+        :cmdDict(aiMsg.Topic.SQUAD_REQUEST_COMPOSE, {
+            [nameToDefID["corgator"]] = 10,
+        })
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID, msg)
 end
 function widget:SendCompose3Squad2()
-    Spring.AiIntentUnitDefs(teamID, intent.topic.AI_REQ_COMPOSE, squadID2, {
-        ["corstorm"] = 3,
-        ["corthud"]  = 10,
-    });
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdValue(aiMsg.Topic.SQUAD_REQUEST_ID, squadID2)
+        :cmdDict(aiMsg.Topic.SQUAD_REQUEST_COMPOSE, {
+            [nameToDefID["corstorm"]] =  3,
+            [nameToDefID["corthud"]]  = 10,
+        })
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID, msg)
+end
+
+function SetSquadTask(squad, task)
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdValue(aiMsg.Topic.SQUAD_ID, squad)
+        :cmdValue(aiMsg.Topic.SQUAD_TASK, task)
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID, msg)
 end
 
 function widget:SendTaskDefend()
     if dm_handle.selectedWave then
-        Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, dm_handle.selectedWave, intent.task.TASK_DEFEND);
     end
 end
 function widget:SendTaskScout()
     if dm_handle.selectedWave then
-        Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, dm_handle.selectedWave, intent.task.TASK_SCOUT);
+        SetSquadTask(dm_handle.selectedWave, aiMsg.Task.SCOUT)
     end
 end
 function widget:SendTaskRaid()
     if dm_handle.selectedWave then
-        Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, dm_handle.selectedWave, intent.task.TASK_RAID);
+        SetSquadTask(dm_handle.selectedWave, aiMsg.Task.RAID)
     end
 end
 function widget:SendTaskAttack()
     if dm_handle.selectedWave then
-        Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, dm_handle.selectedWave, intent.task.TASK_ATTACK);
+        SetSquadTask(dm_handle.selectedWave, aiMsg.Task.ATTACK)
     end
 end
 function widget:SendTaskBomb()
     if dm_handle.selectedWave then
-        Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, dm_handle.selectedWave, intent.task.TASK_BOMB);
+        SetSquadTask(dm_handle.selectedWave, aiMsg.Task.BOMB)
     end
 end
 function widget:SendTaskArty()
     if dm_handle.selectedWave then
-        Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, dm_handle.selectedWave, intent.task.TASK_ARTY);
+        SetSquadTask(dm_handle.selectedWave, aiMsg.Task.ARTY)
     end
 end
 function widget:SendTaskAA()
     if dm_handle.selectedWave then
-        Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, dm_handle.selectedWave, intent.task.TASK_AA);
+        SetSquadTask(dm_handle.selectedWave, aiMsg.Task.AA)
     end
 end
 function widget:SendTaskSupport()
     if dm_handle.selectedWave then
-        Spring.AiIntentFloat(teamID, intent.topic.AI_SQUAD_TASK, dm_handle.selectedWave, intent.task.TASK_SUPPORT);
+        SetSquadTask(dm_handle.selectedWave, aiMsg.Task.SUPPORT)
     end
 end
 
 function widget:SendDozenSquads()
-    local squadID = 11
+    local squadID = 10
     for i = 1, 10 do
         squadID = squadID + 1
         CreateSquad(squadID, {4155, 1854}, 710, {
-            ["corstorm"] = 3,
-            ["corthud"]  = 10,
+            [nameToDefID["corstorm"]] = 3,
+            [nameToDefID["corthud"]]  = 10,
         })
     end
+end
+function widget:CancelDozenSquads()
+    local squadID = 10
+    local msgBuilder = aiMsg.MsgBuilder.new()
+    for i = 1, 10 do
+        squadID = squadID + 1
+        msgBuilder:cmdValue(aiMsg.Topic.SQUAD_REQUEST_CANCEL, squadID)
+    end
+    Spring.SendSkirmishAIMessage(teamID, msgBuilder:toString())
 end
 
 function widget:SendPriorityTarget()
     local units = Spring.GetSelectedUnits()
     if #units > 0 then
-        Spring.AiIntentDict(teamID, intent.topic.AI_REQ_PARAMS, dm_handle.selectedWave, {
-            [intent.param.SQUAD_PRIO_TARGET] = units[1],
-        });
-        Spring.AiIntentDict(teamID, intent.topic.AI_SQUAD_PARAMS, dm_handle.selectedWave, {
-            [intent.param.SQUAD_PRIO_TARGET] = units[1],
-        });
+        local msg = aiMsg.MsgBuilder.new()
+            :cmdValue(aiMsg.Topic.SQUAD_ID, dm_handle.selectedWave)
+            :cmdDict(aiMsg.Topic.SQUAD_REQUEST_PARAMS, {
+                [aiMsg.Param.SQUAD_PRIO_TARGET] = units[1],
+            })
+            :cmdDict(aiMsg.Topic.SQUAD_PARAMS, {
+                [aiMsg.Param.SQUAD_PRIO_TARGET] = units[1],
+            })
+            :toString()
+        Spring.SendSkirmishAIMessage(teamID, msg)
     end
 end
 
--- function widget:SendArmyAAIntent()
---     -- FIXME: According corlab's array in factory.json
---     Spring.AiIntentArray(teamID, intent.topic.AI_UNIT_WEIGHTS, squadID1, {
---         0, 0, 0, 0, 0, 1
---     })
--- end
--- function widget:SendArmySquadIntent()
---     -- FIXME: According corlab's array in factory.json
---     Spring.AiIntentArray(teamID, intent.topic.AI_UNIT_WEIGHTS, squadID1, {
---         0, 0, 0, 0.5, 0.5, 0
---     })
--- end
--- function widget:SendArmyRaidIntent()
---     -- FIXME: According corlab's array in factory.json
---     Spring.AiIntentArray(teamID, intent.topic.AI_UNIT_WEIGHTS, squadID1, {
---         0, 1, 0, 0, 0, 0
---     })
--- end
 function widget:SendUnitDefRetreat1Intent()
-    Spring.AiIntentUnitDefs(teamID, intent.topic.AI_UNITDEF_RETREAT, -1, {
-        ["corstorm"] = 0.5,
-        ["corthud"] = 0.5,
-    })
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdDict(aiMsg.Topic.UNITDEF_RETREAT, {
+            [nameToDefID["corstorm"]] = 0.5,
+            [nameToDefID["corthud"]]  = 0.5,
+        })
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID, msg)
 end
 function widget:SendUnitDefRetreat2Intent()
-    Spring.AiIntentUnitDefs(teamID, intent.topic.AI_UNITDEF_RETREAT, -1, {
-        ["corstorm"] = 1.0,
-        ["corthud"] = 1.0,
-    })
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdDict(aiMsg.Topic.UNITDEF_RETREAT, {
+            [nameToDefID["corstorm"]] = 1.0,
+            [nameToDefID["corthud"]]  = 1.0,
+        })
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID, msg)
 end
 function widget:SendDeactivateFactoryIntent()
     local units = Spring.GetSelectedUnits()
     if #units > 0 then
-        Spring.AiIntentArray(teamID, intent.topic.AI_FACTORY_ENABLE, 0, units)
+        local msg = aiMsg.MsgBuilder.new()
+            :cmdDictArray(aiMsg.Topic.SET_FACTORY_ACTIVE, 0, units)
+            :toString()
+        Spring.SendSkirmishAIMessage(teamID, msg)
     end
 end
 function widget:SendActivateFactoryIntent()
     local units = Spring.GetSelectedUnits()
     if #units > 0 then
-        Spring.AiIntentArray(teamID, intent.topic.AI_FACTORY_ENABLE, 1, units)
+        local msg = aiMsg.MsgBuilder.new()
+            :cmdDictArray(aiMsg.Topic.SET_FACTORY_ACTIVE, 1, units)
+            :toString()
+        Spring.SendSkirmishAIMessage(teamID, msg)
     end
 end
 function widget:SendEnableUnitsMsg()
 --     tracy.ZoneBeginN("ENABLE_UNITDEFS")
-    local msg = luaMsg.BuildArray(luaMsg.topic.ENABLE_UNITDEFS, {
-        nameToDefID["corthud"],
-        nameToDefID["corck"],
-        nameToDefID["cornecro"],
-        nameToDefID["coravp"],
-        nameToDefID["coralab"],
-        nameToDefID["coradvsol"],
-    })
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdArray(aiMsg.Topic.ENABLE_UNITDEFS, {
+            nameToDefID["corstorm"],
+            nameToDefID["corthud"],
+            nameToDefID["corck"],
+            nameToDefID["cornecro"],
+            nameToDefID["coravp"],
+            nameToDefID["coralab"],
+            nameToDefID["coradvsol"],
+        })
+        :toString()
     Spring.SendSkirmishAIMessage(teamID, msg)
 --     tracy.ZoneEnd()
 end
 function widget:SendDisableUnitsMsg()
-    local msg = luaMsg.BuildArray(luaMsg.topic.DISABLE_UNITDEFS, {
-        nameToDefID["corthud"],
-        nameToDefID["corck"],
-        nameToDefID["cornecro"],
-        nameToDefID["coravp"],
-        nameToDefID["coralab"],
-        nameToDefID["coradvsol"],
-    })
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdArray(aiMsg.Topic.DISABLE_UNITDEFS, {
+            nameToDefID["corstorm"],
+            nameToDefID["corthud"],
+            nameToDefID["corck"],
+            nameToDefID["cornecro"],
+            nameToDefID["coravp"],
+            nameToDefID["coralab"],
+            nameToDefID["coradvsol"],
+        })
+        :toString()
     Spring.SendSkirmishAIMessage(teamID, msg)
 end
 function widget:ToggleScriptedRectruit()
     isRecruitScripted = not isRecruitScripted
-    local msg = luaMsg.BuildValue(luaMsg.topic.SET_SCRIPTED_RECRUIT, isRecruitScripted and 1 or 0)
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdValue(aiMsg.Topic.SET_SCRIPTED_RECRUIT, isRecruitScripted and 1 or 0)
+        :toString()
     Spring.SendSkirmishAIMessage(teamID, msg)
 end
 
