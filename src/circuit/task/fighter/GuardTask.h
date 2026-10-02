@@ -15,10 +15,11 @@ namespace circuit {
 
 class CFGuardTask final: public IFighterTask {
 public:
-	CFGuardTask(ITaskModule* mgr, CCircuitUnit* vip, float maxPower);
+	CFGuardTask(ITaskModule* mgr, ICoreUnit::Id vipId, float maxPower);
 	virtual ~CFGuardTask();
 
 	virtual bool CanAssignTo(CCircuitUnit* unit) const override;
+	virtual void RemoveAssignee(CCircuitUnit* unit) override;
 
 	virtual void Start(CCircuitUnit* unit) override;
 	virtual void Update() override;
@@ -26,6 +27,10 @@ public:
 	virtual void OnUnitIdle(CCircuitUnit* unit) override;
 
 	ICoreUnit::Id GetVipId() const { return vipId; }
+
+protected:
+	virtual void Finish() override { Cancel(); }
+	virtual void Cancel() override;
 
 private:
 	ICoreUnit::Id vipId;

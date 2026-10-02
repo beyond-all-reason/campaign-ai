@@ -16,12 +16,16 @@ namespace circuit {
 
 using namespace springai;
 
-CFGuardTask::CFGuardTask(ITaskModule* mgr, CCircuitUnit* vip, float maxPower)
+CFGuardTask::CFGuardTask(ITaskModule* mgr, ICoreUnit::Id vipId, float maxPower)
 		: IFighterTask(mgr, FightType::GUARD, 1.f)
-		, vipId(vip->GetId())
+		, vipId(vipId)
 		, maxPower(maxPower)
 {
-	static_cast<CMilitaryManager*>(mgr)->MarkGuardUnit(vip, this);
+	// NOTE: Guard marker was initially designed for own units only, remains as such
+	CCircuitUnit* vip = manager->GetCircuit()->GetTeamUnit(vipId);
+	if (vip != nullptr) {
+		static_cast<CMilitaryManager*>(mgr)->MarkGuardUnit(vipId, this);
+	}
 }
 
 CFGuardTask::~CFGuardTask()
@@ -54,17 +58,25 @@ bool CFGuardTask::CanAssignTo(CCircuitUnit* unit) const
 	return false;
 }
 
+void CFGuardTask::RemoveAssignee(CCircuitUnit* unit)
+{
+	IFighterTask::RemoveAssignee(unit);
+	if (isScripted && units.empty()) {
+		manager->AbortTask(this);
+	}
+}
+
 void CFGuardTask::Start(CCircuitUnit* unit)
 {
 	CCircuitAI* circuit = manager->GetCircuit();
-	CCircuitUnit* vip = circuit->GetTeamUnit(vipId);
+	CAllyUnit* vip = circuit->GetFriendlyUnit(vipId);
 	if (vip != nullptr) {
 		TRY_UNIT(circuit, unit,
 			unit->GetUnit()->Guard(vip->GetUnit());
 			unit->CmdWantedSpeed(NO_SPEED_LIMIT);
 		)
 	} else {
-		manager->AbortTask(this);
+		manager->DoneTask(this);
 	}
 }
 
@@ -75,16 +87,19 @@ void CFGuardTask::Update()
 //	}
 
 	CCircuitAI* circuit = manager->GetCircuit();
-	CCircuitUnit* vip = circuit->GetTeamUnit(vipId);
+	CAllyUnit* vip = circuit->GetFriendlyUnit(vipId);
 	if (vip == nullptr) {
-		manager->AbortTask(this);
+		manager->DoneTask(this);
 		return;
 	}
 
 	CEnemyInfo* target = nullptr;
 	const int frame = circuit->GetLastFrame();
 	const AIFloat3& pos = vip->GetPos(frame);
-	const std::vector<ICoreUnit::Id>& enemyIds = circuit->GetCallback()->GetEnemyUnitIdsIn(pos, vip->GetCircuitDef()->GetLosRadius() + 500.f);
+	const float guardRange = (attackRange < 0.f)
+			? vip->GetCircuitDef()->GetLosRadius() + 500.f
+			: attackRange;
+	const std::vector<ICoreUnit::Id>& enemyIds = circuit->GetCallback()->GetEnemyUnitIdsIn(pos, guardRange);
 	for (ICoreUnit::Id enemyId : enemyIds) {
 		CEnemyInfo* ei = circuit->GetEnemyInfo(enemyId);
 		if (ei != nullptr) {
@@ -116,13 +131,23 @@ void CFGuardTask::Update()
 void CFGuardTask::OnUnitIdle(CCircuitUnit* unit)
 {
 	CCircuitAI* circuit = manager->GetCircuit();
-	CCircuitUnit* vip = circuit->GetTeamUnit(vipId);
+	CAllyUnit* vip = circuit->GetFriendlyUnit(vipId);
 	if (vip != nullptr) {
 		TRY_UNIT(circuit, unit,
 			unit->GetUnit()->Guard(vip->GetUnit());
 		)
 	} else {
-		manager->AbortTask(this);
+		manager->DoneTask(this);
+	}
+}
+
+void CFGuardTask::Cancel()
+{
+	IFighterTask::Cancel();
+
+	CCircuitUnit* vip = manager->GetCircuit()->GetTeamUnit(vipId);
+	if (vip != nullptr) {
+		static_cast<CMilitaryManager*>(manager)->UnmarkGuardUnit(vipId);
 	}
 }
 

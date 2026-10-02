@@ -19,7 +19,7 @@ void AiTaskAdded(IUnitTask@ task)
 
 void AiTaskRemoved(IUnitTask@ task, bool done)
 {
-	Squad::mgr.SquadTaskDestroyed(task);
+	done ? Squad::mgr.SquadTaskFinished(task) : Squad::mgr.SquadTaskCanceled(task);
 }
 
 void AiTaskResigned(CCircuitUnit@ unit)

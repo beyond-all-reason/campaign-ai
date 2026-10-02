@@ -71,7 +71,7 @@ protected:
 	int attackFrame;
 
 	// Script API
-	float range = 0.f;  // direct attack range
+	float attackRange = -1.f;  // direct attack range; -1: default calculation
 	float retreat = -1.f;  // -1: default; 0: disabled; >0.f: unit's HP percent
 	bool isScripted = false;
 	bool isMergeAllowed = true;

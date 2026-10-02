@@ -683,7 +683,7 @@ class IFighterTask{
 	bool isMergeAllowed;
 	bool isRegroupAllowed;
 	int vipTargetId;
-	float range;
+	float attackRange;
 	float retreat;
 	float goalRange;
 	float ignoreThreat;
@@ -713,7 +713,7 @@ class ISquadTask{
 	bool isMergeAllowed;
 	bool isRegroupAllowed;
 	int vipTargetId;
-	float range;
+	float attackRange;
 	float retreat;
 	float goalRange;
 	float ignoreThreat;
@@ -743,7 +743,7 @@ class CDefendTask{
 	bool isMergeAllowed;
 	bool isRegroupAllowed;
 	int vipTargetId;
-	float range;
+	float attackRange;
 	float retreat;
 	float goalRange;
 	float ignoreThreat;
@@ -771,7 +771,7 @@ class CSuperTask{
 	bool isMergeAllowed;
 	bool isRegroupAllowed;
 	int vipTargetId;
-	float range;
+	float attackRange;
 	float retreat;
 	float goalRange;
 	float ignoreThreat;
@@ -911,7 +911,7 @@ class SFightTask{
 	uint8 check;
 	uint8 promote;
 	float power;
-	CCircuitUnit@ vip;
+	int vipId;
 }
 class CMilitaryManager{
 	IUnitTask@ DefaultMakeTask(CCircuitUnit@);
