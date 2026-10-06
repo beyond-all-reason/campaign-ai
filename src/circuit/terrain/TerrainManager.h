@@ -18,6 +18,10 @@
 #include <deque>
 #include <functional>
 
+namespace geom {
+	class CPolygon;
+}
+
 namespace terrain {
 	struct SArea;
 	struct SMobileType;
@@ -86,6 +90,9 @@ public:
 	void DoLineOfDef(const springai::AIFloat3& start, const springai::AIFloat3& end, CCircuitDef* buildDef,
 			std::function<void (const springai::AIFloat3& pos, CCircuitDef* buildDef)> exec) const;  // FillRowOfBuildPos
 	springai::AIFloat3 GetRandomMovePosition(CCircuitUnit* unit);
+
+	// Script API
+	void Test_AddBlocker(geom::CPolygon* poly);
 
 	const SBlockingMap& GetBlockingMap();
 	std::vector<springai::Feature*> GetFeatures() const;

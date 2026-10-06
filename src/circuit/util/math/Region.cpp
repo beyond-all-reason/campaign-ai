@@ -159,4 +159,4 @@ AIFloat3 CRegion::Random() const
 	return parts.back()->Random();
 }
 
-} // namespace utils
+} // namespace geom

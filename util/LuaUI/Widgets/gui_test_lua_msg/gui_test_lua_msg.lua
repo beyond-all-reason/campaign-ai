@@ -58,6 +58,7 @@ local squadID3 = 3
 local power = 5.2
 local retreatThreshold = 2.2
 local isRecruitScripted = false
+local newRegion = false
 
 local aiMsg = VFS.Include("luarules/utilities/campaign_ai_msg.lua")
 
@@ -124,8 +125,8 @@ function widget:MousePress(x, y, button)
         return false
     end
 
-    local type, pos = Spring.TraceScreenRay(x, y)
-    if type ~= 'ground' then
+    local traceType, pos = Spring.TraceScreenRay(x, y)
+    if traceType ~= 'ground' then
         -- Selected unit may go here?
         return false
     end
@@ -149,6 +150,9 @@ function widget:MousePress(x, y, button)
                 :cmdDictArray(aiMsg.Topic.SQUAD_PARAMS, aiMsg.Param.POSITION, {wx, wz})
                 :toString()
             Spring.SendSkirmishAIMessage(teamID, msg)
+        elseif newRegion then
+            newRegion[#newRegion + 1] = wx
+            newRegion[#newRegion + 1] = wz
         end
     end
 end
@@ -582,6 +586,31 @@ function widget:SendEscortRangeSmall()
         })
         :toString()
     Spring.SendSkirmishAIMessage(teamID, msg)
+end
+
+function widget:SendRegion1()
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdArray(aiMsg.Topic.REGION, {1079, 2391, 1569, 2788, 1809, 2426, 1349, 2172})
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID, msg)
+end
+function widget:SendRegion2()
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdArray(aiMsg.Topic.REGION, {4514, 5271, 4860, 5047, 5266, 5255, 5235, 5631, 4738, 5617})
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID, msg)
+end
+function widget:StartRegion()
+    newRegion = {}
+end
+function widget:EndRegion()
+    if newRegion and #newRegion >= 6 then
+        local msg = aiMsg.MsgBuilder.new()
+            :cmdArray(aiMsg.Topic.REGION, newRegion)
+            :toString()
+        Spring.SendSkirmishAIMessage(teamID, msg)
+    end
+    newRegion = false
 end
 
 

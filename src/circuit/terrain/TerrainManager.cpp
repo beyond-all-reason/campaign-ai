@@ -8,6 +8,7 @@
 #include "terrain/TerrainManager.h"
 #include "terrain/BlockRectangle.h"
 #include "terrain/BlockCircle.h"
+#include "terrain/GridRegion.h"
 #include "terrain/path/PathFinder.h"
 #include "terrain/path/QueryPathWide.h"
 #include "map/ThreatMap.h"
@@ -773,6 +774,13 @@ AIFloat3 CTerrainManager::GetRandomMovePosition(CCircuitUnit* unit)
 	float z = rand() % GetTerrainHeight();
 	AIFloat3 pos(x, circuit->GetMap()->GetElevationAt(x, z), z);
 	return GetMovePosition(unit->GetArea(), pos);
+}
+
+void CTerrainManager::Test_AddBlocker(geom::CPolygon* poly)
+{
+	CGridRegion* gridRegion = new CGridRegion(poly, blockingMap.columns, blockingMap.rows, SQUARE_SIZE * 2);
+	gridRegion->TestBlockRegion(blockingMap);
+	delete gridRegion;
 }
 
 const SBlockingMap& CTerrainManager::GetBlockingMap()

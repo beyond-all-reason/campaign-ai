@@ -781,6 +781,7 @@ void CInitScript::RegisterMgr()
 	r = engine->RegisterObjectMethod("CTerrainManager", "bool IsWaterAVoid() const", asMETHOD(CTerrainManager, IsWaterAVoid), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CTerrainManager", "float GetLandPercent() const", asMETHOD(CTerrainManager, GetLandPercent), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CTerrainManager", "float SetAllyZoneRange(float)", asMETHOD(CTerrainManager, SetAllyZoneRange), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CTerrainManager", "void Test_AddBlocker(CPolygon@+)", asMETHOD(CTerrainManager, Test_AddBlocker), asCALL_THISCALL); ASSERT(r >= 0);
 
 	r = engine->RegisterObjectProperty("CSetupManager", "const CCircuitDef@ commChoice", asOFFSET(CSetupManager, commChoice)); ASSERT(r >= 0);
 

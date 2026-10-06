@@ -29,7 +29,9 @@ class Manager {
 			{formatInt(ELuaMsg::SQUAD_TASK), LuaMsgFunc(this.SquadTask)},
 			{formatInt(ELuaMsg::SQUAD_PARAMS), LuaMsgFunc(this.SquadParams)},
 			{formatInt(ELuaMsg::SQUAD_PATH_PARAMS), LuaMsgFunc(this.SquadPathParams)},
-			{formatInt(ELuaMsg::SQUAD_ESCORT), LuaMsgFunc(this.SquadEscort)}
+			{formatInt(ELuaMsg::SQUAD_ESCORT), LuaMsgFunc(this.SquadEscort)},
+
+			{formatInt(ELuaMsg::REGION), LuaMsgFunc(this.Region)}
 		};
 	}
 
@@ -141,6 +143,17 @@ class Manager {
 
 	void SquadEscort(const array<string>& in params) {
 		Squad::mgr.SetSquadEscort(params);
+	}
+
+	// Region
+	void Region(const array<string>& in params) {
+		array<AIFloat3> verts;
+		for (uint i = 0; i < params.length() / 2; ++i) {
+			const float x = parseFloat(params[i * 2 + 0]);
+			const float z = parseFloat(params[i * 2 + 1]);
+			verts.insertLast(AIFloat3(x, 0.f, z));
+		}
+		aiTerrainMgr.Test_AddBlocker(CPolygon(verts));
 	}
 
 	/*
