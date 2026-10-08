@@ -92,6 +92,7 @@
                     <button onclick="widget:SendRegion2()">region 2</button>
                     <button onclick="widget:StartRegion()">start</button>
                     <button onclick="widget:EndRegion()">end</button>
+                    <button onclick="widget:ClearRegions()">clear regions</button>
                 </div>
             </div>
             <div class="collapse-button" data-event-click="toggleCollapse()" title="Minimize" data-class-collapsed="isCollapsed"></div>

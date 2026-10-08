@@ -55,6 +55,9 @@ local teamID = 1
 local squadID1 = 1
 local squadID2 = 2
 local squadID3 = 3
+local zoneID1 = 1
+local zoneID2 = 2
+local zoneID = 10
 local power = 5.2
 local retreatThreshold = 2.2
 local isRecruitScripted = false
@@ -590,13 +593,15 @@ end
 
 function widget:SendRegion1()
     local msg = aiMsg.MsgBuilder.new()
-        :cmdArray(aiMsg.Topic.REGION, {1079, 2391, 1569, 2788, 1809, 2426, 1349, 2172})
+        :cmdValue(aiMsg.Topic.BUILD_REGION_ID, zoneID1)
+        :paramArray(nameToDefID["cornanotc"], {1079, 2391, 1569, 2788, 1809, 2426, 1349, 2172})
         :toString()
     Spring.SendSkirmishAIMessage(teamID, msg)
 end
 function widget:SendRegion2()
     local msg = aiMsg.MsgBuilder.new()
-        :cmdArray(aiMsg.Topic.REGION, {4514, 5271, 4860, 5047, 5266, 5255, 5235, 5631, 4738, 5617})
+        :cmdValue(aiMsg.Topic.BUILD_REGION_ID, zoneID2)
+        :paramArray(nameToDefID["corsolar"], {4514, 5271, 4860, 5047, 5266, 5255, 5235, 5631, 4738, 5617})
         :toString()
     Spring.SendSkirmishAIMessage(teamID, msg)
 end
@@ -605,11 +610,20 @@ function widget:StartRegion()
 end
 function widget:EndRegion()
     if newRegion and #newRegion >= 6 then
+        zoneID = zoneID + 1
         local msg = aiMsg.MsgBuilder.new()
-            :cmdArray(aiMsg.Topic.REGION, newRegion)
+            :cmdValue(aiMsg.Topic.BUILD_REGION_ID, zoneID)
+            :paramArray(nameToDefID["corwin"], newRegion)
             :toString()
         Spring.SendSkirmishAIMessage(teamID, msg)
     end
+    newRegion = false
+end
+function widget:ClearRegions()
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdValue(aiMsg.Topic.BUILD_REGION_CLEAR, 1)
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID, msg)
     newRegion = false
 end
 

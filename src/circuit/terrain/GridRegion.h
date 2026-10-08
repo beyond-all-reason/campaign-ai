@@ -17,20 +17,43 @@ namespace circuit {
 
 class CGridRegion final {
 public:
-	explicit CGridRegion(geom::CPolygon* poly, int cols, int rows, float cellSize);
+	using Id = int;
+
+	CGridRegion() = delete;
+	explicit CGridRegion(Id id, geom::CPolygon* poly, float cellSize);
 	~CGridRegion();
 
-	void TestBlockRegion(SBlockingMap& blockingMap);
+	template <typename Visitor>
+	void ProcessRegion(Visitor visitor);
 
 private:
 	void Rasterize();
 
+	Id id;
 	geom::CPolygon* polygon;
-	std::vector<bool> grid;
-	int gridCols;
-	int gridRows;
+	struct SColumnSpan {
+		short startCol;
+		short endCol;
+	};
+	struct SRow {
+		short row;
+		std::vector<SColumnSpan> cols;
+	};
+	std::vector<SRow> rows;
 	float cellSize;
 };
+
+template <typename Visitor>
+void CGridRegion::ProcessRegion(Visitor visitor)
+{
+	for (const SRow& row : rows) {
+		for (const SColumnSpan& span : row.cols) {
+			for (short col = span.startCol; col <= span.endCol; ++col) {
+				visitor(col, row.row);
+			}
+		}
+	}
+}
 
 } // namespace circuit
 

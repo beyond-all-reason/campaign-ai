@@ -9,6 +9,7 @@
 #define SRC_CIRCUIT_TERRAIN_TERRAINMANAGER_H_
 
 #include "terrain/BlockingMap.h"
+#include "terrain/GridRegion.h"
 #include "unit/CoreUnit.h"
 #include "unit/CircuitDef.h"
 
@@ -91,9 +92,6 @@ public:
 			std::function<void (const springai::AIFloat3& pos, CCircuitDef* buildDef)> exec) const;  // FillRowOfBuildPos
 	springai::AIFloat3 GetRandomMovePosition(CCircuitUnit* unit);
 
-	// Script API
-	void Test_AddBlocker(geom::CPolygon* poly);
-
 	const SBlockingMap& GetBlockingMap();
 	std::vector<springai::Feature*> GetFeatures() const;
 	bool IsZoneAlly(const springai::AIFloat3& pos) const;
@@ -156,6 +154,14 @@ private:
 	void MarkZoneAlly(const springai::AIFloat3& pos, bool block);
 	void MarkZoneOwn(const springai::AIFloat3& pos, bool block);
 
+	struct SBuildZone {  // Custom reserved zone
+		CGridRegion region;
+		CCircuitDef* buildDef;
+	};
+	std::map<CGridRegion::Id, SBuildZone> buildZones;
+	// blockingMap.grid.size() == gridZone.size()
+	std::vector<CGridRegion::Id> gridZone;  // custom zone id; 0 = none
+
 	struct FactoryPathQuery {
 		std::shared_ptr<IPathQuery> query;
 		const CCircuitDef* mobileDef;
@@ -173,6 +179,12 @@ private:
 	void FillParentBusNodes(CPathInfo* pathInfo);
 
 public:
+	// Script API
+	void AddBuildZone(CGridRegion::Id zoneId, geom::CPolygon* poly, CCircuitDef* buildDef);
+	void DelBuildZone(CGridRegion::Id zoneId);
+	void AddReservedZone(CGridRegion::Id zoneId, geom::CPolygon* poly);
+	void DelReservedZone(CGridRegion::Id zoneId);
+
 	int GetConvertStoP() const { return terrainData->convertStoP; }
 	int GetSectorXSize() const { return terrainData->sectorXSize; }
 	int GetSectorZSize() const { return terrainData->sectorZSize; }

@@ -2,6 +2,7 @@
 #include "../../lua_msg.as"
 #include "../manager/factory.as"
 #include "squad.as"
+#include "region.as"
 
 
 namespace LuaMsg {
@@ -31,7 +32,8 @@ class Manager {
 			{formatInt(ELuaMsg::SQUAD_PATH_PARAMS), LuaMsgFunc(this.SquadPathParams)},
 			{formatInt(ELuaMsg::SQUAD_ESCORT), LuaMsgFunc(this.SquadEscort)},
 
-			{formatInt(ELuaMsg::REGION), LuaMsgFunc(this.Region)}
+			{formatInt(ELuaMsg::BUILD_REGION_ID), LuaMsgFunc(this.MakeRegionId)},
+			{formatInt(ELuaMsg::BUILD_REGION_CLEAR), LuaMsgFunc(this.RegionClear)}
 		};
 	}
 
@@ -146,14 +148,12 @@ class Manager {
 	}
 
 	// Region
-	void Region(const array<string>& in params) {
-		array<AIFloat3> verts;
-		for (uint i = 0; i < params.length() / 2; ++i) {
-			const float x = parseFloat(params[i * 2 + 0]);
-			const float z = parseFloat(params[i * 2 + 1]);
-			verts.insertLast(AIFloat3(x, 0.f, z));
-		}
-		aiTerrainMgr.Test_AddBlocker(CPolygon(verts));
+	void MakeRegionId(const array<string>& in params) {
+		Region::mgr.AddBuildZone(params);
+	}
+
+	void RegionClear(const array<string>& in params) {
+		Region::mgr.ClearBuildZones();
 	}
 
 	/*

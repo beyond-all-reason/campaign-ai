@@ -1583,7 +1583,10 @@ void CBuilderManager::UpdateAreaUsers()
 	for (auto& tasks : buildTasks) {
 		for (IBuilderTask* task : tasks) {
 			CCircuitDef* cdef = task->GetBuildDef();
-			if ((cdef != nullptr) && (task->GetTarget() == nullptr) && !IsBuilderInArea(cdef, task->GetPosition())) {
+			// NOTE: timeout check is for scripted build-zones
+			if ((cdef != nullptr) && (task->GetTarget() == nullptr) && (task->GetTimeout() > 0)
+				&& !IsBuilderInArea(cdef, task->GetPosition()))
+			{
 				removeTasks.insert(task);
 			}
 		}

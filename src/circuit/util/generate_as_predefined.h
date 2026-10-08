@@ -11,14 +11,14 @@ namespace
     template <class Stream>
     void printEnumList(const asIScriptEngine* engine, Stream& stream)
     {
-        for (int i = 0; i < engine->GetEnumCount(); i++)
+        for (asUINT i = 0; i < engine->GetEnumCount(); i++)
         {
             const auto e = engine->GetEnumByIndex(i);
             if (not e) continue;
             const std::string_view ns = e->GetNamespace();
             if (not ns.empty()) stream << std::format("namespace {} {{\n", ns);
             stream << std::format("enum {} {{\n", e->GetName());
-            for (int j = 0; j < e->GetEnumValueCount(); ++j)
+            for (asUINT j = 0; j < e->GetEnumValueCount(); ++j)
             {
                 stream << std::format("\t{}", e->GetEnumValueByIndex(j, nullptr));
                 if (j < e->GetEnumValueCount() - 1) stream << ",";
@@ -32,7 +32,7 @@ namespace
     template <class Stream>
     void printClassTypeList(const asIScriptEngine* engine, Stream& stream)
     {
-        for (int i = 0; i < engine->GetObjectTypeCount(); i++)
+        for (asUINT i = 0; i < engine->GetObjectTypeCount(); i++)
         {
             const auto t = engine->GetObjectTypeByIndex(i);
             if (not t) continue;
@@ -44,7 +44,7 @@ namespace
             if (t->GetSubTypeCount() > 0)
             {
                 stream << "<";
-                for (int sub = 0; sub < t->GetSubTypeCount(); ++sub)
+                for (asUINT sub = 0; sub < t->GetSubTypeCount(); ++sub)
                 {
                     if (sub < t->GetSubTypeCount() - 1) stream << ", ";
                     const auto st = t->GetSubType(sub);
@@ -55,7 +55,7 @@ namespace
             }
 
             stream << "{\n";
-            for (int j = 0; j < t->GetBehaviourCount(); ++j)
+            for (asUINT j = 0; j < t->GetBehaviourCount(); ++j)
             {
                 asEBehaviours behaviours;
                 const auto f = t->GetBehaviourByIndex(j, &behaviours);
@@ -65,16 +65,16 @@ namespace
                     stream << std::format("\t{};\n", f->GetDeclaration(false, true, true));
                 }
             }
-            for (int j = 0; j < t->GetMethodCount(); ++j)
+            for (asUINT j = 0; j < t->GetMethodCount(); ++j)
             {
                 const auto m = t->GetMethodByIndex(j);
                 stream << std::format("\t{};\n", m->GetDeclaration(false, true, true));
             }
-            for (int j = 0; j < t->GetPropertyCount(); ++j)
+            for (asUINT j = 0; j < t->GetPropertyCount(); ++j)
             {
                 stream << std::format("\t{};\n", t->GetPropertyDeclaration(j, true));
             }
-            for (int j = 0; j < t->GetChildFuncdefCount(); ++j)
+            for (asUINT j = 0; j < t->GetChildFuncdefCount(); ++j)
             {
                 stream << std::format("\tfuncdef {};\n",
                                       t->GetChildFuncdef(j)->GetFuncdefSignature()->GetDeclaration(false));
@@ -87,7 +87,7 @@ namespace
     template <class Stream>
     void printGlobalFunctionList(const asIScriptEngine* engine, Stream& stream)
     {
-        for (int i = 0; i < engine->GetGlobalFunctionCount(); i++)
+        for (asUINT i = 0; i < engine->GetGlobalFunctionCount(); i++)
         {
             const auto f = engine->GetGlobalFunctionByIndex(i);
             if (not f) continue;
@@ -102,7 +102,7 @@ namespace
     template <class Stream>
     void printGlobalPropertyList(const asIScriptEngine* engine, Stream& stream)
     {
-        for (int i = 0; i < engine->GetGlobalPropertyCount(); i++)
+        for (asUINT i = 0; i < engine->GetGlobalPropertyCount(); i++)
         {
             const char* name;
             const char* ns0;
@@ -124,7 +124,7 @@ namespace
     template <class Stream>
     void printGlobalTypedef(const asIScriptEngine* engine, Stream& stream)
     {
-        for (int i = 0; i < engine->GetTypedefCount(); ++i)
+        for (asUINT i = 0; i < engine->GetTypedefCount(); ++i)
         {
             const auto type = engine->GetTypedefByIndex(i);
             if (not type) continue;

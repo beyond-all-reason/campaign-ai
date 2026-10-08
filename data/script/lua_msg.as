@@ -45,7 +45,8 @@ enum ELuaMsg {
 	SQUAD_PATH_PARAMS                = 215,
 	SQUAD_ESCORT                     = 216,
 
-	REGION = 301,
+	BUILD_REGION_ID = 301,
+	BUILD_REGION_CLEAR = 302,
 }
 
 }  // namespace LuaMsg
