@@ -8,7 +8,6 @@
 #ifndef SRC_CIRCUIT_TERRAIN_GRIDREGION_H_
 #define SRC_CIRCUIT_TERRAIN_GRIDREGION_H_
 
-#include "terrain/BlockingMap.h"  // Test only
 #include "util/math/Region.h"
 
 #include <vector>
@@ -23,8 +22,10 @@ public:
 	explicit CGridRegion(Id id, geom::CPolygon* poly, float cellSize);
 	~CGridRegion();
 
+	Id GetId() const { return id; }
+
 	template <typename Visitor>
-	void ProcessRegion(Visitor visitor);
+	void ProcessRegion(Visitor visitor) const;
 
 private:
 	void Rasterize();
@@ -44,7 +45,7 @@ private:
 };
 
 template <typename Visitor>
-void CGridRegion::ProcessRegion(Visitor visitor)
+void CGridRegion::ProcessRegion(Visitor visitor) const
 {
 	for (const SRow& row : rows) {
 		for (const SColumnSpan& span : row.cols) {

@@ -9,7 +9,6 @@
 #define SRC_CIRCUIT_TERRAIN_TERRAINMANAGER_H_
 
 #include "terrain/BlockingMap.h"
-#include "terrain/GridRegion.h"
 #include "unit/CoreUnit.h"
 #include "unit/CircuitDef.h"
 
@@ -154,14 +153,6 @@ private:
 	void MarkZoneAlly(const springai::AIFloat3& pos, bool block);
 	void MarkZoneOwn(const springai::AIFloat3& pos, bool block);
 
-	struct SBuildZone {  // Custom reserved zone
-		CGridRegion region;
-		CCircuitDef* buildDef;
-	};
-	std::map<CGridRegion::Id, SBuildZone> buildZones;
-	// blockingMap.grid.size() == gridZone.size()
-	std::vector<CGridRegion::Id> gridZone;  // custom zone id; 0 = none
-
 	struct FactoryPathQuery {
 		std::shared_ptr<IPathQuery> query;
 		const CCircuitDef* mobileDef;
@@ -179,11 +170,12 @@ private:
 	void FillParentBusNodes(CPathInfo* pathInfo);
 
 public:
-	// Script API
-	void AddBuildZone(CGridRegion::Id zoneId, geom::CPolygon* poly, CCircuitDef* buildDef);
-	void DelBuildZone(CGridRegion::Id zoneId);
-	void AddReservedZone(CGridRegion::Id zoneId, geom::CPolygon* poly);
-	void DelReservedZone(CGridRegion::Id zoneId);
+	using ZoneFunc = std::function<void (const springai::AIFloat3& p)>;
+	void FillBuildZone(const CGridRegion& region, const CCircuitDef* buildDef, ZoneFunc visitor);
+	void MarkRegion(const CGridRegion& region);
+	void UnmarkRegion(const CGridRegion& region);
+	void MarkReservedZone(const CGridRegion& region);
+	void UnmarkReservedZone(const CGridRegion& region);
 
 	int GetConvertStoP() const { return terrainData->convertStoP; }
 	int GetSectorXSize() const { return terrainData->sectorXSize; }

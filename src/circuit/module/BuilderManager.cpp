@@ -935,6 +935,63 @@ bool CBuilderManager::CanUpGeo(CCircuitDef* cdef) const
 	return (it != workerDefs.end()) && it->second.canUpGeo;
 }
 
+void CBuilderManager::AddBuildZone(CGridRegion::Id zoneId, geom::CPolygon* poly, CCircuitDef* buildDef)
+{
+	auto [it, success] = buildZones.emplace(zoneId, SBuildZone{CGridRegion(zoneId, poly, GRID_BUILD_STEP), buildDef});
+	if (!success) {
+		return;
+	}
+	SBuildZone& bz = it->second;
+	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
+	terrainMgr->MarkRegion(bz.region);
+	terrainMgr->FillBuildZone(bz.region, buildDef, [this, &bz](const AIFloat3& pos) {
+		IBuilderTask* task = Enqueue(TaskB::Common(IBuilderTask::BuildType::ENERGY,
+				IBuilderTask::Priority::HIGH, bz.buildDef, pos, 0.f, true, -1));
+		task->SetBuildPos(pos);
+		task->AddRef();
+		bz.buildTasks.insert(task);
+	});
+}
+
+void CBuilderManager::DelBuildZone(CGridRegion::Id zoneId)
+{
+	auto it = buildZones.find(zoneId);
+	if (it == buildZones.end()) {
+		return;
+	}
+	SBuildZone& bz = it->second;
+	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
+	for (IBuilderTask* task : bz.buildTasks) {
+		task->Abort();
+		task->Release();
+	}
+	terrainMgr->UnmarkRegion(bz.region);
+	buildZones.erase(zoneId);
+}
+
+void CBuilderManager::AddReservedZone(CGridRegion::Id zoneId, geom::CPolygon* poly)
+{
+	auto [it, success] = buildZones.emplace(zoneId, SBuildZone{CGridRegion(zoneId, poly, GRID_BUILD_STEP), nullptr});
+	if (!success) {
+		return;
+	}
+	SBuildZone& bz = it->second;
+	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
+	terrainMgr->MarkReservedZone(bz.region);
+}
+
+void CBuilderManager::DelReservedZone(CGridRegion::Id zoneId)
+{
+	auto it = buildZones.find(zoneId);
+	if (it == buildZones.end()) {
+		return;
+	}
+	SBuildZone& bz = it->second;
+	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
+	terrainMgr->UnmarkReservedZone(bz.region);
+	buildZones.erase(zoneId);
+}
+
 IUnitTask* CBuilderManager::DefaultMakeTask(CCircuitUnit* unit)
 {
 	const int frame = circuit->GetLastFrame();

@@ -56,6 +56,7 @@ CTerrainManager::CTerrainManager(CCircuitAI* circuit, CTerrainData* terrainData)
 	blockingMap.rows = mapHeight / 2;
 	SBlockingMap::SBlockCell cell = {0};
 	blockingMap.grid.resize(blockingMap.columns * blockingMap.rows, cell);
+	blockingMap.gridZone.resize(blockingMap.columns * blockingMap.rows, NULL_BUILD_ZONE);
 
 	blockingMap.columnsLow = mapWidth / (GRID_RATIO_LOW * 2);
 	blockingMap.rowsLow = mapHeight / (GRID_RATIO_LOW * 2);
@@ -66,8 +67,6 @@ CTerrainManager::CTerrainManager(CCircuitAI* circuit, CTerrainData* terrainData)
 	blockingMap.rowsAlly = mapHeight / (GRID_RATIO_ALLY * 2);
 	SBlockingMap::SBlockCellAlly cellAlly = {0};
 	blockingMap.gridAlly.resize(blockingMap.columnsAlly * blockingMap.rowsAlly, cellAlly);
-
-	gridZone.resize(blockingMap.columns * blockingMap.rows, 0);
 }
 
 CTerrainManager::~CTerrainManager()
@@ -1575,27 +1574,19 @@ void CTerrainManager::FillParentBusNodes(CPathInfo* pathInfo)
 	}
 }
 
-void CTerrainManager::AddBuildZone(CGridRegion::Id zoneId, geom::CPolygon* poly, CCircuitDef* buildDef)
+void CTerrainManager::FillBuildZone(const CGridRegion& region, const CCircuitDef* buildDef, ZoneFunc visitor)
 {
-	auto [it, success] = buildZones.emplace(zoneId, SBuildZone{CGridRegion(zoneId, poly, GRID_BUILD_STEP), buildDef});
-	if (!success) {
-		return;
-	}
-	SBuildZone& bz = it->second;
-	bz.region.ProcessRegion([this, zoneId](short x, short z) {
-		gridZone[z * blockingMap.columns + x] = zoneId;
-	});
-
 	CMap* map = circuit->GetMap();
-	int facing = 0;
-	CBuilderManager* builderMgr = circuit->GetBuilderManager();
+	int facing = 0;  // TODO: param
 	UnitDef* unitDef = buildDef->GetDef();
 	const int xsize = (((facing & 1) == 0) ? unitDef->GetXSize() : unitDef->GetZSize()) / 2;
 	const int zsize = (((facing & 1) == 1) ? unitDef->GetXSize() : unitDef->GetZSize()) / 2;
+
+	CGridRegion::Id zoneId = region.GetId();
 	auto isOpenSite = [this, zoneId](const int2& s1, const int2& s2) {
 		for (int z = s1.y; z < s2.y; ++z) {
 			for (int x = s1.x; x < s2.x; ++x) {
-				if ((gridZone[z * blockingMap.columns + x] != zoneId)
+				if (!blockingMap.IsBuildZone(x, z, zoneId)
 					|| blockingMap.IsBlocked(x, z, static_cast<SBlockingMap::SM>(SBlockingMap::StructMask::ALL)))
 				{
 					return false;
@@ -1606,12 +1597,12 @@ void CTerrainManager::AddBuildZone(CGridRegion::Id zoneId, geom::CPolygon* poly,
 	};
 
 	short usedX = -1, usedZ = -1;
-	bz.region.ProcessRegion([=, this, &usedX, &usedZ](short x, short z) {
+	region.ProcessRegion([=, this, &usedX, &usedZ](short x, short z) {
 		if (usedZ == z) {
-			if (abs(usedX - x) < xsize) {
+			if (x - usedX < xsize) {
 				return;
 			}
-		} else if (abs(usedZ - z) < zsize) {
+		} else if (z - usedZ < zsize) {
 			return;
 		}
 
@@ -1628,55 +1619,42 @@ void CTerrainManager::AddBuildZone(CGridRegion::Id zoneId, geom::CPolygon* poly,
 
 		AIFloat3 probePos(posX, 0, posZ);
 		if (map->IsPossibleToBuildAt(buildDef->GetDef(), probePos, facing)) {
-			// TODO: Store enqueued task for DelBuildZone
-			IBuilderTask* task = builderMgr->Enqueue(TaskB::Common(IBuilderTask::BuildType::ENERGY,
-					IBuilderTask::Priority::NOW, buildDef, probePos, 0.f, true, -1));
-			task->SetBuildPos(probePos);
-			usedX = x;
-			usedZ = z;
+			visitor(probePos);
+			usedX = x; usedZ = z;
 		}
 	});
 }
 
-void CTerrainManager::DelBuildZone(CGridRegion::Id zoneId)
+void CTerrainManager::MarkRegion(const CGridRegion& region)
 {
-	auto it = buildZones.find(zoneId);
-	if (it == buildZones.end()) {
-		return;
-	}
-	SBuildZone& bz = it->second;
-	bz.region.ProcessRegion([this](short x, short z) {
-		// TODO: Abort zone tasks
-		gridZone[z * blockingMap.columns + x] = 0;
+	CGridRegion::Id zoneId = region.GetId();
+	region.ProcessRegion([this, zoneId](short x, short z) {
+		blockingMap.SetBuildZone(x, z, zoneId);
 	});
-	buildZones.erase(zoneId);
 }
 
-void CTerrainManager::AddReservedZone(CGridRegion::Id zoneId, geom::CPolygon* poly)
+void CTerrainManager::UnmarkRegion(const CGridRegion& region)
 {
-	auto [it, success] = buildZones.emplace(zoneId, SBuildZone{CGridRegion(zoneId, poly, GRID_BUILD_STEP), nullptr});
-	if (!success) {
-		return;
-	}
-	SBuildZone& bz = it->second;
-	bz.region.ProcessRegion([this, zoneId](short x, short z) {
+	region.ProcessRegion([this](short x, short z) {
+		blockingMap.SetBuildZone(x, z, NULL_BUILD_ZONE);
+	});
+}
+
+void CTerrainManager::MarkReservedZone(const CGridRegion& region)
+{
+	CGridRegion::Id zoneId = region.GetId();
+	region.ProcessRegion([this, zoneId](short x, short z) {
 		blockingMap.AddBlocker(x, z, SBlockingMap::StructType::RESERVED);
-		gridZone[z * blockingMap.columns + x] = zoneId;
+		blockingMap.SetBuildZone(x, z, zoneId);
 	});
 }
 
-void CTerrainManager::DelReservedZone(CGridRegion::Id zoneId)
+void CTerrainManager::UnmarkReservedZone(const CGridRegion& region)
 {
-	auto it = buildZones.find(zoneId);
-	if (it == buildZones.end()) {
-		return;
-	}
-	SBuildZone& bz = it->second;
-	bz.region.ProcessRegion([this](short x, short z) {
+	region.ProcessRegion([this](short x, short z) {
 		blockingMap.DelBlocker(x, z, SBlockingMap::StructType::RESERVED);
-		gridZone[z * blockingMap.columns + x] = 0;
+		blockingMap.SetBuildZone(x, z, NULL_BUILD_ZONE);
 	});
-	buildZones.erase(zoneId);
 }
 
 void CTerrainManager::SnapPosition(AIFloat3& position)

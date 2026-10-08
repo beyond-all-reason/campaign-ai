@@ -10,6 +10,7 @@
 
 #include "module/TaskModule.h"
 #include "task/builder/BuilderTask.h"
+#include "terrain/GridRegion.h"
 #include "terrain/TerrainData.h"
 #include "unit/CircuitUnit.h"
 
@@ -322,6 +323,12 @@ public:
 	void IncGuardCount() { ++guardCount; }
 	void DecGuardCount() { --guardCount; }
 
+	// Script API
+	void AddBuildZone(CGridRegion::Id zoneId, geom::CPolygon* poly, CCircuitDef* buildDef);
+	void DelBuildZone(CGridRegion::Id zoneId);
+	void AddReservedZone(CGridRegion::Id zoneId, geom::CPolygon* poly);
+	void DelReservedZone(CGridRegion::Id zoneId);
+
 private:
 	virtual IUnitTask* DefaultMakeTask(CCircuitUnit* unit) override;
 	IBuilderTask* MakeEnergizerTask(CCircuitUnit* unit, const CQueryCostMap* query);
@@ -367,6 +374,13 @@ private:
 		bool canUpGeo : 1;
 	};
 	std::unordered_map<CCircuitDef*, SWorkExt> workerDefs;
+
+	struct SBuildZone {  // Custom reserved zone
+		CGridRegion region;
+		CCircuitDef* buildDef;
+		std::set<IBuilderTask*> buildTasks;
+	};
+	std::map<CGridRegion::Id, SBuildZone> buildZones;
 
 public:
 	void UpdateAreaUsers();

@@ -20,7 +20,7 @@ class Manager {
 			verts.insertLast(AIFloat3(x, 0.f, z));
 		}
 		Id unitDefId = parseInt(unitDef_points[0]);
-		aiTerrainMgr.AddBuildZone(regionId, CPolygon(verts), ai.GetCircuitDef(unitDefId));
+		aiBuilderMgr.AddBuildZone(regionId, CPolygon(verts), ai.GetCircuitDef(unitDefId));
 
 		for (uint i = 0; i < verts.length(); ++i)
 			AiAddLine(verts[i], verts[(i+1) % verts.length()]);
@@ -29,7 +29,7 @@ class Manager {
 
 	void ClearBuildZones() {
 		for (auto it = buildZones.begin(); it++;)
-			aiTerrainMgr.DelBuildZone(it.current());
+			aiBuilderMgr.DelBuildZone(it.current());
 		buildZones.clear();
 	}
 

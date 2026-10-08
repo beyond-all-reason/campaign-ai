@@ -8,6 +8,8 @@
 #ifndef SRC_CIRCUIT_TERRAIN_BLOCKINGMAP_H_
 #define SRC_CIRCUIT_TERRAIN_BLOCKINGMAP_H_
 
+#include "terrain/GridRegion.h"
+
 #include "System/type2.h"
 
 #include <vector>
@@ -18,6 +20,7 @@
 #define GRID_RATIO_ALLY		8
 #define GRID_RATIO_LOW		8
 #define STRUCT_BIT(bits)	static_cast<SBlockingMap::SM>(SBlockingMap::StructMask::bits)
+#define NULL_BUILD_ZONE		0
 
 namespace circuit {
 
@@ -58,6 +61,9 @@ struct SBlockingMap {
 	inline void AddZoneOwn(int xAlly, int zAlly);
 	inline void DelZoneOwn(int xAlly, int zAlly);
 
+	inline bool IsBuildZone(short x, short z, CGridRegion::Id zoneId) const;
+	inline void SetBuildZone(short x, short z, CGridRegion::Id zoneId);
+
 	inline bool IsInBounds(const int2& r1, const int2& r2) const;
 	inline bool IsInBounds(int x, int z) const;
 	inline bool IsInBoundsLow(int x, int z) const;
@@ -76,6 +82,7 @@ struct SBlockingMap {
 		unsigned short blockerCounts[static_cast<ST>(StructType::_SIZE_)];
 	};
 	std::vector<SBlockCell> grid;  // granularity Map::GetWidth / 2,  Map::GetHeight / 2
+	std::vector<CGridRegion::Id> gridZone;  // custom zone id; 0 = none
 	int columns;
 	int rows;
 
