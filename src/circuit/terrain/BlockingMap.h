@@ -20,7 +20,6 @@
 #define GRID_RATIO_ALLY		8
 #define GRID_RATIO_LOW		8
 #define STRUCT_BIT(bits)	static_cast<SBlockingMap::SM>(SBlockingMap::StructMask::bits)
-#define NULL_BUILD_ZONE		0
 
 namespace circuit {
 
@@ -35,8 +34,7 @@ struct SBlockingMap {
 		FACTORY = 0x0001,      MEX = 0x0002,      GEO = 0x0004,     PYLON = 0x0008,
 		CONVERT = 0x0010, ENGY_LOW = 0x0020, ENGY_MID = 0x0040, ENGY_HIGH = 0x0080,
 		DEF_LOW = 0x0100,  DEF_MID = 0x0200, DEF_HIGH = 0x0400,   SPECIAL = 0x0800,
-		   NANO = 0x1000,    TERRA = 0x2000,  UNKNOWN = 0x4000,      ZONE = 0x8000};
-	// ZONE - custom build-zone, see CTerrainManager::gridZone;
+		   NANO = 0x1000,    TERRA = 0x2000,  UNKNOWN = 0x4000,  RESERVED = 0x8000};
 	using ST = std::underlying_type<StructType>::type;
 	using SM = std::underlying_type<StructMask>::type;
 	using StructTypes = std::map<std::string, StructType>;

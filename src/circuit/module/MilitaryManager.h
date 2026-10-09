@@ -10,6 +10,7 @@
 
 #include "module/TaskModule.h"
 #include "setup/DefenceData.h"
+#include "terrain/GridRegion.h"
 #include "task/fighter/FighterTask.h"
 #include "unit/CircuitDef.h"
 #include "util/AvailList.h"
@@ -185,7 +186,12 @@ public:
 
 	float GetRangeUnitCountCompensatorScale();
 
+	// Script API
+	void AddTriggerZone(CGridRegion::Id zoneId, geom::CPolygon* poly);
+	void DelTriggerZone(CGridRegion::Id zoneId);
 private:
+	void UpdateTriggers();
+
 	virtual IUnitTask* DefaultMakeTask(CCircuitUnit* unit) override;
 
 	void Watchdog();
@@ -274,6 +280,12 @@ private:
 
 	std::shared_ptr<IMainJob> defend;
 	std::vector<std::pair<springai::AIFloat3, BuildVector>> buildDefence;  // pos: defences
+
+	struct STriggerZone {  // Custom trigger zone
+		CGridRegion region;
+	};
+	std::map<CGridRegion::Id, STriggerZone> triggerZones;
+	unsigned int taskTriggerIterator;
 
 	virtual void Load(std::istream& is) override;
 	virtual void Save(std::ostream& os) const override;

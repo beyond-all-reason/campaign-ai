@@ -27,6 +27,7 @@ public:
 public:
 	void MakeDefence(int cluster, const springai::AIFloat3& pos);
 	void TaskResigned(CCircuitUnit* unit);
+	void TaskZoneChanged(CCircuitUnit* unit, int srcZoneId, int dstZoneId);
 
 private:
 	static CMilitaryManager::SRoleInfo::SVsInfo* GetVsInfo(CMilitaryManager::SRoleInfo* info, CCircuitDef::RoleT vsType);
@@ -34,6 +35,7 @@ private:
 	struct SScriptInfo {
 		asIScriptFunction* makeDefence = nullptr;
 		asIScriptFunction* taskResigned = nullptr;
+		asIScriptFunction* taskZoneChanged = nullptr;
 	} militaryInfo;
 };
 

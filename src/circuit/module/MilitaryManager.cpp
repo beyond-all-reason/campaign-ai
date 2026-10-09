@@ -59,6 +59,7 @@ CMilitaryManager::CMilitaryManager(CCircuitAI* circuit)
 		, isEnemyFound(false)
 		, armyCost(0.f)
 		, bigGunDef(nullptr)
+		, taskTriggerIterator(0)
 {
 	circuit->GetScheduler()->RunOnInit(CScheduler::GameJob(&CMilitaryManager::Init, this));
 
@@ -525,6 +526,7 @@ void CMilitaryManager::Init()
 		scheduler->RunJobEvery(CScheduler::GameJob(&CMilitaryManager::UpdateIdle, this), interval, offset + 0);
 		scheduler->RunJobEvery(CScheduler::GameJob(&CMilitaryManager::Update, this), 1/*interval / 2*/, offset + 1);
 		scheduler->RunJobEvery(CScheduler::GameJob(&CMilitaryManager::UpdateDefenceTasks, this), FRAMES_PER_SEC * 5, offset + 2);
+		scheduler->RunJobEvery(CScheduler::GameJob(&CMilitaryManager::UpdateTriggers, this), 1, offset + 3);
 
 		scheduler->RunJobEvery(CScheduler::GameJob(&CMilitaryManager::Watchdog, this),
 								FRAMES_PER_SEC * 60,
@@ -1636,6 +1638,56 @@ float CMilitaryManager::GetRangeUnitCountCompensatorScale()
 //				threatRangeScaling.scale, totalEnemies, enemyCountMinToStartScaling, rateAdjPerUnit);
 	}
 	return threatRangeScaling.scale;
+}
+
+void CMilitaryManager::AddTriggerZone(CGridRegion::Id zoneId, geom::CPolygon* poly)
+{
+	auto [it, success] = triggerZones.emplace(zoneId, STriggerZone{CGridRegion(zoneId, poly, GRID_TRIGGER_STEP)});
+	if (!success) {
+		return;
+	}
+	STriggerZone& tz = it->second;
+	circuit->GetTerrainManager()->MarkTriggerZone(tz.region, tz.region.GetId());
+}
+
+void CMilitaryManager::DelTriggerZone(CGridRegion::Id zoneId)
+{
+	auto it = triggerZones.find(zoneId);
+	if (it == triggerZones.end()) {
+		return;
+	}
+	STriggerZone& tz = it->second;
+	circuit->GetTerrainManager()->MarkTriggerZone(tz.region, NULL_ZONE);
+	triggerZones.erase(zoneId);
+}
+
+void CMilitaryManager::UpdateTriggers()
+{
+	if (taskTriggerIterator >= updateTasks.size()) {
+		if (taskTriggerIterator == 0) {
+			return;
+		}
+		taskTriggerIterator = 0;
+	}
+
+	IUnitTask* task = updateTasks[taskTriggerIterator];
+	++taskTriggerIterator;
+	if (task->GetType() != IUnitTask::Type::FIGHTER) {
+		return;
+	}
+	IFighterTask* taskF = static_cast<IFighterTask*>(task);
+	CCircuitUnit* unit = taskF->GetLeader();
+	if (unit == nullptr) {
+		return;
+	}
+	const AIFloat3& pos = unit->GetPos(circuit->GetLastFrame());
+
+	CGridRegion::Id zoneId = circuit->GetTerrainManager()->GetTriggerZoneId(pos);
+	CGridRegion::Id lastZoneId = taskF->GetZoneId();
+	if (lastZoneId != zoneId) {
+		taskF->SetZoneId(zoneId);
+		static_cast<CMilitaryScript*>(script)->TaskZoneChanged(unit, lastZoneId, zoneId);
+	}
 }
 
 IUnitTask* CMilitaryManager::DefaultMakeTask(CCircuitUnit* unit)

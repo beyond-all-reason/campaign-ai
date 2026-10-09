@@ -56,7 +56,7 @@ CTerrainManager::CTerrainManager(CCircuitAI* circuit, CTerrainData* terrainData)
 	blockingMap.rows = mapHeight / 2;
 	SBlockingMap::SBlockCell cell = {0};
 	blockingMap.grid.resize(blockingMap.columns * blockingMap.rows, cell);
-	blockingMap.gridZone.resize(blockingMap.columns * blockingMap.rows, NULL_BUILD_ZONE);
+	blockingMap.gridZone.resize(blockingMap.columns * blockingMap.rows, NULL_ZONE);
 
 	blockingMap.columnsLow = mapWidth / (GRID_RATIO_LOW * 2);
 	blockingMap.rowsLow = mapHeight / (GRID_RATIO_LOW * 2);
@@ -67,6 +67,10 @@ CTerrainManager::CTerrainManager(CCircuitAI* circuit, CTerrainData* terrainData)
 	blockingMap.rowsAlly = mapHeight / (GRID_RATIO_ALLY * 2);
 	SBlockingMap::SBlockCellAlly cellAlly = {0};
 	blockingMap.gridAlly.resize(blockingMap.columnsAlly * blockingMap.rowsAlly, cellAlly);
+
+	triggerColumns = mapWidth / (GRID_TRIGGER_STEP / SQUARE_SIZE);
+	short triggerRows = mapHeight / (GRID_TRIGGER_STEP / SQUARE_SIZE);
+	triggerZone.resize(triggerColumns * triggerRows, NULL_ZONE);
 }
 
 CTerrainManager::~CTerrainManager()
@@ -1625,18 +1629,10 @@ void CTerrainManager::FillBuildZone(const CGridRegion& region, const CCircuitDef
 	});
 }
 
-void CTerrainManager::MarkRegion(const CGridRegion& region)
+void CTerrainManager::MarkBuildZone(const CGridRegion& region, CGridRegion::Id zoneId)
 {
-	CGridRegion::Id zoneId = region.GetId();
 	region.ProcessRegion([this, zoneId](short x, short z) {
 		blockingMap.SetBuildZone(x, z, zoneId);
-	});
-}
-
-void CTerrainManager::UnmarkRegion(const CGridRegion& region)
-{
-	region.ProcessRegion([this](short x, short z) {
-		blockingMap.SetBuildZone(x, z, NULL_BUILD_ZONE);
 	});
 }
 
@@ -1653,8 +1649,22 @@ void CTerrainManager::UnmarkReservedZone(const CGridRegion& region)
 {
 	region.ProcessRegion([this](short x, short z) {
 		blockingMap.DelBlocker(x, z, SBlockingMap::StructType::RESERVED);
-		blockingMap.SetBuildZone(x, z, NULL_BUILD_ZONE);
+		blockingMap.SetBuildZone(x, z, NULL_ZONE);
 	});
+}
+
+void CTerrainManager::MarkTriggerZone(const CGridRegion& region, CGridRegion::Id zoneId)
+{
+	region.ProcessRegion([this, zoneId](short x, short z) {
+		triggerZone[z * triggerColumns + x] = zoneId;
+	});
+}
+
+CGridRegion::Id CTerrainManager::GetTriggerZoneId(const AIFloat3& pos) const
+{
+	short x = short(pos.x / GRID_TRIGGER_STEP);
+	short z = short(pos.z / GRID_TRIGGER_STEP);
+	return triggerZone[z * triggerColumns + x];
 }
 
 void CTerrainManager::SnapPosition(AIFloat3& position)

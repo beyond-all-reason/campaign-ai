@@ -814,6 +814,11 @@ void CBuilderManager::DequeueTask(IUnitTask* task, bool done)
 				} break;
 				default: {
 					unfinishedUnits.erase(taskB->GetTarget());
+					auto itZ = taskToZone.find(taskB);
+					if (itZ != taskToZone.end()) {
+						itZ->second->buildTasks.erase(taskB);
+						taskToZone.erase(itZ);
+					}
 				} break;
 			}
 			tasks.erase(it);
@@ -943,13 +948,13 @@ void CBuilderManager::AddBuildZone(CGridRegion::Id zoneId, geom::CPolygon* poly,
 	}
 	SBuildZone& bz = it->second;
 	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
-	terrainMgr->MarkRegion(bz.region);
+	terrainMgr->MarkBuildZone(bz.region, zoneId);
 	terrainMgr->FillBuildZone(bz.region, buildDef, [this, &bz](const AIFloat3& pos) {
 		IBuilderTask* task = Enqueue(TaskB::Common(IBuilderTask::BuildType::ENERGY,
 				IBuilderTask::Priority::HIGH, bz.buildDef, pos, 0.f, true, -1));
 		task->SetBuildPos(pos);
-		task->AddRef();
 		bz.buildTasks.insert(task);
+		taskToZone[task] = &bz;
 	});
 }
 
@@ -960,12 +965,11 @@ void CBuilderManager::DelBuildZone(CGridRegion::Id zoneId)
 		return;
 	}
 	SBuildZone& bz = it->second;
-	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
 	for (IBuilderTask* task : bz.buildTasks) {
 		task->Abort();
-		task->Release();
+		taskToZone.erase(task);
 	}
-	terrainMgr->UnmarkRegion(bz.region);
+	circuit->GetTerrainManager()->MarkBuildZone(bz.region, NULL_ZONE);
 	buildZones.erase(zoneId);
 }
 
@@ -976,8 +980,7 @@ void CBuilderManager::AddReservedZone(CGridRegion::Id zoneId, geom::CPolygon* po
 		return;
 	}
 	SBuildZone& bz = it->second;
-	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
-	terrainMgr->MarkReservedZone(bz.region);
+	circuit->GetTerrainManager()->MarkReservedZone(bz.region);
 }
 
 void CBuilderManager::DelReservedZone(CGridRegion::Id zoneId)
@@ -987,8 +990,7 @@ void CBuilderManager::DelReservedZone(CGridRegion::Id zoneId)
 		return;
 	}
 	SBuildZone& bz = it->second;
-	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
-	terrainMgr->UnmarkReservedZone(bz.region);
+	circuit->GetTerrainManager()->UnmarkReservedZone(bz.region);
 	buildZones.erase(zoneId);
 }
 

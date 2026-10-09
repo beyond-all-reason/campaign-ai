@@ -90,9 +90,14 @@
                 <div class="grid commands">
                     <button onclick="widget:SendRegion1()">region 1</button>
                     <button onclick="widget:SendRegion2()">region 2</button>
-                    <button onclick="widget:StartRegion()">start</button>
-                    <button onclick="widget:EndRegion()">end</button>
-                    <button onclick="widget:ClearRegions()">clear regions</button>
+                    <button onclick="widget:StartRegion()">start build</button>
+                    <button onclick="widget:EndRegion()">end build</button>
+                    <button onclick="widget:ClearRegions()">clear builds</button>
+                </div>
+                <div class="grid commands">
+                    <button onclick="widget:StartTriggerRegion()">start trigger</button>
+                    <button onclick="widget:EndTriggerRegion()">end trigger</button>
+                    <button onclick="widget:ClearTriggers()">clear triggers</button>
                 </div>
             </div>
             <div class="collapse-button" data-event-click="toggleCollapse()" title="Minimize" data-class-collapsed="isCollapsed"></div>

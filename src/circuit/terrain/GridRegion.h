@@ -12,6 +12,8 @@
 
 #include <vector>
 
+#define NULL_ZONE	0
+
 namespace circuit {
 
 class CGridRegion final {

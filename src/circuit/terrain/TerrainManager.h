@@ -18,10 +18,6 @@
 #include <deque>
 #include <functional>
 
-namespace geom {
-	class CPolygon;
-}
-
 namespace terrain {
 	struct SArea;
 	struct SMobileType;
@@ -30,6 +26,8 @@ namespace terrain {
 	struct SSector;
 	struct SAreaData;
 }
+
+#define GRID_TRIGGER_STEP	GRID_BUILD_STEP
 
 namespace circuit {
 
@@ -153,6 +151,9 @@ private:
 	void MarkZoneAlly(const springai::AIFloat3& pos, bool block);
 	void MarkZoneOwn(const springai::AIFloat3& pos, bool block);
 
+	std::vector<CGridRegion::Id> triggerZone;
+	short triggerColumns;
+
 	struct FactoryPathQuery {
 		std::shared_ptr<IPathQuery> query;
 		const CCircuitDef* mobileDef;
@@ -172,10 +173,11 @@ private:
 public:
 	using ZoneFunc = std::function<void (const springai::AIFloat3& p)>;
 	void FillBuildZone(const CGridRegion& region, const CCircuitDef* buildDef, ZoneFunc visitor);
-	void MarkRegion(const CGridRegion& region);
-	void UnmarkRegion(const CGridRegion& region);
+	void MarkBuildZone(const CGridRegion& region, CGridRegion::Id zoneId);
 	void MarkReservedZone(const CGridRegion& region);
 	void UnmarkReservedZone(const CGridRegion& region);
+	void MarkTriggerZone(const CGridRegion& region, CGridRegion::Id zoneId);
+	CGridRegion::Id GetTriggerZoneId(const springai::AIFloat3& pos) const;
 
 	int GetConvertStoP() const { return terrainData->convertStoP; }
 	int GetSectorXSize() const { return terrainData->sectorXSize; }

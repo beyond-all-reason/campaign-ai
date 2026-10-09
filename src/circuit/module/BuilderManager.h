@@ -375,12 +375,13 @@ private:
 	};
 	std::unordered_map<CCircuitDef*, SWorkExt> workerDefs;
 
-	struct SBuildZone {  // Custom reserved zone
+	struct SBuildZone {  // Custom build zone
 		CGridRegion region;
 		CCircuitDef* buildDef;
 		std::set<IBuilderTask*> buildTasks;
 	};
 	std::map<CGridRegion::Id, SBuildZone> buildZones;
+	std::map<IBuilderTask*, SBuildZone*> taskToZone;
 
 public:
 	void UpdateAreaUsers();

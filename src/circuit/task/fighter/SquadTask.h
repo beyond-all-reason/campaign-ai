@@ -31,7 +31,7 @@ public:
 	bool IsScripted() const { return isScripted; }
 	const std::map<float, std::set<CCircuitUnit*>>& GetRangeUnits() const { return rangeUnits; }
 
-	CCircuitUnit* GetLeader() const { return leader; }
+	virtual CCircuitUnit* GetLeader() const override { return leader; }
 	const springai::AIFloat3& GetLeaderPos(int frame) const;
 
 private:

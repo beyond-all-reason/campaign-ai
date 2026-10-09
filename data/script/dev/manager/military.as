@@ -27,6 +27,11 @@ void AiTaskResigned(CCircuitUnit@ unit)
 	Squad::mgr.SquadUnitDestroyed(unit);
 }
 
+void AiTaskZoneChanged(CCircuitUnit@ unit, int srcZoneId, int dstZoneId)
+{
+	AiAddPoint(unit.GetPos(ai.frame), "" + srcZoneId + "=>" + dstZoneId);
+}
+
 void AiUnitAdded(CCircuitUnit@ unit, Unit::UseAs usage)
 {
 }

@@ -58,6 +58,7 @@ local squadID3 = 3
 local zoneID1 = 1
 local zoneID2 = 2
 local zoneID = 10
+local triggerZoneID = 0
 local power = 5.2
 local retreatThreshold = 2.2
 local isRecruitScripted = false
@@ -625,6 +626,26 @@ function widget:ClearRegions()
         :toString()
     Spring.SendSkirmishAIMessage(teamID, msg)
     newRegion = false
+end
+
+function widget:StartTriggerRegion()
+    newRegion = {}
+end
+function widget:EndTriggerRegion()
+    if newRegion and #newRegion >= 6 then
+        triggerZoneID = triggerZoneID + 1
+        local msg = aiMsg.MsgBuilder.new()
+            :cmdDictArray(aiMsg.Topic.TRIGGER_REGION_ID, triggerZoneID, newRegion)
+            :toString()
+        Spring.SendSkirmishAIMessage(teamID, msg)
+    end
+    newRegion = false
+end
+function widget:ClearTriggers()
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdValue(aiMsg.Topic.TRIGGER_REGION_CLEAR, 1)
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID, msg)
 end
 
 
