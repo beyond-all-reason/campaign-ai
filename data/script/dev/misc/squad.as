@@ -292,7 +292,7 @@ class Manager {
 		// NOTE: SQUAD_REQUEST_COMPOSE is a standalone message and can arrive multiple times at any time.
 		//       If squad is in the middle of compositing - disband and start anew.
 		if (!isNewReq && selSquad.state != ESquadState::FINISHED) {
-			DestroySquad(selSquad);
+			DisbandSquad(selSquad);
 			isNewReq = true;
 		}
 		for (uint i = 0; i < params.length(); ++i) {
@@ -340,8 +340,8 @@ class Manager {
 		}
 	}
 
-	private void CheckSquadFinished(Squad@ squad, int taskUnitNum) {
-		if (squad.req.unitNum <= taskUnitNum && squad.state == ESquadState::CREATED) {
+	private void CheckSquadFinished(Squad@ squad, int assignedUnitNum) {
+		if (assignedUnitNum >= squad.req.unitNum && squad.state == ESquadState::CREATED) {
 			IFighterTask@ fighterTask = cast<IFighterTask>(squad.task);
 			fighterTask.isRegroupAllowed = true;
 			fighterTask.vipTargetId = squad.req.vipTargetId;
@@ -417,7 +417,7 @@ class Manager {
 		requests.insertLast(req);
 	}
 
-	private void DestroySquad(Squad@ squad) {
+	private void DisbandSquad(Squad@ squad) {
 		if (squad.req.isRepeat) {
 			RepeatRequest(squad);
 		} else {
@@ -426,13 +426,13 @@ class Manager {
 	}
 
 	// Invoked by LuaMsg::Manager::SquadDisband
-	bool DestroySquadId(Id squadId) {
+	bool DisbandSquadId(Id squadId) {
 		bool success;
 		Squad@ squad = squads.find(squadId, success);
 		if (!success)
 			return false;
 
-		DestroySquad(squad);
+		DisbandSquad(squad);
 		return true;
 	}
 
@@ -475,7 +475,7 @@ class Manager {
 		if (!success)
 			return false;
 
-		DestroySquad(squad);
+		DisbandSquad(squad);
 		return true;
 	}
 
@@ -490,7 +490,7 @@ class Manager {
 			// Guard target was destroyed
 			squad.SetInitialTask();
 		} else
-			DestroySquad(squad);
+			DisbandSquad(squad);
 		return true;
 	}
 

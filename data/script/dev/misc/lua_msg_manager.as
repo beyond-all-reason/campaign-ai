@@ -124,7 +124,7 @@ class Manager {
 	}
 
 	void SquadDisband(const array<string>& in params) {
-		Squad::mgr.DestroySquadId(parseInt(params[0]));
+		Squad::mgr.DisbandSquadId(parseInt(params[0]));
 	}
 
 	void SquadTask(const array<string>& in params) {
