@@ -88,7 +88,7 @@ public:
 	springai::AIFloat3 GetRandomMovePosition(CCircuitUnit* unit);
 
 	const SBlockingMap& GetBlockingMap();
-	std::vector<springai::Feature*> GetWrecks() const;
+	std::vector<springai::Feature*> GetFeatures() const;
 	bool IsZoneAlly(const springai::AIFloat3& pos) const;
 	void AddZoneOwn(const springai::AIFloat3& pos) { MarkZoneOwn(pos, true); }
 	void DelZoneOwn(const springai::AIFloat3& pos) { MarkZoneOwn(pos, false); }

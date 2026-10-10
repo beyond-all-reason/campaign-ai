@@ -914,10 +914,10 @@ int CCircuitAI::Message(int playerId, const char* message)
 
 	size_t msgLength = strlen(message);
 
-	if (strncmp(message, cmdBreak, 6) == 0) {
+	if (strncmp(message, cmdBreak, strlen(cmdBreak)) == 0) {
 		__asm__("int3");
 	}
-	else if (strncmp(message, cmdReload, 7) == 0) {
+	else if (strncmp(message, cmdReload, strlen(cmdReload)) == 0) {
 		game->SetPause(true, "reload");
 		scriptManager->Reload();
 	}
@@ -929,30 +929,30 @@ int CCircuitAI::Message(int playerId, const char* message)
 		selfD();
 	}
 
-	else if (strncmp(message, cmdBlock, 6) == 0) {
+	else if (strncmp(message, cmdBlock, strlen(cmdBlock)) == 0) {
 		terrainManager->ToggleVis();
 	}
-	else if (strncmp(message, cmdWBlock, 7) == 0) {
-		if (teamId == atoi((const char*)&message[8])) {
+	else if (strncmp(message, cmdWBlock, strlen(cmdWBlock)) == 0) {
+		if (teamId == atoi((const char*)&message[strlen(cmdWBlock) + 1])) {
 			terrainManager->ToggleWidgetDraw();
 		}
 	}
 
-	else if (strncmp(message, cmdArea, 5) == 0) {
+	else if (strncmp(message, cmdArea, strlen(cmdArea)) == 0) {
 		gameAttribute->GetTerrainData().ToggleVis(lastFrame);
 	}
-	else if (strncmp(message, cmdPath, 5) == 0) {
+	else if (strncmp(message, cmdPath, strlen(cmdPath)) == 0) {
 		pathfinder->TogglePathVis(this);
 	}
-	else if (strncmp(message, cmdMvCost, 7) == 0) {
+	else if (strncmp(message, cmdMvCost, strlen(cmdMvCost)) == 0) {
 		pathfinder->ToggleMoveArrayVis(this);
 	}
-	else if (strncmp(message, cmdKnn, 4) == 0) {
+	else if (strncmp(message, cmdKnn, strlen(cmdKnn)) == 0) {
 		const AIFloat3 dbgPos = map->GetMousePos();
 		int index = metalManager->FindNearestCluster(dbgPos);
 		drawer->AddPoint(metalManager->GetClusters()[index].position, "knn");
 	}
-	else if (strncmp(message, cmdLog, 4) == 0) {
+	else if (strncmp(message, cmdLog, strlen(cmdLog)) == 0) {
 		auto selection = callback->GetSelectedUnits();
 		for (Unit* u : selection) {
 			CCircuitUnit* unit = GetTeamUnit(u->GetUnitId());
@@ -962,18 +962,18 @@ int CCircuitAI::Message(int playerId, const char* message)
 		}
 		utils::free_clear(selection);
 	}
-	else if (strncmp(message, cmdBTask, 6) == 0) {
-		if (teamId == atoi((const char*)&message[7])) {
+	else if (strncmp(message, cmdBTask, strlen(cmdBTask)) == 0) {
+		if (teamId == atoi((const char*)&message[strlen(cmdBTask) + 1])) {
 			builderManager->Log();
 		}
 	}
-	else if (strncmp(message, cmdChoke, 6) == 0) {
+	else if (strncmp(message, cmdChoke, strlen(cmdChoke)) == 0) {
 		gameAttribute->GetTerrainData().ToggleTAVis(lastFrame);
 	}
-	else if (strncmp(message, cmdMetal, 6) == 0) {
+	else if (strncmp(message, cmdMetal, strlen(cmdMetal)) == 0) {
 		gameAttribute->GetMetalData().ToggleTAVis(lastFrame);
 	}
-	else if (strncmp(message, cmdMouse, 6) == 0) {
+	else if (strncmp(message, cmdMouse, strlen(cmdMouse)) == 0) {
 		AIFloat3 mousePos = map->GetMousePos();
 		LOG("%f, %f, %f", mousePos.x, mousePos.y, mousePos.z);
 		auto selection = callback->GetSelectedUnits();
@@ -988,44 +988,44 @@ int CCircuitAI::Message(int playerId, const char* message)
 		}
 	}
 
-	else if (strncmp(message, cmdThreat, 7) == 0) {
+	else if (strncmp(message, cmdThreat, strlen(cmdThreat)) == 0) {
 		mapManager->GetThreatMap()->ToggleSDLVis();
 	}
-	else if (strncmp(message, cmdWTDraw, 7) == 0) {
-		if (teamId == atoi((const char*)&message[8])) {
+	else if (strncmp(message, cmdWTDraw, strlen(cmdWTDraw)) == 0) {
+		if (teamId == atoi((const char*)&message[strlen(cmdWTDraw) + 1])) {
 			mapManager->GetThreatMap()->ToggleWidgetDraw();
 		}
 	}
-	else if (strncmp(message, cmdWTDiv, 6) == 0) {
+	else if (strncmp(message, cmdWTDiv, strlen(cmdWTDiv)) == 0) {
 		std::string s(message);
 		auto start = s.rfind(" ");
 		std::string layer = (start != std::string::npos) ? s.substr(start + 1) : "";
-		mapManager->GetThreatMap()->SetMaxThreat(atof((const char*)&message[7]), layer);
+		mapManager->GetThreatMap()->SetMaxThreat(atof((const char*)&message[strlen(cmdWTDiv) + 1]), layer);
 	}
-	else if (strncmp(message, cmdWTPrint, 8) == 0) {
-		if (teamId == atoi((const char*)&message[9])) {
+	else if (strncmp(message, cmdWTPrint, strlen(cmdWTPrint)) == 0) {
+		if (teamId == atoi((const char*)&message[strlen(cmdWTPrint) + 1])) {
 			mapManager->GetThreatMap()->ToggleWidgetPrint();
 		}
 	}
 
-	else if (strncmp(message, cmdInfl, 5) == 0) {
+	else if (strncmp(message, cmdInfl, strlen(cmdInfl)) == 0) {
 		mapManager->GetInflMap()->ToggleSDLVis();
 	}
-	else if (strncmp(message, cmdWIDraw, 7) == 0) {
-		if (teamId == atoi((const char*)&message[8])) {
+	else if (strncmp(message, cmdWIDraw, strlen(cmdWIDraw)) == 0) {
+		if (teamId == atoi((const char*)&message[strlen(cmdWIDraw) + 1])) {
 			mapManager->GetInflMap()->ToggleWidgetDraw();
 		}
 	}
-	else if (strncmp(message, cmdWIDiv, 6) == 0) {
-		mapManager->GetInflMap()->SetMaxThreat(atof((const char*)&message[7]));
+	else if (strncmp(message, cmdWIDiv, strlen(cmdWIDiv)) == 0) {
+		mapManager->GetInflMap()->SetMaxThreat(atof((const char*)&message[strlen(cmdWIDiv) + 1]));
 	}
-	else if (strncmp(message, cmdWIPrint, 8) == 0) {
-		if (teamId == atoi((const char*)&message[9])) {
+	else if (strncmp(message, cmdWIPrint, strlen(cmdWIPrint)) == 0) {
+		if (teamId == atoi((const char*)&message[strlen(cmdWIPrint) + 1])) {
 			mapManager->GetInflMap()->ToggleWidgetPrint();
 		}
 	}
 
-	else if (strncmp(message, cmdGrid, 5) == 0) {
+	else if (strncmp(message, cmdGrid, strlen(cmdGrid)) == 0) {
 		auto selection = callback->GetSelectedUnits();
 		if (!selection.empty()) {
 			if (selection[0]->GetAllyTeam() == allyTeamId) {
@@ -1036,23 +1036,23 @@ int CCircuitAI::Message(int playerId, const char* message)
 			allyTeam->GetEnergyGrid()->ToggleVis();
 		}
 	}
-	else if (strncmp(message, cmdNode, 5) == 0) {
+	else if (strncmp(message, cmdNode, strlen(cmdNode)) == 0) {
 		const AIFloat3 dbgPos = map->GetMousePos();
 		economyManager->GetEnergyGrid()->DrawNodePylons(dbgPos);
 	}
-	else if (strncmp(message, cmdLink, 5) == 0) {
+	else if (strncmp(message, cmdLink, strlen(cmdLink)) == 0) {
 		const AIFloat3 dbgPos = map->GetMousePos();
 		economyManager->GetEnergyGrid()->DrawLinkPylons(dbgPos);
 	}
 
-	else if (strncmp(message, cmdName, 5) == 0) {
-		pathfinder->SetDbgDef(GetCircuitDef(message[6]));
+	else if (strncmp(message, cmdName, strlen(cmdName)) == 0) {
+		pathfinder->SetDbgDef(GetCircuitDef(message[strlen(cmdName) + 1]));
 		pathfinder->SetDbgPos(map->GetMousePos());
 		const AIFloat3& dbgPos = pathfinder->GetDbgPos();
 		LOG("%f, %f, %f, %i", dbgPos.x, dbgPos.y, dbgPos.z, pathfinder->GetDbgDef());
 	}
-	else if (strncmp(message, cmdEnd, 4) == 0) {
-		pathfinder->SetDbgType(atoi((const char*)&message[5]));
+	else if (strncmp(message, cmdEnd, strlen(cmdEnd)) == 0) {
+		pathfinder->SetDbgType(atoi((const char*)&message[strlen(cmdEnd) + 1]));
 		AIFloat3 endPos = map->GetMousePos();
 		std::shared_ptr<IPathQuery> query = pathfinder->CreateDbgPathQuery(GetThreatMap(),
 				endPos, pathfinder->GetSquareSize());

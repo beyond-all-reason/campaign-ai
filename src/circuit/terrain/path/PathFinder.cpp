@@ -154,7 +154,7 @@ void CPathFinder::UpdateAreaUsers(CTerrainManager* terrainMgr)
 		}
 	}
 
-	auto features = terrainMgr->GetWrecks();
+	auto features = terrainMgr->GetFeatures();
 	for (Feature* f : features) {
 		if (f == nullptr) {
 			continue;
@@ -988,7 +988,7 @@ void CPathFinder::UpdateMoveArrayVis(float* moveArray)
 		}
 	}
 	std::ostringstream cmd;
-	cmd << "ai_thr_data:";
+	cmd << "ai_grid_data:";
 	cmd.write(reinterpret_cast<const char*>(pathArray.data()), pathArray.size() * sizeof(float));
 	std::string s = cmd.str();
 	circuit->GetLua()->CallRules(s.c_str(), s.size());
@@ -1003,12 +1003,12 @@ void CPathFinder::ToggleMoveArrayVis(CCircuitAI* circuit)
 	toggleFrame = circuit->GetLastFrame();
 	this->circuit = circuit;
 
-	std::string cmd("ai_thr_print:");
+	std::string cmd("ai_grid_print:");
 	std::string result = circuit->GetLua()->CallRules(cmd.c_str(), cmd.size());
 
 	isMoveArrayVis = (result == "1");
 	if (isMoveArrayVis) {
-		cmd = utils::int_to_string(squareSize, "ai_thr_size:%i");
+		cmd = utils::int_to_string(squareSize, "ai_grid_size:%i");
 		cmd += utils::float_to_string(THREAT_BASE, " %f");
 		circuit->GetLua()->CallRules(cmd.c_str(), cmd.size());
 

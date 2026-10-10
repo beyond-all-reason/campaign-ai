@@ -26,8 +26,8 @@ local widget = widget ---@type Widget
 
 function widget:GetInfo()
     return {
-        name = "AiIntent demo",
-        desc = "AiIntent showcase",
+        name = "LuaMsg demo",
+        desc = "LuaMsg showcase",
         author = "rlcevg",
         date = "2025-10-20",
         license = "My private v2 or later",
@@ -37,9 +37,9 @@ function widget:GetInfo()
 end
 
 -- Constants
-local WIDGET_NAME = "gui_intent"
-local MODEL_NAME = "gui_intent_model"
-local RML_PATH = "LuaUI/Widgets/gui_intent/gui_intent.rml"
+local WIDGET_NAME = "gui_test_lua_msg"
+local MODEL_NAME = "gui_test_lua_msg_model"
+local RML_PATH = "LuaUI/Widgets/gui_test_lua_msg/gui_test_lua_msg.rml"
 
 -- Widget state
 local document
@@ -48,7 +48,7 @@ local arePausing = true
 local drawHandle = nil
 
 --------------------------------------------------------------------------------
--- Intent API parameters
+-- LuaMsg API parameters
 --------------------------------------------------------------------------------
 
 local teamID = 1
@@ -185,7 +185,7 @@ end
 
 function widget:SavePosition()
     if not document then return end
-    local element = document:GetElementById("gui_intent-widget")
+    local element = document:GetElementById("gui_test_lua_msg-widget")
     if not element then return end
     local x = element.offset_left
     local y = element.offset_top
@@ -195,16 +195,16 @@ function widget:SavePosition()
     if not vsx or not vsy then return end
     local relX = x / vsx
     local relY = y / vsy
-    spSetConfigInt("intent_RelativeX", math.floor(relX * 1000))
-    spSetConfigInt("intent_RelativeY", math.floor(relY * 1000))
+    spSetConfigInt("testLuaMsg_RelativeX", math.floor(relX * 1000))
+    spSetConfigInt("testLuaMsg_RelativeY", math.floor(relY * 1000))
 end
 
 function widget:LoadPosition()
     if not document then return end
-    local element = document:GetElementById("gui_intent-widget")
+    local element = document:GetElementById("gui_test_lua_msg-widget")
     if not element then return end
-    local relX = spGetConfigInt("intent_RelativeX", -1)
-    local relY = spGetConfigInt("intent_RelativeY", -1)
+    local relX = spGetConfigInt("testLuaMsg_RelativeX", -1)
+    local relY = spGetConfigInt("testLuaMsg_RelativeY", -1)
     if relX == -1 or relY == -1 then return end
     relX = relX / 1000
     relY = relY / 1000

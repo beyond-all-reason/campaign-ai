@@ -324,7 +324,7 @@ void IGrid::UpdateTAVis()
 	debugDrawer->DrawTex(sectorWin.first, sectorWin.second);
 
 	std::ostringstream cmd;
-	cmd << "ai_thr_data:";
+	cmd << "ai_grid_data:";
 	std::vector<float> dataArray;
 	dataArray.reserve(sectors.size());
 	for (int i = 0; i < debugData->tileSize.x * debugData->tileSize.y; ++i) {
@@ -342,9 +342,9 @@ void IGrid::ToggleTAVis(int frame)
 	}
 	toggleFrame = frame;
 
-	std::string cmd("ai_thr_draw:");
+	std::string cmd("ai_grid_draw:");
 	debugLua->CallRules(cmd.c_str(), cmd.size());
-	cmd = "ai_thr_size:16 0";
+	cmd = "ai_grid_size:16 0";
 	debugLua->CallRules(cmd.c_str(), cmd.size());
 
 	if (tileWin.second == nullptr) {

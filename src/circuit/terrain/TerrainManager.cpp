@@ -783,7 +783,7 @@ const SBlockingMap& CTerrainManager::GetBlockingMap()
 	return blockingMap;
 }
 
-std::vector<Feature*> CTerrainManager::GetWrecks() const
+std::vector<Feature*> CTerrainManager::GetFeatures() const
 {
 	return circuit->GetCallback()->GetFeatures();
 }
@@ -2135,12 +2135,12 @@ void CTerrainManager::ToggleVis()
 
 void CTerrainManager::ToggleWidgetDraw()
 {
-	std::string cmd("ai_thr_draw:");
+	std::string cmd("ai_grid_draw:");
 	std::string result = circuit->GetLua()->CallRules(cmd.c_str(), cmd.size());
 
 	isWidgetDrawing = (result == "1");
 	if (isWidgetDrawing) {
-		cmd = utils::int_to_string(16, "ai_thr_size:%i");
+		cmd = utils::int_to_string(16, "ai_grid_size:%i");
 		cmd += utils::float_to_string(0, " %f");
 		circuit->GetLua()->CallRules(cmd.c_str(), cmd.size());
 
