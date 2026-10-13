@@ -906,7 +906,7 @@ void CInitScript::RegisterIFighterTask(asIScriptEngine* engine, const char* cls)
 	r = engine->RegisterObjectMethod(cls, "void SetTargetPos(const AIFloat3& in)", asMETHOD(T, SetTargetPos), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod(cls, "const AIFloat3& GetTargetPos() const", asMETHOD(T, GetTargetPos), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty(cls, "Id vipTargetId", asOFFSET(T, vipTargetId)); ASSERT(r >= 0);
-	r = engine->RegisterObjectProperty(cls, "float range", asOFFSET(T, range)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty(cls, "float attackRange", asOFFSET(T, attackRange)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty(cls, "float retreat", asOFFSET(T, retreat)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty(cls, "float goalRange", asOFFSET(T, goalRange)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty(cls, "float ignoreThreat", asOFFSET(T, ignoreThreat)); ASSERT(r >= 0);

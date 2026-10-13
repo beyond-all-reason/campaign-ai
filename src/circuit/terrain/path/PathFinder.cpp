@@ -953,9 +953,9 @@ void CPathFinder::UpdatePathVis(const IndexVec& path)
 	int figId = fig->DrawLine(ZeroVector, ZeroVector, 16.0f, true, FRAMES_PER_SEC * 5, 0);
 	for (unsigned i = 1; i < path.size(); ++i) {
 		AIFloat3 s = PathIndex2Pos(path[i - 1]);
-		s.y = map->GetElevationAt(s.x, s.z);
+		s.y = map->GetElevationAt(s.x, s.z) + SQUARE_SIZE;
 		AIFloat3 e = PathIndex2Pos(path[i]);
-		e.y = map->GetElevationAt(e.x, e.z);
+		e.y = map->GetElevationAt(e.x, e.z) + SQUARE_SIZE;
 		fig->DrawLine(s, e, 16.0f, true, FRAMES_PER_SEC * 20, figId);
 	}
 	fig->SetColor(figId, AIColor((float)rand() / RAND_MAX, (float)rand() / RAND_MAX, (float)rand() / RAND_MAX), 255);

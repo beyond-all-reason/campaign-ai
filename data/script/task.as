@@ -302,14 +302,14 @@ SFightTask Common(Task::FightType type)
 	ti.check = type;
 	ti.promote = type;
 	ti.power = 0.f;
-	@ti.vip = null;
+	ti.vipId = -1;
 	return ti;
 }
-SFightTask Guard(CCircuitUnit@ vip)
+SFightTask Guard(Id vipId)
 {
 	SFightTask ti;
 	ti.type = Task::FightType::GUARD;
-	@ti.vip = vip;
+	ti.vipId = vipId;
 	return ti;
 }
 SFightTask Defend(Task::FightType promote, float power)

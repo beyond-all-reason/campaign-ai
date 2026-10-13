@@ -48,6 +48,7 @@ class Squad {
 	}
 
 	private void ChangeTask(SFightTask& in data) {
+		mgr.ClearTaskToSquad(task.id);
 		IUnitTask@ newTask = aiMilitaryMgr.Enqueue(data);
 		newTask.tag = TASK_SQUAD_TAG;
 		task.ReplaceBy(newTask);
@@ -59,8 +60,9 @@ class Squad {
 		fighterTask.isMergeAllowed = false;
 		fighterTask.isRegroupAllowed = true;
 		fighterTask.SetTargetPos(req.pos);
-		fighterTask.range = req.attackRange;
+		fighterTask.attackRange = req.attackRange;
 		fighterTask.retreat = req.retreat;
+		mgr.SetTaskToSquad(task.id, this);
 	}
 
 	void SetTask(int type) {
@@ -93,6 +95,19 @@ class Squad {
 		}
 	}
 
+	void SetInitialTask() {
+		mgr.ClearTaskToSquad(task.id);
+		IUnitTask@ newTask = req.InitialTask();
+		task.ReplaceBy(newTask);
+		task.Abort();
+		@task = newTask;
+		mgr.SetTaskToSquad(task.id, this);
+	}
+
+	void SetEscort(Id vipId) {
+ 		ChangeTask(TaskF::Guard(vipId));
+	}
+
 	void SetPosition(const AIFloat3& in pos) {
 		if (task.GetType() == Task::Type::FIGHTER)
 			cast<IFighterTask>(task).SetTargetPos(pos);
@@ -100,7 +115,7 @@ class Squad {
 
 	void SetAttackRange(float range) {
 		if (task.GetType() == Task::Type::FIGHTER)
-			cast<IFighterTask>(task).range = range;
+			cast<IFighterTask>(task).attackRange = range;
 	}
 
 	void SetRetreat(float value) {
@@ -160,7 +175,7 @@ class Request {
 		defendTask.isRegroupAllowed = false;
 		defendTask.SetTargetPos(this.pos);
 		defendTask.vipTargetId = -1;
-		defendTask.range = this.attackRange;
+		defendTask.attackRange = this.attackRange;
 		defendTask.retreat = this.retreat;
 		return task;
 	}
@@ -277,7 +292,7 @@ class Manager {
 		// NOTE: SQUAD_REQUEST_COMPOSE is a standalone message and can arrive multiple times at any time.
 		//       If squad is in the middle of compositing - disband and start anew.
 		if (!isNewReq && selSquad.state != ESquadState::FINISHED) {
-			DestroySquad(selSquad);
+			DisbandSquad(selSquad);
 			isNewReq = true;
 		}
 		for (uint i = 0; i < params.length(); ++i) {
@@ -325,8 +340,8 @@ class Manager {
 		}
 	}
 
-	private void CheckSquadFinished(Squad@ squad, int taskUnitNum) {
-		if (squad.req.unitNum == taskUnitNum && squad.state == ESquadState::CREATED) {
+	private void CheckSquadFinished(Squad@ squad, int assignedUnitNum) {
+		if (assignedUnitNum >= squad.req.unitNum && squad.state == ESquadState::CREATED) {
 			IFighterTask@ fighterTask = cast<IFighterTask>(squad.task);
 			fighterTask.isRegroupAllowed = true;
 			fighterTask.vipTargetId = squad.req.vipTargetId;
@@ -402,22 +417,22 @@ class Manager {
 		requests.insertLast(req);
 	}
 
-	private void DestroySquad(Squad@ squad) {
+	private void DisbandSquad(Squad@ squad) {
 		if (squad.req.isRepeat) {
 			RepeatRequest(squad);
 		} else {
-			RemoveSquad(squad);
+			DestroyRequest(squad);
 		}
 	}
 
 	// Invoked by LuaMsg::Manager::SquadDisband
-	bool DestroySquadId(Id squadId) {
+	bool DisbandSquadId(Id squadId) {
 		bool success;
 		Squad@ squad = squads.find(squadId, success);
 		if (!success)
 			return false;
 
-		DestroySquad(squad);
+		DisbandSquad(squad);
 		return true;
 	}
 
@@ -453,16 +468,29 @@ class Manager {
 		req.recruitTasks.erase(task.id);
 	}
 
-	// Invoked by Military::AiTaskRemoved
-	bool SquadTaskDestroyed(IUnitTask@ task) {
+	// Invoked by Military::AiTaskRemoved done=false
+	bool SquadTaskCanceled(IUnitTask@ task) {
 		bool success;
 		Squad@ squad = taskToSquad.find(task.id, success);
 		if (!success)
 			return false;
 
-		taskToSquad.erase(task.id);
-		@squad.task = null;
-		DestroySquad(squad);
+		DisbandSquad(squad);
+		return true;
+	}
+
+	// Invoked by Military::AiTaskRemoved done=true
+	bool SquadTaskFinished(IUnitTask@ task) {
+		bool success;
+		Squad@ squad = taskToSquad.find(task.id, success);
+		if (!success)
+			return false;
+
+		if (cast<IFighterTask>(task).GetFightType() == Task::FightType::GUARD) {
+			// Guard target was destroyed
+			squad.SetInitialTask();
+		} else
+			DisbandSquad(squad);
 		return true;
 	}
 
@@ -527,14 +555,13 @@ class Manager {
 		if (selSquad is null || selSquad.task is null)
 			return false;
 
-		taskToSquad.erase(selSquad.task.id);
 		selSquad.SetTask(type);
-		@taskToSquad[selSquad.task.id] = selSquad;
 		return true;
 	}
 
 	private void ParseSquadPathParam(const array<string>& in params, Squad@ squad) {
 		for (uint i = 0; i < params.length(); ++i) {
+			// params contains "<ESquadPath>=<values>" pairs
 			const array<string>@ kv = params[i].split(LuaMsg::SEP_KEY_VALUE);
 			switch (parseInt(kv[0])) {
 			case ESquadPath::GOAL_RANGE: {
@@ -564,8 +591,25 @@ class Manager {
 		return true;
 	}
 
+	// Invoked by LuaMsg::Manager::SquadEscort
+	bool SetSquadEscort(const array<string>& in params) {
+		if (selSquad is null)
+			return false;
+
+		selSquad.SetEscort(parseInt(params[0]));
+		return true;
+	}
+
 	void ClearBuildTaskToReq(Id taskId) {
 		buildTaskToReq.erase(taskId);
+	}
+
+	void ClearTaskToSquad(Id taskId) {
+		taskToSquad.erase(taskId);
+	}
+
+	void SetTaskToSquad(Id taskId, Squad@ squad) {
+		@taskToSquad[taskId] = squad;
 	}
 
 	private map<Id, Squad@> squads;  // owner

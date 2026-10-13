@@ -28,7 +28,8 @@ class Manager {
 			{formatInt(ELuaMsg::SQUAD_DISBAND), LuaMsgFunc(this.SquadDisband)},
 			{formatInt(ELuaMsg::SQUAD_TASK), LuaMsgFunc(this.SquadTask)},
 			{formatInt(ELuaMsg::SQUAD_PARAMS), LuaMsgFunc(this.SquadParams)},
-			{formatInt(ELuaMsg::SQUAD_PATH_PARAMS), LuaMsgFunc(this.SquadPathParams)}
+			{formatInt(ELuaMsg::SQUAD_PATH_PARAMS), LuaMsgFunc(this.SquadPathParams)},
+			{formatInt(ELuaMsg::SQUAD_ESCORT), LuaMsgFunc(this.SquadEscort)}
 		};
 	}
 
@@ -79,19 +80,19 @@ class Manager {
 	void SetUnitDefRetreat(const array<string>& in params) {
 		for (uint i = 0; i < params.length(); ++i) {
 			// params contains "<unitDefId>=<retreat_HP_percent>" pairs
-			const array<string>@ kv = params[i].split(SEP_KEY_VALUE);
-			CCircuitDef@ cdef = ai.GetCircuitDef(parseInt(kv[0]));
+			const array<string>@ unitDef_retreat = params[i].split(SEP_KEY_VALUE);
+			CCircuitDef@ cdef = ai.GetCircuitDef(parseInt(unitDef_retreat[0]));
 			if (cdef is null)
 				continue;
-			cdef.retreat = parseFloat(kv[1]);
+			cdef.retreat = parseFloat(unitDef_retreat[1]);
 		}
 	}
 
 	void SetFactoryActive(const array<string>& in params) {
 		// params is "<isActive>=<unitId1>,<unitId2>,<unitId3>,..."
-		const array<string>@ kv = params[0].split(SEP_KEY_VALUE);
-		const array<string>@ unitIds = kv[1].split(SEP_SUBPARAM);
-		bool isActive = kv[0] != "0";
+		const array<string>@ active_units = params[0].split(SEP_KEY_VALUE);
+		const array<string>@ unitIds = active_units[1].split(SEP_SUBPARAM);
+		bool isActive = active_units[0] != "0";
 		for (uint i = 0; i < unitIds.length(); ++i)
 			aiFactoryMgr.SetIsActiveFactory(parseInt(unitIds[i]), isActive);
 	}
@@ -123,7 +124,7 @@ class Manager {
 	}
 
 	void SquadDisband(const array<string>& in params) {
-		Squad::mgr.DestroySquadId(parseInt(params[0]));
+		Squad::mgr.DisbandSquadId(parseInt(params[0]));
 	}
 
 	void SquadTask(const array<string>& in params) {
@@ -136,6 +137,10 @@ class Manager {
 
 	void SquadPathParams(const array<string>& in params) {
 		Squad::mgr.SetSquadPathParams(params);
+	}
+
+	void SquadEscort(const array<string>& in params) {
+		Squad::mgr.SetSquadEscort(params);
 	}
 
 	/*

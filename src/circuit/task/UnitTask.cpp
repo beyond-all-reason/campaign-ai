@@ -128,6 +128,7 @@ void IUnitTask::Cancel()
 
 void IUnitTask::OnUnitMoveFailed(CCircuitUnit* unit)
 {
+	// TODO: try again with increasingly longer intervals
 	CCircuitAI* circuit = manager->GetCircuit();
 	const int frame = circuit->GetLastFrame();
 	AIFloat3 pos = geom::get_radial_pos(unit->GetPos(frame), SQUARE_SIZE * 32);
