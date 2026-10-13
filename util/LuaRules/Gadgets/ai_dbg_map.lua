@@ -30,13 +30,13 @@ function gadget:RecvSkirmishAIMessage(teamID, dataStr)
 
 	SendToUnsynced("AiDbgEvent", teamID, dataStr)
 
-	local cmdThrDraw  = "ai_thr_draw:"
-	local cmdThrPrint = "ai_thr_print:"
+	local cmdGridDraw  = "ai_grid_draw:"
+	local cmdGridPrint = "ai_grid_print:"
 
-	if dataStr:sub(1, #cmdThrDraw) == cmdThrDraw then
+	if dataStr:sub(1, #cmdGridDraw) == cmdGridDraw then
 		isDraw = not isDraw
 		return isDraw and "1" or "0"
-	elseif dataStr:sub(1, #cmdThrPrint) == cmdThrPrint then
+	elseif dataStr:sub(1, #cmdGridPrint) == cmdGridPrint then
 		isPrint = not isPrint
 		return isPrint and "1" or "0"
 	end
@@ -312,18 +312,18 @@ local mapHeight = Game.mapSizeZ
 
 local function HandleAiDbgEvent(cmd, teamID, dataStr)
 -- 	SpringShared.Echo("cmd: " .. cmd .. " | teamID: " .. tostring(teamID) .. " | dataStr: '" .. dataStr .. "'")
-	local cmdThrData  = "ai_thr_data:"
-	local cmdBlkData  = "ai_blk_data:"
-	local cmdThrSize  = "ai_thr_size:"
-	local cmdThrDiv   = "ai_thr_div:"
-	local cmdThrDraw  = "ai_thr_draw:"
-	local cmdThrPrint = "ai_thr_print:"
-	local cmdMrkAdd   = "ai_mrk_add:"
-	local cmdMrkClear = "ai_mrk_clear:"
+	local cmdGridData  = "ai_grid_data:"
+	local cmdBlkData   = "ai_blk_data:"
+	local cmdGridSize  = "ai_grid_size:"
+	local cmdGridDiv   = "ai_grid_div:"
+	local cmdGridDraw  = "ai_grid_draw:"
+	local cmdGridPrint = "ai_grid_print:"
+	local cmdMrkAdd    = "ai_mrk_add:"
+	local cmdMrkClear  = "ai_mrk_clear:"
 
-	if dataStr:sub(1, #cmdThrData) == cmdThrData then
-		-- "ai_thr_data:<float1><float2><float3>..."
-		local mapStr = dataStr:sub(#cmdThrData + 1)
+	if dataStr:sub(1, #cmdGridData) == cmdGridData then
+		-- "ai_grid_data:<float1><float2><float3>..."
+		local mapStr = dataStr:sub(#cmdGridData + 1)
 		aiData.map = VFS.UnpackF32(mapStr, 1, aiData.width * aiData.height)
 		aiData.mapChanged = SpringShared.GetGameFrame()
 		--SpringShared.Echo("aiData.mapChanged", SpringShared.GetGameFrame())
@@ -333,9 +333,9 @@ local function HandleAiDbgEvent(cmd, teamID, dataStr)
 		aiData.map = VFS.UnpackU8(mapStr, 1, aiData.width * aiData.height)
 		aiData.mapChanged = SpringShared.GetGameFrame()
 		--SpringShared.Echo("aiData.mapChanged", SpringShared.GetGameFrame())
-	elseif dataStr:sub(1, #cmdThrSize) == cmdThrSize then
-		-- "ai_thr_size:<square_size> <threat_base>"
-		local sb = dataStr:sub(cmdThrSize:len() + 1)
+	elseif dataStr:sub(1, #cmdGridSize) == cmdGridSize then
+		-- "ai_grid_size:<square_size> <threat_base>"
+		local sb = dataStr:sub(cmdGridSize:len() + 1)
 		local slash = sb:find(" ", 1, true)
 		if not slash then return end
 		local ss = tonumber(sb:sub(1, slash - 1))
@@ -345,14 +345,14 @@ local function HandleAiDbgEvent(cmd, teamID, dataStr)
 		aiData.size = ss
 		aiData.width = mapWidth / aiData.size
 		aiData.height = mapHeight / aiData.size
-	elseif dataStr:sub(1, #cmdThrDiv) == cmdThrDiv then
-		-- "ai_thr_div:<divider>"
-		aiData.div = tonumber(dataStr:sub(#cmdThrDiv + 1))
-	elseif dataStr:sub(1, #cmdThrDraw) == cmdThrDraw then
-		-- "ai_thr_draw:"
+	elseif dataStr:sub(1, #cmdGridDiv) == cmdGridDiv then
+		-- "ai_grid_div:<divider>"
+		aiData.div = tonumber(dataStr:sub(#cmdGridDiv + 1))
+	elseif dataStr:sub(1, #cmdGridDraw) == cmdGridDraw then
+		-- "ai_grid_draw:"
 		aiData.isDraw = not aiData.isDraw
-	elseif dataStr:sub(1, #cmdThrPrint) == cmdThrPrint then
-		-- "ai_thr_print:"
+	elseif dataStr:sub(1, #cmdGridPrint) == cmdGridPrint then
+		-- "ai_grid_print:"
 		aiData.isPrint = not aiData.isPrint
 	elseif dataStr:sub(1, #cmdMrkAdd) == cmdMrkAdd then
 		-- "ai_mrk_add:<pos.x> <pos.z> <radius> <color.r> <color.g> <color.b> <color.a> <text>"

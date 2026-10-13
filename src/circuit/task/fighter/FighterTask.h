@@ -71,13 +71,17 @@ protected:
 	int attackFrame;
 
 	// Script API
-	float range = 0.f;
-	float retreat = -1.f;
+	float range = 0.f;  // direct attack range
+	float retreat = -1.f;  // -1: default; 0: disabled; >0.f: unit's HP percent
 	bool isScripted = false;
 	bool isMergeAllowed = true;
 	bool isRegroupAllowed = true;
 	springai::AIFloat3 targetPos;
 	ICoreUnit::Id vipTargetId = -1;
+	float goalRange = -1.f; // Pathing: acceptable end distance to goal position
+	float ignoreThreat = 0.f;  // Pathing: ignore threat up to this level ~ minThreat
+	float avoidThreat = std::numeric_limits<float>::max();  // Pathing: avoid threat starting from this level ~ maxThreat
+	bool isEndPosOnly = false;  // Pathing: use only end position
 
 private:  // NOTE: Never assign directly, use SetTarget() to avoid access to a dead target
 	CEnemyInfo* target;

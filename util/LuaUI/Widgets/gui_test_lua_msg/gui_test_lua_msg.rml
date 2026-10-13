@@ -1,12 +1,12 @@
 <rml>
 
     <head>
-        <title>AIIntent demo</title>
-        <link rel="stylesheet" href="gui_intent.rcss" type="text/rcss" />
+        <title>LuaMsg demo</title>
+        <link rel="stylesheet" href="gui_test_lua_msg.rcss" type="text/rcss" />
     </head>
 
-    <body id="gui_intent-widget" class="intent-root" data-class-collapsed="isCollapsed">
-        <div id="widget-container" data-model="gui_intent_model" class="panel">
+    <body id="gui_test_lua_msg-widget" class="intent-root" data-class-collapsed="isCollapsed">
+        <div id="widget-container" data-model="gui_test_lua_msg_model" class="panel">
             <!-- Small floating debug buttons -->
             <!-- <div class="debug-controls">
                 <button class="globallos-btn" data-class-active="globallosEnabled" onclick="widget:Reload()" title="Reload Widget">r</button>
@@ -63,6 +63,10 @@
                     <button onclick="widget:SendTaskArty()">arty</button>
                     <button onclick="widget:SendTaskAA()">AA</button>
                     <button onclick="widget:SendTaskSupport()">support</button>
+                </div>
+                <div class="grid commands">
+                    <button onclick="widget:SetPathParamThreat()">set path param</button>
+                    <button onclick="widget:ClearPathParamThreat()">clear path param</button>
                 </div>
                 <div class="grid commands">
                     <button onclick="widget:SendDozenSquads()">10 squads</button>

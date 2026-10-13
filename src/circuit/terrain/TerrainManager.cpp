@@ -23,9 +23,9 @@
 #include "util/Profiler.h"
 #include "json/json.h"
 
+#include "spring/SpringCallback.h"
 #include "spring/SpringMap.h"
 
-#include "OOAICallback.h"
 #include "WeaponDef.h"
 #include "Pathing.h"
 #include "MoveData.h"
@@ -781,6 +781,11 @@ const SBlockingMap& CTerrainManager::GetBlockingMap()
 		MarkAllyBuildings();
 	}
 	return blockingMap;
+}
+
+std::vector<Feature*> CTerrainManager::GetFeatures() const
+{
+	return circuit->GetCallback()->GetFeatures();
 }
 
 bool CTerrainManager::IsZoneAlly(const AIFloat3& pos) const
@@ -2130,12 +2135,12 @@ void CTerrainManager::ToggleVis()
 
 void CTerrainManager::ToggleWidgetDraw()
 {
-	std::string cmd("ai_thr_draw:");
+	std::string cmd("ai_grid_draw:");
 	std::string result = circuit->GetLua()->CallRules(cmd.c_str(), cmd.size());
 
 	isWidgetDrawing = (result == "1");
 	if (isWidgetDrawing) {
-		cmd = utils::int_to_string(16, "ai_thr_size:%i");
+		cmd = utils::int_to_string(16, "ai_grid_size:%i");
 		cmd += utils::float_to_string(0, " %f");
 		circuit->GetLua()->CallRules(cmd.c_str(), cmd.size());
 

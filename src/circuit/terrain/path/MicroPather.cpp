@@ -61,6 +61,10 @@
 #define THREAT_EPSILON		1e-2f
 #define MOVE_EPSILON		1e-1f
 
+// Balancing heuristics
+constexpr float MOVE_COST_MOD = 10.f;
+constexpr float THREAT_COST_MOD = 0.1f;
+
 using namespace NSMicroPather;
 
 class OpenQueueBH {
@@ -600,7 +604,7 @@ int CMicroPather::Solve(void* startNode, void* endNode, VoidVec* path, float* co
 */
 
 int CMicroPather::FindBestPathToAnyGivenPoint(void* startNode, VoidVec& endNodes,
-		VoidVec& targets, float maxThreat, IndexVec* path, float* cost)
+		VoidVec& targets, float minThreat, float maxThreat, IndexVec* path, float* cost)
 {
 	assert(!isRunning);
 	isRunning = true;
@@ -725,7 +729,8 @@ int CMicroPather::FindBestPathToAnyGivenPoint(void* startNode, VoidVec& endNodes
 				#endif
 
 				float newCost = nodeCostFromStart;
-				const float nodeCost = canMoveArray[indexEnd] + moveFun(index2) + threatFun(index2);
+				const float nodeCost = canMoveArray[indexEnd] * MOVE_COST_MOD + moveFun(index2)
+						+ std::max(threatFun(index2) - minThreat, THREAT_BASE) * THREAT_COST_MOD;
 
 				#ifdef USE_ASSERTIONS
 				assert(nodeCost > 0.f);  // > 1.f for speed
@@ -893,8 +898,8 @@ int CMicroPather::FindBestPathToPointOnRadius(void* startNode, void* endNode,
 				#endif
 
 				float newCost = nodeCostFromStart;
-				const float nodeCost = canMoveArray[indexEnd] + moveFun(index2)
-						+ std::max(threatFun(index2) - minThreat, THREAT_BASE);
+				const float nodeCost = canMoveArray[indexEnd] * MOVE_COST_MOD + moveFun(index2)
+						+ std::max(threatFun(index2) - minThreat, THREAT_BASE) * THREAT_COST_MOD;
 
 				#ifdef USE_ASSERTIONS
 				assert(nodeCost > 0.f);  // > 1.f for speed

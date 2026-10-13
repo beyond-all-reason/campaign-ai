@@ -132,7 +132,7 @@ scrollbarvertical sliderbar {
     right: 0;
 }
 
-#gui_intent-widget {
+#gui_test_lua_msg-widget {
     width: 400dp;
 }
 

@@ -720,7 +720,7 @@ void CThreatMap::UpdateVis()
 	CCircuitAI* circuit = manager->GetCircuit();
 	if (isWidgetDrawing || isWidgetPrinting) {
 		std::ostringstream cmd;
-		cmd << "ai_thr_data:";
+		cmd << "ai_grid_data:";
 		float* threatArray;
 		switch (layerDbg) {
 			case 0: {
@@ -817,12 +817,12 @@ void CThreatMap::ToggleSDLVis()
 void CThreatMap::ToggleWidgetDraw()
 {
 	CCircuitAI* circuit = manager->GetCircuit();
-	std::string cmd("ai_thr_draw:");
+	std::string cmd("ai_grid_draw:");
 	std::string result = circuit->GetLua()->CallRules(cmd.c_str(), cmd.size());
 
 	isWidgetDrawing = (result == "1");
 	if (isWidgetDrawing) {
-		cmd = utils::int_to_string(squareSize, "ai_thr_size:%i");
+		cmd = utils::int_to_string(squareSize, "ai_grid_size:%i");
 		cmd += utils::float_to_string(THREAT_BASE, " %f");
 		circuit->GetLua()->CallRules(cmd.c_str(), cmd.size());
 
@@ -833,12 +833,12 @@ void CThreatMap::ToggleWidgetDraw()
 void CThreatMap::ToggleWidgetPrint()
 {
 	CCircuitAI* circuit = manager->GetCircuit();
-	std::string cmd("ai_thr_print:");
+	std::string cmd("ai_grid_print:");
 	std::string result = circuit->GetLua()->CallRules(cmd.c_str(), cmd.size());
 
 	isWidgetPrinting = (result == "1");
 	if (isWidgetPrinting) {
-		cmd = utils::int_to_string(squareSize, "ai_thr_size:%i");
+		cmd = utils::int_to_string(squareSize, "ai_grid_size:%i");
 		cmd += utils::float_to_string(THREAT_BASE, " %f");
 		circuit->GetLua()->CallRules(cmd.c_str(), cmd.size());
 
@@ -858,7 +858,7 @@ void CThreatMap::SetMaxThreat(float maxThreat, std::string layer)
 		layerDbg = 1;
 	}
 	CCircuitAI* circuit = manager->GetCircuit();
-	std::string cmd = utils::float_to_string(maxThreat, "ai_thr_div:%f");
+	std::string cmd = utils::float_to_string(maxThreat, "ai_grid_div:%f");
 	circuit->GetLua()->CallRules(cmd.c_str(), cmd.size());
 }
 #endif  // DEBUG_VIS

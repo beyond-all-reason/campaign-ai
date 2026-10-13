@@ -75,6 +75,7 @@
 
 #define FLT_BIG (FLT_MAX / 2.0)
 #define COST_BASE		1.0f
+#define COST_WRECKS		400.f
 #define COST_RESERVE	40.0f
 #define COST_STRUCT		400.f
 #define COST_BLOCKED	1000.f
@@ -243,7 +244,8 @@ namespace NSMicroPather {
 
 			void SetMapData(const float* canMoveArray, const float* threatArray,
 					const CostFunc& moveFun, const CostFunc& threatFun, const terrain::SAreaData* areaData);
-			int FindBestPathToAnyGivenPoint(void* startNode, VoidVec& endNodes, VoidVec& targets, float maxThreat,
+			int FindBestPathToAnyGivenPoint(void* startNode, VoidVec& endNodes, VoidVec& targets,
+					float minThreat, float maxThreat,
 					IndexVec* path, float* cost);
 			int FindBestPathToPointOnRadius(void* startNode, void* endNode, int radius,
 					float minThreat, float maxThreat, HitFunc hitTest,

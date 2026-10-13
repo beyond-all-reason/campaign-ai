@@ -1,0 +1,9 @@
+{
+	"id": "gui_test_lua_msg",
+	"display_name": "LuaMsg Interface",
+	"author": "rlcevg",
+	"discord_link": "",
+	"github_link": "",
+	"description": "Provides a GUI for LuaMsg testing.",
+	"last_updated": "2026-04-11T11:05:37.000Z"
+}

@@ -121,7 +121,8 @@ void CSupportTask::Update()
 
 	std::shared_ptr<IPathQuery> query = pathfinder->CreatePathMultiQuery(
 			unit, circuit->GetThreatMap(),
-			startPos, range, urgentPositions, nullptr, false, std::numeric_limits<float>::max(), true);
+			startPos, range, urgentPositions,
+			nullptr, false, THREAT_BASE, std::numeric_limits<float>::max(), true);
 	pathQueries[unit] = query;
 
 	pathfinder->RunQuery(circuit->GetScheduler().get(), query, [this](const IPathQuery* query) {

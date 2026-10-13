@@ -25,6 +25,13 @@ enum ESquadTask {
 	SUPPORT   = 8,
 }
 
+enum ESquadPath {
+	GOAL_RANGE    = 1,
+	IGNORE_THREAT = 2,
+	AVOID_THREAT  = 3,
+	USE_END_POS   = 4,
+}
+
 enum ESquadState {CREATED, FINISHED}
 
 string SIG_SQUAD_FINISHED ("ai_squad_finished:" );
@@ -106,10 +113,21 @@ class Squad {
 			cast<IFighterTask>(task).vipTargetId = enemyId;
 	}
 
+	void ApplyPathingParams() {
+		if (task.GetType() != Task::Type::FIGHTER)
+			return;
+		IFighterTask@ taskF = cast<IFighterTask>(task);
+		taskF.goalRange = pathParams.goalRange;
+		taskF.ignoreThreat = pathParams.ignoreThreat;
+		taskF.avoidThreat = pathParams.avoidThreat;
+		taskF.isEndPosOnly = pathParams.useEndPos;
+	}
+
 	Id id;
 	Request@ req;
 	IUnitTask@ task = null;  // military IFighterTask
 	ESquadState state = ESquadState::CREATED;
+	Pathing pathParams;
 }
 
 
@@ -169,6 +187,14 @@ class Amount {
 
 	int amount;
 	int assignedCount = 0;
+}
+
+
+class Pathing {
+	float goalRange = -1.f;
+	float ignoreThreat = 0.f;
+	float avoidThreat = MAX_POWER;
+	bool useEndPos = false;
 }
 
 
@@ -461,7 +487,7 @@ class Manager {
 		return true;
 	}
 
-	private void ParsESquadParam(const array<string>& in params, Squad@ squad) {
+	private void ParseSquadParam(const array<string>& in params, Squad@ squad) {
 		for (uint i = 0; i < params.length(); ++i) {
 			// params contains "<ESquadParam>=<values>" pairs
 			const array<string>@ kv = params[i].split(LuaMsg::SEP_KEY_VALUE);
@@ -492,7 +518,7 @@ class Manager {
 		if (selSquad is null)
 			return false;
 
-		ParsESquadParam(params, selSquad);
+		ParseSquadParam(params, selSquad);
 		return true;
 	}
 
@@ -504,6 +530,37 @@ class Manager {
 		taskToSquad.erase(selSquad.task.id);
 		selSquad.SetTask(type);
 		@taskToSquad[selSquad.task.id] = selSquad;
+		return true;
+	}
+
+	private void ParseSquadPathParam(const array<string>& in params, Squad@ squad) {
+		for (uint i = 0; i < params.length(); ++i) {
+			const array<string>@ kv = params[i].split(LuaMsg::SEP_KEY_VALUE);
+			switch (parseInt(kv[0])) {
+			case ESquadPath::GOAL_RANGE: {
+				squad.pathParams.goalRange = parseFloat(kv[1]);
+			} break;
+			case ESquadPath::IGNORE_THREAT: {
+				squad.pathParams.ignoreThreat = parseFloat(kv[1]);
+			} break;
+			case ESquadPath::AVOID_THREAT: {
+				squad.pathParams.avoidThreat = parseFloat(kv[1]);
+			} break;
+			case ESquadPath::USE_END_POS: {
+				squad.pathParams.useEndPos = kv[1] != "0";
+			}
+			default: break;
+			}
+		}
+		squad.ApplyPathingParams();
+	}
+
+	// Invoked by LuaMsg::Manager::SquadPathParams
+	bool SetSquadPathParams(const array<string>& in params) {
+		if (selSquad is null)
+			return false;
+
+		ParseSquadPathParam(params, selSquad);
 		return true;
 	}
 

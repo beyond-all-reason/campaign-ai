@@ -62,10 +62,12 @@ public:
 
 	std::shared_ptr<IPathQuery> CreatePathSingleQuery(CCircuitUnit* unit, CThreatMap* threatMap,
 			const springai::AIFloat3& startPos, const springai::AIFloat3& endPos, float maxRange,
-			NSMicroPather::HitFunc&& hitTest = nullptr, float minThreat = 0.f, float maxThreat = std::numeric_limits<float>::max(), bool endPosOnly = false);
+			NSMicroPather::HitFunc&& hitTest = nullptr,
+			float minThreat = 0.f, float maxThreat = std::numeric_limits<float>::max(), bool endPosOnly = false);
 	std::shared_ptr<IPathQuery> CreatePathMultiQuery(CCircuitUnit* unit, CThreatMap* threatMap,
 			const springai::AIFloat3& startPos, float maxRange, const F3Vec& possibleTargets,
-			NSMicroPather::HitFunc&& hitTest = nullptr, bool withGoal = false, float maxThreat = std::numeric_limits<float>::max(), bool endPosOnly = false);
+			NSMicroPather::HitFunc&& hitTest = nullptr, bool withGoal = false,
+			float minThreat = 0.f, float maxThreat = std::numeric_limits<float>::max(), bool endPosOnly = false);
 	std::shared_ptr<IPathQuery> CreatePathWideQuery(CCircuitUnit* unit, const CCircuitDef* cdef,
 			const springai::AIFloat3& startPos, const springai::AIFloat3& endPos, const IndexVec& targets);
 	std::shared_ptr<IPathQuery> CreateCostMapQuery(CCircuitUnit* unit, CThreatMap* threatMap,
@@ -121,6 +123,7 @@ private:
 	struct SBlockCount {
 		int structs;
 		int reserve;
+		int wrecks;
 	};
 	static std::vector<SBlockCount> blockArray;  // temporary array for moveArray construction
 	bool isAreaUpdated;
@@ -135,12 +138,13 @@ private:
 
 #ifdef DEBUG_VIS
 private:
-	bool isVis;
-	int toggleFrame;
-	CCircuitAI* circuit;
-	CCircuitDef* dbgDef;
-	springai::AIFloat3 dbgPos;
-	int dbgType;
+	bool isPathVis = false;
+	bool isMoveArrayVis = false;
+	int toggleFrame = -1;
+	CCircuitAI* circuit = nullptr;
+	CCircuitDef* dbgDef = nullptr;
+	springai::AIFloat3 dbgPos;  // = ZeroVector;
+	int dbgType = 1;
 	std::shared_ptr<IPathQuery> dbgQuery;
 public:
 	std::shared_ptr<IPathQuery> CreateDbgPathQuery(CThreatMap* threatMap,
@@ -153,8 +157,10 @@ public:
 	void SetDbgType(int type) { dbgType = type; }
 	int GetDbgType() const { return dbgType; }
 	void SetDbgQuery(const std::shared_ptr<IPathQuery>& query) { dbgQuery = query; }
-	void UpdateVis(const IndexVec& path);
-	void ToggleVis(CCircuitAI* circuit);
+	void UpdatePathVis(const IndexVec& path);
+	void TogglePathVis(CCircuitAI* circuit);
+	void UpdateMoveArrayVis(float* moveArray);
+	void ToggleMoveArrayVis(CCircuitAI* circuit);
 #endif
 };
 

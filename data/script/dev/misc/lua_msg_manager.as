@@ -27,7 +27,8 @@ class Manager {
 			{formatInt(ELuaMsg::SQUAD_ID), LuaMsgFunc(this.SelectSquadId)},
 			{formatInt(ELuaMsg::SQUAD_DISBAND), LuaMsgFunc(this.SquadDisband)},
 			{formatInt(ELuaMsg::SQUAD_TASK), LuaMsgFunc(this.SquadTask)},
-			{formatInt(ELuaMsg::SQUAD_PARAMS), LuaMsgFunc(this.SquadParams)}
+			{formatInt(ELuaMsg::SQUAD_PARAMS), LuaMsgFunc(this.SquadParams)},
+			{formatInt(ELuaMsg::SQUAD_PATH_PARAMS), LuaMsgFunc(this.SquadPathParams)}
 		};
 	}
 
@@ -131,6 +132,10 @@ class Manager {
 
 	void SquadParams(const array<string>& in params) {
 		Squad::mgr.SetSquadParams(params);
+	}
+
+	void SquadPathParams(const array<string>& in params) {
+		Squad::mgr.SetSquadPathParams(params);
 	}
 
 	/*
