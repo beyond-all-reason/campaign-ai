@@ -13,7 +13,7 @@ local delimiter = {
 	SEP_SUBPARAM = ",",
 }
 
-local topic = {
+local topic = {  -- Message topic
 	SET_AI_ACTIVE = 1, -- boolean
 	ENABLE_UNITDEFS = 2, -- array of unitDefIDs
 	DISABLE_UNITDEFS = 3, -- array of unitDefIDs
@@ -29,8 +29,11 @@ local topic = {
 	SET_SCRIPTED_RECRUIT = 16, -- boolean
 
 	-- Base starts at 100
-	BASE_CREATE = 101,
-	BASE_REBUILD = 102,
+	BASE_ID = 101,
+	BASE_ADD_PLAN = 102,
+	BASE_DEL_PLAN = 103,
+	BASE_CANCEL = 104,
+	BASE_PARAMS = 105,
 
 	-- Squad Request starts at 200
 	SQUAD_REQUEST_ID = 201,
@@ -51,21 +54,31 @@ local topic = {
 	TRIGGER_REGION_CLEAR = 322,
 }
 
-local signal = {
-	TRIGGER_REGION_ENTER = 301,
-	TRIGGER_REGION_EXIT = 302,
+local signal = {  -- Trigger signal
+	PREFIX = "ai_",  -- signal message prefix
+	SQUAD_FINISHED = 201,
+	SQUAD_DESTROYED = 202,
+	REGION_ENTER = 301,
+	REGION_EXIT = 302,
 }
 
-local parameter = {
+local plan = {  -- Build plan params
+	UNITDEF = 1,
+	POSITION = 2,
+	ZONE = 3,
+	REBUILD = 4,
+}
+
+local squad = {  -- Squad params
 	POSITION = 1,
-	SQUAD_GATHER_RANGE = 2,
-	SQUAD_ATTACK_RANGE = 3,
-	SQUAD_REBUILD = 4,
-	SQUAD_RETREAT = 5,
-	SQUAD_PRIO_TARGET = 6,
+	GATHER_RANGE = 2,
+	ATTACK_RANGE = 3,
+	REBUILD = 4,
+	RETREAT = 5,
+	PRIO_TARGET = 6,
 }
 
-local task = {
+local task = {  -- Task types
 	DEFEND = 1,
 	SCOUT = 2,
 	RAID = 3,
@@ -76,7 +89,7 @@ local task = {
 	SUPPORT = 8,
 }
 
-local pathing = {
+local pathing = {  -- Pathing params
 	GOAL_RANGE = 1,
 	IGNORE_THREAT = 2,
 	AVOID_THREAT = 3,
@@ -141,7 +154,8 @@ MsgBuilder.__tostring = MsgBuilder.toString
 return {
 	Topic = topic,
 	Signal = signal,
-	Param = parameter,
+	Plan = plan,
+	Squad = squad,
 	Task = task,
 	Path = pathing,
 	MsgBuilder = MsgBuilder,

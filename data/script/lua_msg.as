@@ -12,6 +12,8 @@ string SEP_SUBPARAM(",");
 
 string VERSION("1");
 
+string SIG_PREFIX("ai_");
+
 // Has to be same as Lua's defines
 enum ELuaMsg {
 	SET_AI_ACTIVE                    =   1,  // boolean
@@ -29,8 +31,11 @@ enum ELuaMsg {
 	SET_SCRIPTED_RECRUIT             =  16,  // boolean
 
 	// Base starts at 100
-	BASE_CREATE                      = 101,
-	BASE_REBUILD                     = 102,
+	BASE_ID                          = 101,
+	BASE_ADD_PLAN                    = 102,
+	BASE_DEL_PLAN                    = 103,
+	BASE_CANCEL                      = 104,
+	BASE_PARAMS                      = 105,
 
 	// Squad Request starts at 200
 	SQUAD_REQUEST_ID                 = 201,
@@ -52,8 +57,18 @@ enum ELuaMsg {
 }
 
 enum ESignal {
-	TRIGGER_REGION_ENTER             = 301,
-	TRIGGER_REGION_EXIT              = 302,
+	SQUAD_FINISHED                   = 201,
+	SQUAD_DESTROYED                  = 202,
+	REGION_ENTER                     = 301,
+	REGION_EXIT                      = 302,
+}
+
+void Signal(ESignal sig, Id paramId) {
+	ai.CallRules(SIG_PREFIX + sig + SEP_COMMAND + paramId);
+}
+
+void Signal(ESignal sig, Id paramId, Id detailId) {
+	ai.CallRules(SIG_PREFIX + sig + SEP_COMMAND + paramId + SEP_PARAM + detailId);
 }
 
 }  // namespace LuaMsg

@@ -13,27 +13,28 @@ function gadget:GetInfo()
 end
 
 
+local aiMsg = VFS.Include("luarules/utilities/campaign_ai_msg.lua")
+
+
 if gadgetHandler:IsSyncedCode() then
 
 function gadget:RecvSkirmishAIMessage(teamID, dataStr)
 -- 	Spring.Echo("gadget | teamID: " .. teamID .. " | dataStr: " .. dataStr)
-	local prefix = "ai_"
+	local prefix = aiMsg.Signal.PREFIX
 
 	if dataStr:sub(1, #prefix) ~= prefix then
 		return
 	end
 
-	SendToUnsynced("AiHandleCall", teamID, dataStr)
+	SendToUnsynced("AiHandleCall", teamID, dataStr:sub(#prefix + 1))
 end
 
 -----------------------------------------
 else  -- not gadgetHandler:IsSyncedCode()
 -----------------------------------------
 
-local aiMsg = VFS.Include("luarules/utilities/campaign_ai_msg.lua")
-
 local triggers = {
-	["ai_squad_finished"] = function(teamID, dataStr)
+	[tostring(aiMsg.Signal.SQUAD_FINISHED)] = function(teamID, dataStr)
 		-- "ai_squad_finished:<squadID>"
 		local squadID = tonumber(dataStr)
 		Spring.Echo("Squad Finished: " .. squadID)
@@ -41,12 +42,12 @@ local triggers = {
 		local msg = aiMsg.MsgBuilder.new()
 			:cmdValue(aiMsg.Topic.SQUAD_ID, squadID)
 -- 			:cmdValue(aiMsg.Topic.SQUAD_TASK, aiMsg.Task.ATTACK)
-			:cmdDictArray(aiMsg.Topic.SQUAD_PARAMS, aiMsg.Param.POSITION, {881, 6507})
+			:cmdDictArray(aiMsg.Topic.SQUAD_PARAMS, aiMsg.Squad.POSITION, {881, 6507})
 			:toString()
 		Spring.SendSkirmishAIMessage(teamID, msg)
 	end,
 
-	["ai_squad_destroyed"] = function(teamID, dataStr)
+	[tostring(aiMsg.Signal.SQUAD_DESTROYED)] = function(teamID, dataStr)
 		-- "ai_squad_destroyed:<squadID>"
 		local squadID = tonumber(dataStr)
 		Spring.Echo("Squad Destroyed: " .. squadID)
@@ -55,6 +56,7 @@ local triggers = {
 
 local function HandleAiCall(cmd, teamID, dataStr)
 	local actName = dataStr:match("^([^:]*)")
+-- 	Spring.Echo("HandleAiCall: " .. dataStr .. " | " .. actName)
 	if triggers[actName] then
 		triggers[actName](teamID, dataStr:sub(#actName + 2))
 	end

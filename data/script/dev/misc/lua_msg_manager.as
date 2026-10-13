@@ -1,6 +1,7 @@
 #include "../../define.as"
 #include "../../lua_msg.as"
 #include "../manager/factory.as"
+#include "base.as"
 #include "squad.as"
 #include "region.as"
 
@@ -19,6 +20,10 @@ class Manager {
 			{formatInt(ELuaMsg::SET_UNITDEF_RETREAT_HP), LuaMsgFunc(this.SetUnitDefRetreat)},
 			{formatInt(ELuaMsg::SET_FACTORY_ACTIVE), LuaMsgFunc(this.SetFactoryActive)},
 			{formatInt(ELuaMsg::SET_SCRIPTED_RECRUIT), LuaMsgFunc(this.SetScriptedRecruit)},
+
+			{formatInt(ELuaMsg::BASE_ID), LuaMsgFunc(this.SelectBaseId)},
+			{formatInt(ELuaMsg::BASE_ADD_PLAN), LuaMsgFunc(this.BaseAddPlan)},
+			{formatInt(ELuaMsg::BASE_DEL_PLAN), LuaMsgFunc(this.BaseDelPlan)},
 
 			{formatInt(ELuaMsg::SQUAD_REQUEST_ID), LuaMsgFunc(this.SelectSquadRequestId)},
 			{formatInt(ELuaMsg::SQUAD_REQUEST_COMPOSE), LuaMsgFunc(this.SquadRequestCompose)},
@@ -107,6 +112,19 @@ class Manager {
 		Factory::isRecruitScripted = params[0] != "0";
 	}
 
+	// Base
+	void SelectBaseId(const array<string>& in params) {
+		Base::mgr.SelectBase(parseInt(params[0]));
+	}
+
+	void BaseAddPlan(const array<string>& in params) {
+		Base::mgr.AddBasePlan(params);
+	}
+
+	void BaseDelPlan(const array<string>& in params) {
+		Base::mgr.DelBasePlan(params);
+	}
+
 	// Squad Request
 	void SelectSquadRequestId(const array<string>& in params) {
 		Squad::mgr.SelectSquad(parseInt(params[0]));
@@ -164,6 +182,25 @@ class Manager {
 
 	void TriggerRegionClear(const array<string>& in params) {
 		Region::mgr.ClearTriggerZones();
+	}
+
+	/*
+	 * Signals
+	 */
+	void SigSquadFinished(Id squadId) {
+		Signal(ESignal::SQUAD_FINISHED, squadId);
+	}
+
+	void SigSquadDestroyed(Id squadId) {
+		Signal(ESignal::SQUAD_DESTROYED, squadId);
+	}
+
+	void SigRegionEnter(Id regionId, Id squadId) {
+		Signal(ESignal::REGION_ENTER, regionId, squadId);
+	}
+
+	void SigRegionExit(Id regionId, Id squadId) {
+		Signal(ESignal::REGION_EXIT, regionId, squadId);
 	}
 
 	/*
