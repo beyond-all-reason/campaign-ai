@@ -190,7 +190,7 @@ public:
 	void AddTriggerZone(CGridRegion::Id zoneId, geom::CPolygon* poly);
 	void DelTriggerZone(CGridRegion::Id zoneId);
 private:
-	void UpdateTriggers();
+	void UpdateTriggersStep();
 
 	virtual IUnitTask* DefaultMakeTask(CCircuitUnit* unit) override;
 
@@ -285,7 +285,7 @@ private:
 		CGridRegion region;
 	};
 	std::map<CGridRegion::Id, STriggerZone> triggerZones;
-	unsigned int taskTriggerIterator;
+	unsigned int taskTriggerIndex;
 
 	virtual void Load(std::istream& is) override;
 	virtual void Save(std::ostream& os) const override;

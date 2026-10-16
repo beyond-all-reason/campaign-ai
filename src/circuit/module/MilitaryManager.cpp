@@ -59,7 +59,7 @@ CMilitaryManager::CMilitaryManager(CCircuitAI* circuit)
 		, isEnemyFound(false)
 		, armyCost(0.f)
 		, bigGunDef(nullptr)
-		, taskTriggerIterator(0)
+		, taskTriggerIndex(0)
 {
 	circuit->GetScheduler()->RunOnInit(CScheduler::GameJob(&CMilitaryManager::Init, this));
 
@@ -526,7 +526,7 @@ void CMilitaryManager::Init()
 		scheduler->RunJobEvery(CScheduler::GameJob(&CMilitaryManager::UpdateIdle, this), interval, offset + 0);
 		scheduler->RunJobEvery(CScheduler::GameJob(&CMilitaryManager::Update, this), 1/*interval / 2*/, offset + 1);
 		scheduler->RunJobEvery(CScheduler::GameJob(&CMilitaryManager::UpdateDefenceTasks, this), FRAMES_PER_SEC * 5, offset + 2);
-		scheduler->RunJobEvery(CScheduler::GameJob(&CMilitaryManager::UpdateTriggers, this), 1, offset + 3);
+		scheduler->RunJobEvery(CScheduler::GameJob(&CMilitaryManager::UpdateTriggersStep, this), 1, offset + 3);
 
 		scheduler->RunJobEvery(CScheduler::GameJob(&CMilitaryManager::Watchdog, this),
 								FRAMES_PER_SEC * 60,
@@ -1661,20 +1661,26 @@ void CMilitaryManager::DelTriggerZone(CGridRegion::Id zoneId)
 	triggerZones.erase(zoneId);
 }
 
-void CMilitaryManager::UpdateTriggers()
+void CMilitaryManager::UpdateTriggersStep()
 {
-	if (taskTriggerIterator >= updateTasks.size()) {
-		if (taskTriggerIterator == 0) {
+	if (taskTriggerIndex >= updateTasks.size()) {
+		if (taskTriggerIndex == 0) {
 			return;
 		}
-		taskTriggerIterator = 0;
+		taskTriggerIndex = 0;
 	}
 
-	IUnitTask* task = updateTasks[taskTriggerIterator];
-	++taskTriggerIterator;
-	if (task->GetType() != IUnitTask::Type::FIGHTER) {
-		return;
+	// NOTE: Squad operates only with classes that has IFighterTask as a base.
+	//       And the smallest unit that MAPI is interested to control is a squad.
+	//       Skip till next IFighterTask.
+	IUnitTask* task = updateTasks[taskTriggerIndex++];
+	while (task->GetType() != IUnitTask::Type::FIGHTER) {
+		if (taskTriggerIndex >= updateTasks.size()) {
+			return;
+		}
+		task = updateTasks[taskTriggerIndex++];
 	}
+
 	IFighterTask* taskF = static_cast<IFighterTask*>(task);
 	CCircuitUnit* unit = taskF->GetLeader();
 	if (unit == nullptr) {
