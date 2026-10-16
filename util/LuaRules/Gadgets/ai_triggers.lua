@@ -62,9 +62,6 @@ local function HandleAiCall(cmd, teamID, dataStr)
 	end
 end
 
--- function gadget:GameFrame(gameFrame)
--- end
-
 function gadget:Initialize()
 	Spring.Echo("Initialize AI Intent")
 	gadgetHandler:AddSyncAction("AiHandleCall", HandleAiCall)

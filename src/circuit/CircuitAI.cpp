@@ -945,7 +945,9 @@ int CCircuitAI::Message(int playerId, const char* message)
 		pathfinder->TogglePathVis(this);
 	}
 	else if (strncmp(message, cmdMvCost, strlen(cmdMvCost)) == 0) {
-		pathfinder->ToggleMoveArrayVis(this);
+		if (teamId == atoi((const char*)&message[strlen(cmdMvCost) + 1])) {
+			pathfinder->ToggleMoveArrayVis(this);
+		}
 	}
 	else if (strncmp(message, cmdKnn, strlen(cmdKnn)) == 0) {
 		const AIFloat3 dbgPos = map->GetMousePos();

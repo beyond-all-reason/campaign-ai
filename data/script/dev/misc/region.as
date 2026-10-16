@@ -16,15 +16,15 @@ class Manager {
 	}
 
 	bool AddBuildZone(const array<string>& in params) {
-		// params contains ["<RegionID>", "<UnitDefId>=<x1>,<z1>,<x2>,<z2>,<x3>,<z3>"]
-		Id regionId = parseInt(params[0]);
+		// params contains ["<RegionID>=<x1>,<z1>,<x2>,<z2>,<x3>,<z3>", "<UnitDefId>"]
+		const array<string>@ region_points = params[0].split(LuaMsg::SEP_KEY_VALUE);
+		Id regionId = parseInt(region_points[0]);
 		if (buildZones.contains(regionId))
 			return false;
 
 		buildZones.insert(regionId);
-		const array<string>@ unitDef_points = params[1].split(LuaMsg::SEP_KEY_VALUE);
-		const array<AIFloat3>@ verts = ParseVerts(unitDef_points[1]);
-		Id unitDefId = parseInt(unitDef_points[0]);
+		const array<AIFloat3>@ verts = ParseVerts(region_points[1]);
+		Id unitDefId = parseInt(params[1]);
 		aiBuilderMgr.AddBuildZone(regionId, CPolygon(verts), ai.GetCircuitDef(unitDefId));
 
 		for (uint i = 0; i < verts.length(); ++i)  // FIXME: DEBUG
@@ -36,6 +36,28 @@ class Manager {
 		for (auto it = buildZones.begin(); it++;)
 			aiBuilderMgr.DelBuildZone(it.current());
 		buildZones.clear();
+	}
+
+	bool AddReservedZone(const array<string>& in params) {
+		// params contains "<RegionID>=<x1>,<z1>,<x2>,<z2>,<x3>,<z3>"
+		const array<string>@ region_points = params[0].split(LuaMsg::SEP_KEY_VALUE);
+		Id regionId = parseInt(region_points[0]);
+		if (reservedZones.contains(regionId))
+			return false;
+
+		reservedZones.insert(regionId);
+		const array<AIFloat3>@ verts = ParseVerts(region_points[1]);
+		aiBuilderMgr.AddReservedZone(regionId, CPolygon(verts));
+
+		for (uint i = 0; i < verts.length(); ++i)  // FIXME: DEBUG
+			AiAddLine(verts[i], verts[(i+1) % verts.length()]);
+		return true;
+	}
+
+	void ClearReservedZones() {
+		for (auto it = reservedZones.begin(); it++;)
+			aiBuilderMgr.DelReservedZone(it.current());
+		reservedZones.clear();
 	}
 
 	bool AddTriggerZone(const string& in param) {
@@ -61,6 +83,7 @@ class Manager {
 	}
 
 	private set<Id> buildZones;
+	private set<Id> reservedZones;
 	private set<Id> triggerZones;
 }
 

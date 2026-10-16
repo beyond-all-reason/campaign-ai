@@ -1427,6 +1427,9 @@ void CMilitaryManager::UpdateDefenceTasks()
 
 void CMilitaryManager::UpdateDefence()
 {
+	if (isScriptDefence) {
+		return;
+	}
 	ZoneScoped;
 
 	const int frame = circuit->GetLastFrame();

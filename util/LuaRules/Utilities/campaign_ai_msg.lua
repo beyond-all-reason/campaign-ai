@@ -13,7 +13,7 @@ local delimiter = {
 	SEP_SUBPARAM = ",",
 }
 
-local topic = {  -- Message topic
+local topic = { -- Message topic
 	SET_AI_ACTIVE = 1, -- boolean
 	ENABLE_UNITDEFS = 2, -- array of unitDefIDs
 	DISABLE_UNITDEFS = 3, -- array of unitDefIDs
@@ -26,7 +26,8 @@ local topic = {  -- Message topic
 
 	SET_FACTORY_ACTIVE = 13,
 
-	SET_SCRIPTED_RECRUIT = 16, -- boolean
+	SCRIPT_CONSTRUCTION_PARAMS = 15, -- construct params
+	SET_SCRIPT_RECRUIT = 16, -- boolean
 
 	-- Base starts at 100
 	BASE_ID = 101,
@@ -50,26 +51,38 @@ local topic = {  -- Message topic
 
 	BUILD_REGION_ID = 301,
 	BUILD_REGION_CLEAR = 302,
+	RESERVED_REGION_ID = 303,
+	RESERVED_REGION_CLEAR = 304,
 	TRIGGER_REGION_ID = 321,
 	TRIGGER_REGION_CLEAR = 322,
 }
 
-local signal = {  -- Trigger signal
-	PREFIX = "ai_",  -- signal message prefix
+local signal = { -- Trigger signal
+	PREFIX = "ai_", -- signal message prefix
 	SQUAD_FINISHED = 201,
 	SQUAD_DESTROYED = 202,
 	REGION_ENTER = 301,
 	REGION_EXIT = 302,
 }
 
-local plan = {  -- Build plan params
+local construct = {
+	ASSIGNMENT = 1,
+	FACTORY = 2,
+	STORAGE = 3,
+	METAL = 4,
+	ENERGY = 5,
+	ECONOMY = 6,
+	DEFENCE = 7,
+}
+
+local plan = { -- Build plan params
 	UNITDEF = 1,
 	POSITION = 2,
 	ZONE = 3,
 	REBUILD = 4,
 }
 
-local squad = {  -- Squad params
+local squad = { -- Squad params
 	POSITION = 1,
 	GATHER_RANGE = 2,
 	ATTACK_RANGE = 3,
@@ -78,7 +91,7 @@ local squad = {  -- Squad params
 	PRIO_TARGET = 6,
 }
 
-local task = {  -- Task types
+local task = { -- Task types
 	DEFEND = 1,
 	SCOUT = 2,
 	RAID = 3,
@@ -89,7 +102,7 @@ local task = {  -- Task types
 	SUPPORT = 8,
 }
 
-local pathing = {  -- Pathing params
+local pathing = { -- Pathing params
 	GOAL_RANGE = 1,
 	IGNORE_THREAT = 2,
 	AVOID_THREAT = 3,
@@ -135,6 +148,11 @@ function MsgBuilder:cmdDictArray(cmd, key, values)
 	return self
 end
 
+function MsgBuilder:addValue(value)
+	self.buffer[#self.buffer] = self.buffer[#self.buffer] .. delimiter.SEP_PARAM .. value
+	return self
+end
+
 function MsgBuilder:paramArray(param, values)
 	self.buffer[#self.buffer] = self.buffer[#self.buffer]
 		.. delimiter.SEP_PARAM
@@ -154,6 +172,7 @@ MsgBuilder.__tostring = MsgBuilder.toString
 return {
 	Topic = topic,
 	Signal = signal,
+	Construct = construct,
 	Plan = plan,
 	Squad = squad,
 	Task = task,

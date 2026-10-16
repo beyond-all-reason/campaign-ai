@@ -70,8 +70,8 @@ public:
 	CEnergyGrid* GetEnergyGrid() const { return energyGrid; }
 	float GetClusterRange() const { return clusterRange; }
 	float GetPylonRange() const { return pylonRange; }
-	float GetMetalMake(CCircuitDef* cdef) const;  // script
-	float GetEnergyMake(CCircuitDef* cdef) const;  // script
+	float GetMetalMake(CCircuitDef* cdef) const;  // Script API
+	float GetEnergyMake(CCircuitDef* cdef) const;  // Script API
 	CCircuitDef* GetLowEnergy(const springai::AIFloat3& pos, float& outMake, const CCircuitUnit* builder = nullptr) const;
 	void AddEconomyDefs(const std::set<CCircuitDef*>& buildDefs);  // add available economy defs
 	void RemoveEconomyDefs(const std::set<CCircuitDef*>& buildDefs);
@@ -308,6 +308,13 @@ private:
 
 	std::shared_ptr<IMainJob> morph;
 	std::set<CCircuitUnit*> morphees;
+
+	// Script API
+	bool isScriptFactory = false;
+	bool isScriptStorage = false;
+	bool isScriptMetal = false;
+	bool isScriptEnergy = false;
+	bool isScriptEconomy = false;
 };
 
 } // namespace circuit

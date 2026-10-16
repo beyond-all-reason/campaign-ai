@@ -1,5 +1,6 @@
 #include "../../define.as"
 #include "../../lua_msg.as"
+#include "../manager/builder.as"
 #include "../manager/factory.as"
 #include "base.as"
 #include "squad.as"
@@ -7,6 +8,17 @@
 
 
 namespace LuaMsg {
+
+// Must match the Lua definitions
+enum EConstructParam {
+	ASSIGNMENT = 1,
+	FACTORY    = 2,
+	STORAGE    = 3,
+	METAL      = 4,
+	ENERGY     = 5,
+	ECONOMY    = 6,
+	DEFENCE    = 7,
+}
 
 class Manager {
 	void InitHandlers() {
@@ -19,7 +31,8 @@ class Manager {
 
 			{formatInt(ELuaMsg::SET_UNITDEF_RETREAT_HP), LuaMsgFunc(this.SetUnitDefRetreat)},
 			{formatInt(ELuaMsg::SET_FACTORY_ACTIVE), LuaMsgFunc(this.SetFactoryActive)},
-			{formatInt(ELuaMsg::SET_SCRIPTED_RECRUIT), LuaMsgFunc(this.SetScriptedRecruit)},
+			{formatInt(ELuaMsg::SCRIPT_CONSTRUCTION_PARAMS), LuaMsgFunc(this.SetScriptConstruction)},
+			{formatInt(ELuaMsg::SET_SCRIPT_RECRUIT), LuaMsgFunc(this.SetScriptRecruit)},
 
 			{formatInt(ELuaMsg::BASE_ID), LuaMsgFunc(this.SelectBaseId)},
 			{formatInt(ELuaMsg::BASE_ADD_PLAN), LuaMsgFunc(this.BaseAddPlan)},
@@ -39,6 +52,8 @@ class Manager {
 
 			{formatInt(ELuaMsg::BUILD_REGION_ID), LuaMsgFunc(this.MakeBuildRegion)},
 			{formatInt(ELuaMsg::BUILD_REGION_CLEAR), LuaMsgFunc(this.BuildRegionClear)},
+			{formatInt(ELuaMsg::RESERVED_REGION_ID), LuaMsgFunc(this.MakeReservedRegion)},
+			{formatInt(ELuaMsg::RESERVED_REGION_CLEAR), LuaMsgFunc(this.ReservedRegionClear)},
 			{formatInt(ELuaMsg::TRIGGER_REGION_ID), LuaMsgFunc(this.MakeTriggerRegion)},
 			{formatInt(ELuaMsg::TRIGGER_REGION_CLEAR), LuaMsgFunc(this.TriggerRegionClear)}
 		};
@@ -108,7 +123,39 @@ class Manager {
 			aiFactoryMgr.SetIsActiveFactory(parseInt(unitIds[i]), isActive);
 	}
 
-	void SetScriptedRecruit(const array<string>& in params) {
+	void SetScriptConstruction(const array<string>& in params) {
+		for (uint i = 0; i < params.length(); ++i) {
+			// params contains "<EConstructParam>=<bool>" pairs
+			const array<string>@ kv = params[i].split(LuaMsg::SEP_KEY_VALUE);
+			const bool isScripted = kv[1] != "0";
+			switch (parseInt(kv[0])) {
+			case EConstructParam::ASSIGNMENT: {
+				Builder::isConstructionScripted = isScripted;
+			} break;
+			case EConstructParam::FACTORY: {
+				aiEconomyMgr.isScriptFactory = isScripted;
+			} break;
+			case EConstructParam::STORAGE: {
+				aiEconomyMgr.isScriptStorage = isScripted;
+			} break;
+			case EConstructParam::METAL: {
+				aiEconomyMgr.isScriptMetal = isScripted;
+			} break;
+			case EConstructParam::ENERGY: {
+				aiEconomyMgr.isScriptEnergy = isScripted;
+			} break;
+			case EConstructParam::ECONOMY: {
+				aiEconomyMgr.isScriptEconomy = isScripted;
+			} break;
+			case EConstructParam::DEFENCE: {
+				aiMilitaryMgr.isScriptDefence = isScripted;
+			} break;
+			default: break;
+			}
+		}
+	}
+
+	void SetScriptRecruit(const array<string>& in params) {
 		Factory::isRecruitScripted = params[0] != "0";
 	}
 
@@ -174,6 +221,14 @@ class Manager {
 
 	void BuildRegionClear(const array<string>& in params) {
 		Region::mgr.ClearBuildZones();
+	}
+
+	void MakeReservedRegion(const array<string>& in params) {
+		Region::mgr.AddReservedZone(params);
+	}
+
+	void ReservedRegionClear(const array<string>& in params) {
+		Region::mgr.ClearReservedZones();
 	}
 
 	void MakeTriggerRegion(const array<string>& in params) {

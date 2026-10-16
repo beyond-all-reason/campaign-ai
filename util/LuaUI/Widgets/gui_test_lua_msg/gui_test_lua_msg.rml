@@ -21,7 +21,7 @@
                 </div>
             </handle>
             <div class="content give intent-collapsible" data-class-collapsed="isCollapsed">
-               <div class="grid commands">
+                <div class="grid commands">
                     <button onclick="widget:SendCommand('cheat')">cheat</button>
 <!--                    <button onclick="widget:SendCommand('globallos')">global los</button>
                     <button onclick="widget:SendCommand('godmode')">godmode</button>
@@ -37,6 +37,23 @@
                     <button onclick="widget:SendCommand('setspeed 10')">>></button>
                     <button onclick="widget:SendCommand('setspeed 20')">>>></button>
                 </div>
+            </div>
+            <tabset class="content give intent-collapsible" data-class-collapsed="isCollapsed">
+                <tab>Misc</tab>
+                <panel>
+                <div class="grid commands">
+                    <button onclick="widget:SendUnitDefRetreat1Intent()">retreat0.5</button>
+                    <button onclick="widget:SendUnitDefRetreat2Intent()">retreat1.0</button>
+                    <button onclick="widget:SendDeactivateFactoryIntent()">Deactivate Factory</button>
+                    <button onclick="widget:SendActivateFactoryIntent()">Activate Factory</button>
+                    <button onclick="widget:SendEnableUnitsMsg()">Enable Units</button>
+                    <button onclick="widget:SendDisableUnitsMsg()">Disable Units</button>
+                    <button onclick="widget:ToggleScriptedRectruit()">Scripted recruit</button>
+                </div>
+                </panel>
+
+                <tab>Squad</tab>
+                <panel>
                 <div class="grid commands">
                     <button onclick="widget:SendNewSquad1()">New Squad1</button>
                     <button onclick="widget:SendNewSquad2()">New Squad2</button>
@@ -74,20 +91,14 @@
                     <button onclick="widget:SendPriorityTarget()">target</button>
                 </div>
                 <div class="grid commands">
-                    <button onclick="widget:SendUnitDefRetreat1Intent()">retreat0.5</button>
-                    <button onclick="widget:SendUnitDefRetreat2Intent()">retreat1.0</button>
-                    <button onclick="widget:SendDeactivateFactoryIntent()">Deactivate Factory</button>
-                    <button onclick="widget:SendActivateFactoryIntent()">Activate Factory</button>
-                    <button onclick="widget:SendEnableUnitsMsg()">Enable Units</button>
-                    <button onclick="widget:SendDisableUnitsMsg()">Disable Units</button>
-                    <button onclick="widget:ToggleScriptedRectruit()">Scripted recruit</button>
-                </div>
-                <div class="grid commands">
                     <button onclick="widget:SendEscortTask()">escort</button>
                     <button onclick="widget:SendEscortRangeBig()">2000 range</button>
                     <button onclick="widget:SendEscortRangeSmall()">100 range</button>
                 </div>
-                <div class="grid commands">
+                </panel>
+
+                <tab>Region</tab>
+                <panel><div class="grid commands">
                     <button onclick="widget:SendRegion1()">region 1</button>
                     <button onclick="widget:SendRegion2()">region 2</button>
                     <button onclick="widget:StartRegion()">start build</button>
@@ -95,14 +106,23 @@
                     <button onclick="widget:ClearRegions()">clear builds</button>
                 </div>
                 <div class="grid commands">
+                    <button onclick="widget:StartReservedRegion()">start reserved</button>
+                    <button onclick="widget:EndReservedRegion()">end reserved</button>
+                    <button onclick="widget:ClearReserved()">clear reserved</button>
+                </div>
+                <div class="grid commands">
                     <button onclick="widget:StartTriggerRegion()">start trigger</button>
                     <button onclick="widget:EndTriggerRegion()">end trigger</button>
                     <button onclick="widget:ClearTriggers()">clear triggers</button>
-                </div>
+                </div></panel>
+
+                <tab>Base</tab>
+                <panel>
                 <div class="grid commands">
                     <button onclick="widget:SendNewBase()">base</button>
                 </div>
-            </div>
+                </panel>
+            </tabset>
             <div class="collapse-button" data-event-click="toggleCollapse()" title="Minimize" data-class-collapsed="isCollapsed"></div>
         </div>
     </body>

@@ -19,51 +19,54 @@ class Base {
 
 	Id id;
 
-	// array<BuildPlan@> plans;
-	map<Id, array<BuildPlan@>@> udToPlan;  // UnitDefId: BuildPlan
+	array<BuildTask@> plans;
+	map<Id, array<BuildTask@>@> udToPlan;  // UnitDefId: BuildTask
 	set<Id> tasks;  // IBuilderTask.id for cleanup
 
 	AIFloat3 pos;  // nominal center
 	set<Id> buildings;  // UnitID
 }
 
-class BuildPlan {
+class BuildTask {
 	Id unitDefId = -1;
-	bool isDone = false;
 	AIFloat3 pos;  // either single position
 	Id zoneId = -1;  // or dedicated zone
+	Base@ base = null;
+	IBuilderTask@ task = null;
+	bool isDone = false;
 	bool isRebuild = false;
 }
 
 class Manager {
 	private void ParseBasePlanParams(const array<string>& in params, Base@ base) {
-		BuildPlan bp;
+		BuildTask bt;
 		for (uint i = 0; i < params.length(); ++i) {
 			// params contains "<EPlanParam>=<positional_values>" pairs
 			const array<string>@ kv = params[i].split(LuaMsg::SEP_KEY_VALUE);
 			switch (parseInt(kv[0])) {  // kv[0]="<EPlanParam>"
 			case EPlanParam::UNITDEF: {  // kv[1]="<unitDefId>"
-				bp.unitDefId = parseInt(kv[1]);
-				if (!base.udToPlan.contains(bp.unitDefId))
-					base.udToPlan.insert(bp.unitDefId, {});
+				bt.unitDefId = parseInt(kv[1]);
+				if (!base.udToPlan.contains(bt.unitDefId))
+					base.udToPlan.insert(bt.unitDefId, {});
 			} break;
 			case EPlanParam::POSITION: {  // kv[1]="<posX>,<posZ>"
 				const array<string>@ posStr = kv[1].split(LuaMsg::SEP_SUBPARAM);
-				bp.pos.x = parseFloat(posStr[0]);
-				bp.pos.z = parseFloat(posStr[1]);
+				bt.pos.x = parseFloat(posStr[0]);
+				bt.pos.z = parseFloat(posStr[1]);
 			} break;
 			case EPlanParam::ZONE: {  // kv[1]="<regionId>"
 				// TODO
-				bp.zoneId = parseInt(kv[1]);
+				bt.zoneId = parseInt(kv[1]);
 			} break;
 			case EPlanParam::REBUILD: {  // kv[1]="<bool>"
-				bp.isRebuild = kv[1] != "0";
+				bt.isRebuild = kv[1] != "0";
 			} break;
 			default: break;
 			}
 		}
-		base.udToPlan[bp.unitDefId].insertLast(@bp);
-		// base.plans.insertLast(@bp);
+		@bt.base = base;
+		base.udToPlan[bt.unitDefId].insertLast(@bt);
+		base.plans.insertLast(@bt);
 	}
 
 	// Invoked by LuaMsg::Manager::SelectBaseId
@@ -83,7 +86,6 @@ class Manager {
 			return false;
 
 		ParseBasePlanParams(params, selBase);
-
 		return true;
 	}
 
@@ -94,8 +96,68 @@ class Manager {
 		return true;
 	}
 
+	private Base@ GetNearestBase(const AIFloat3& in pos) {
+		Base@ base = null;
+		float sqLeastDist = BIG_FLOAT;
+		for (auto it = bases.begin(); it++;) {
+			Base@ checkBase = it.current_value();
+			float sqDist = pos.SqDistance2D(checkBase.pos);
+			if (sqLeastDist <= sqDist)
+				continue;
+			sqLeastDist = sqDist;
+			@base = checkBase;
+		}
+		return base;
+	}
+
+	// Invoked by Builder::AiMakeTask
+	IBuilderTask@ GetTaskToBuild(CCircuitUnit@ unit) {
+		// NOTE: Builder controller periodically re-evaluates assigned task.
+		//       Return cached base one to save performance.
+		if (taskToPlan.contains(unit.task.id))
+			return cast<IBuilderTask>(unit.task);
+
+		Base@ base = GetNearestBase(unit.GetPos(ai.frame));
+		if (base is null)
+			return null;
+
+		for (uint i = 0; i < base.plans.length(); ++i) {
+			BuildTask@ bt = base.plans[i];
+			if (bt.isDone)
+				continue;
+			if (!unit.circuitDef.CanBuild(bt.unitDefId))
+				continue;
+			if (bt.task is null) {
+				IUnitTask@ task = aiBuilderMgr.Enqueue(TaskB::Common(Task::BuildType::STORE, Task::Priority::HIGH,
+						ai.GetCircuitDef(bt.unitDefId), bt.pos, 0.f));
+				taskToPlan.insert(task.id, @bt);
+				@bt.task = cast<IBuilderTask>(task);
+			}
+			return bt.task;
+		}
+		return null;
+	}
+
+	// Invoked by Builder::AiTaskRemoved done=true
+	void BaseTaskFinished(IBuilderTask@ task) {
+		bool success;
+		BuildTask@ bt = taskToPlan.find(task.id, success);
+		if (!success)
+			return;
+
+		bt.isDone = true;
+		// TODO: Remove BuildTask out of plan if isRebuild=false
+		taskToPlan.erase(task.id);
+	}
+
+	// Invoked by Builder::AiTaskRemoved done=false
+	void BaseTaskCanceled(IBuilderTask@ task) {
+		taskToPlan.erase(task.id);
+		// TODO: Repeat if isRebuild
+	}
+
 	private map<Id, Base@> bases;  // owner
-	private map<Id, Base@> taskToBase;  // IBuilderTask.id => Base
+	private map<Id, BuildTask@> taskToPlan;  // IBuilderTask.id => BuildTask
 
 	private Base@ selBase = null;  // Selected state
 }

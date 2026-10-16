@@ -683,8 +683,12 @@ class IFighterTask{
 	bool isMergeAllowed;
 	bool isRegroupAllowed;
 	int vipTargetId;
-	float range;
+	float attackRange;
 	float retreat;
+	float goalRange;
+	float ignoreThreat;
+	float avoidThreat;
+	bool isEndPosOnly;
 }
 class ISquadTask{
 	int GetRefCount() const;
@@ -709,8 +713,12 @@ class ISquadTask{
 	bool isMergeAllowed;
 	bool isRegroupAllowed;
 	int vipTargetId;
-	float range;
+	float attackRange;
 	float retreat;
+	float goalRange;
+	float ignoreThreat;
+	float avoidThreat;
+	bool isEndPosOnly;
 }
 class CDefendTask{
 	int GetRefCount() const;
@@ -735,8 +743,12 @@ class CDefendTask{
 	bool isMergeAllowed;
 	bool isRegroupAllowed;
 	int vipTargetId;
-	float range;
+	float attackRange;
 	float retreat;
+	float goalRange;
+	float ignoreThreat;
+	float avoidThreat;
+	bool isEndPosOnly;
 }
 class CSuperTask{
 	int GetRefCount() const;
@@ -759,8 +771,12 @@ class CSuperTask{
 	bool isMergeAllowed;
 	bool isRegroupAllowed;
 	int vipTargetId;
-	float range;
+	float attackRange;
 	float retreat;
+	float goalRange;
+	float ignoreThreat;
+	float avoidThreat;
+	bool isEndPosOnly;
 }
 class CMaskHandler{
 	TypeMask GetTypeMask(const string&in);
@@ -812,6 +828,11 @@ class CEconomyManager{
 	float reclConvertEff;
 	float reclEnergyEff;
 	float startMexTravel;
+	bool isScriptFactory;
+	bool isScriptStorage;
+	bool isScriptMetal;
+	bool isScriptEnergy;
+	bool isScriptEconomy;
 }
 class SRecruitTask{
 	uint8 type;
@@ -899,7 +920,7 @@ class SFightTask{
 	uint8 check;
 	uint8 promote;
 	float power;
-	CCircuitUnit@ vip;
+	int vipId;
 }
 class CMilitaryManager{
 	IUnitTask@ DefaultMakeTask(CCircuitUnit@);
@@ -913,6 +934,7 @@ class CMilitaryManager{
 	void DelTriggerZone(int);
 	SResponseInfo@ GetResponseInfo(int) const;
 	const float armyCost;
+	bool isScriptDefence;
 	SQuotaMilitary quota;
 }
 class SQuotaMilitary{

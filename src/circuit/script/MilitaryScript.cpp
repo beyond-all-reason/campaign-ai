@@ -42,6 +42,7 @@ CMilitaryScript::CMilitaryScript(CScriptManager* scr, CMilitaryManager* mgr)
 	r = engine->RegisterObjectMethod("CMilitaryManager", "void AssignTask(CCircuitUnit@, IUnitTask@+)", asMETHODPR(CMilitaryManager, AssignTask, (CCircuitUnit*, IUnitTask*), void), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CMilitaryManager", "void AddTriggerZone(Id, CPolygon@+)", asMETHOD(CMilitaryManager, AddTriggerZone), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CMilitaryManager", "void DelTriggerZone(Id)", asMETHOD(CMilitaryManager, DelTriggerZone), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("CMilitaryManager", "bool isScriptDefence", asOFFSET(CMilitaryManager, isScriptDefence)); ASSERT(r >= 0);
 
 	// NOTE: Config's "quota" scattered across CMilitaryManager, CEnemyManager, CThreatMap, CFactoryManager, CSetupManager
 	r = engine->RegisterObjectType("SQuotaMilitary", 0, asOBJ_REF | asOBJ_NOCOUNT); ASSERT(r >= 0);

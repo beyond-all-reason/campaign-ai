@@ -1023,6 +1023,9 @@ bool CEconomyManager::IsEnoughEnergyIncome(CCircuitDef const* buildDef, CCircuit
 
 IBuilderTask* CEconomyManager::MakeEconomyTasks(const AIFloat3& position, CCircuitUnit* unit)
 {
+	if (isScriptEconomy) {
+		return nullptr;
+	}
 	ZoneScoped;
 
 	CBuilderManager* builderMgr = circuit->GetBuilderManager();
@@ -1048,6 +1051,9 @@ IBuilderTask* CEconomyManager::MakeEconomyTasks(const AIFloat3& position, CCircu
 
 IBuilderTask* CEconomyManager::UpdateMetalTasks(const AIFloat3& position, CCircuitUnit* unit)
 {
+	if (isScriptMetal) {
+		return nullptr;
+	}
 	assert(unit != nullptr);
 	ZoneScoped;
 
@@ -1193,6 +1199,9 @@ IBuilderTask* CEconomyManager::UpdateMetalTasks(const AIFloat3& position, CCircu
 
 IBuilderTask* CEconomyManager::UpdateReclaimTasks(const AIFloat3& position, CCircuitUnit* unit, bool isNear)
 {
+	if (isScriptMetal) {
+		return nullptr;
+	}
 	ZoneScoped;
 
 	CBuilderManager* builderMgr = circuit->GetBuilderManager();
@@ -1282,6 +1291,9 @@ IBuilderTask* CEconomyManager::UpdateReclaimTasks(const AIFloat3& position, CCir
 
 IBuilderTask* CEconomyManager::UpdateEnergyTasks(const AIFloat3& position, CCircuitUnit* unit)
 {
+	if (isScriptEnergy) {
+		return nullptr;
+	}
 	ZoneScoped;
 
 	CBuilderManager* builderMgr = circuit->GetBuilderManager();
@@ -1417,6 +1429,9 @@ IBuilderTask* CEconomyManager::UpdateEnergyTasks(const AIFloat3& position, CCirc
 
 IBuilderTask* CEconomyManager::UpdateGeoTasks(const AIFloat3& position, CCircuitUnit* unit)
 {
+	if (isScriptEnergy) {
+		return nullptr;
+	}
 	ZoneScoped;
 
 	CBuilderManager* builderMgr = circuit->GetBuilderManager();
@@ -1465,6 +1480,9 @@ IBuilderTask* CEconomyManager::UpdateGeoTasks(const AIFloat3& position, CCircuit
 
 IBuilderTask* CEconomyManager::UpdateFactoryTasks(const AIFloat3& position, CCircuitUnit* unit)
 {
+	if (isScriptFactory) {
+		return nullptr;
+	}
 	ZoneScoped;
 
 	CBuilderManager* builderMgr = circuit->GetBuilderManager();
@@ -1637,6 +1655,9 @@ IBuilderTask* CEconomyManager::UpdateFactoryTasks()
 
 IBuilderTask* CEconomyManager::UpdateStorageTasks()
 {
+	if (isScriptStorage) {
+		return nullptr;
+	}
 	ZoneScoped;
 
 	CBuilderManager* builderMgr = circuit->GetBuilderManager();
@@ -1757,6 +1778,10 @@ IBuilderTask* CEconomyManager::CheckMobileAssistRequired(const AIFloat3& positio
 
 void CEconomyManager::StartFactoryJob()
 {
+	if (isScriptFactory) {
+		return;
+	}
+
 	CFactoryManager* factoryMgr = circuit->GetFactoryManager();
 	if ((factoryMgr->GetFactoryCount() == 0) && circuit->GetBuilderManager()->GetTasks(IBuilderTask::BuildType::FACTORY).empty()) {
 		CCircuitUnit* comm = circuit->GetSetupManager()->GetCommander();

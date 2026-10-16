@@ -57,10 +57,11 @@ local baseID1 = 1
 local squadID1 = 1
 local squadID2 = 2
 local squadID3 = 3
-local zoneID1 = 1
-local zoneID2 = 2
-local zoneID = 10
+local buildZoneID1 = 1
+local buildZoneID2 = 2
+local buildZoneID = 10
 local triggerZoneID = 0
+local reservedZoneID = 100
 local power = 5.2
 local retreatThreshold = 2.2
 local isRecruitScripted = false
@@ -560,7 +561,7 @@ end
 function widget:ToggleScriptedRectruit()
     isRecruitScripted = not isRecruitScripted
     local msg = aiMsg.MsgBuilder.new()
-        :cmdValue(aiMsg.Topic.SET_SCRIPTED_RECRUIT, isRecruitScripted and 1 or 0)
+        :cmdValue(aiMsg.Topic.SET_SCRIPT_RECRUIT, isRecruitScripted and 1 or 0)
         :toString()
     Spring.SendSkirmishAIMessage(teamID1, msg)
 end
@@ -596,15 +597,15 @@ end
 
 function widget:SendRegion1()
     local msg = aiMsg.MsgBuilder.new()
-        :cmdValue(aiMsg.Topic.BUILD_REGION_ID, zoneID1)
-        :paramArray(nameToDefID["cornanotc"], {1079, 2391, 1569, 2788, 1809, 2426, 1349, 2172})
+        :cmdDictArray(aiMsg.Topic.BUILD_REGION_ID, buildZoneID1, {1079, 2391, 1569, 2788, 1809, 2426, 1349, 2172})
+        :addValue(nameToDefID["cornanotc"])
         :toString()
     Spring.SendSkirmishAIMessage(teamID1, msg)
 end
 function widget:SendRegion2()
     local msg = aiMsg.MsgBuilder.new()
-        :cmdValue(aiMsg.Topic.BUILD_REGION_ID, zoneID2)
-        :paramArray(nameToDefID["corsolar"], {4514, 5271, 4860, 5047, 5266, 5255, 5235, 5631, 4738, 5617})
+        :cmdDictArray(aiMsg.Topic.BUILD_REGION_ID, buildZoneID2, {4514, 5271, 4860, 5047, 5266, 5255, 5235, 5631, 4738, 5617})
+        :addValue(nameToDefID["corsolar"])
         :toString()
     Spring.SendSkirmishAIMessage(teamID1, msg)
 end
@@ -613,10 +614,10 @@ function widget:StartRegion()
 end
 function widget:EndRegion()
     if newRegion and #newRegion >= 6 then
-        zoneID = zoneID + 1
+        buildZoneID = buildZoneID + 1
         local msg = aiMsg.MsgBuilder.new()
-            :cmdValue(aiMsg.Topic.BUILD_REGION_ID, zoneID)
-            :paramArray(nameToDefID["corwin"], newRegion)
+            :cmdDictArray(aiMsg.Topic.BUILD_REGION_ID, buildZoneID, newRegion)
+            :addValue(nameToDefID["corwin"])
             :toString()
         Spring.SendSkirmishAIMessage(teamID1, msg)
     end
@@ -650,6 +651,26 @@ function widget:ClearTriggers()
     Spring.SendSkirmishAIMessage(teamID1, msg)
 end
 
+function widget:StartReservedRegion()
+    newRegion = {}
+end
+function widget:EndReservedRegion()
+    if newRegion and #newRegion >= 6 then
+        reservedZoneID = reservedZoneID + 1
+        local msg = aiMsg.MsgBuilder.new()
+            :cmdDictArray(aiMsg.Topic.RESERVED_REGION_ID, reservedZoneID, newRegion)
+            :toString()
+        Spring.SendSkirmishAIMessage(teamID1, msg)
+    end
+    newRegion = false
+end
+function widget:ClearReserved()
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdValue(aiMsg.Topic.RESERVED_REGION_CLEAR, 1)
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID1, msg)
+end
+
 function widget:SendNewBase()
     local msg = aiMsg.MsgBuilder.new()
         :cmdValue(aiMsg.Topic.BASE_ID, baseID1)
@@ -671,6 +692,23 @@ function widget:SendNewBase()
         :paramArray(aiMsg.Plan.POSITION, {621, 6696})
         :toString()
     Spring.SendSkirmishAIMessage(teamID0, msg)
+end
+
+function widget:UnitFinished(unitID, unitDefID, unitTeam)
+	if unitTeam == teamID0 and  unitDefID == nameToDefID["armlab"] then
+        local msg = aiMsg.MsgBuilder.new()
+            :cmdDict(aiMsg.Topic.SCRIPT_CONSTRUCTION_PARAMS, {
+                [aiMsg.Construct.ASSIGNMENT] = 0,
+                [aiMsg.Construct.FACTORY] = 0,
+                [aiMsg.Construct.STORAGE] = 0,
+                [aiMsg.Construct.METAL] = 0,
+                [aiMsg.Construct.ENERGY] = 0,
+                [aiMsg.Construct.ECONOMY] = 0,
+                [aiMsg.Construct.DEFENCE] = 0,
+            })
+            :toString()
+        Spring.SendSkirmishAIMessage(teamID0, msg)
+    end
 end
 
 
@@ -708,6 +746,19 @@ end
 
 function widget:GameStart()
     ToggleScriptedRectruit()
+
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdDict(aiMsg.Topic.SCRIPT_CONSTRUCTION_PARAMS, {
+            [aiMsg.Construct.ASSIGNMENT] = 1,
+            [aiMsg.Construct.FACTORY] = 1,
+            [aiMsg.Construct.STORAGE] = 1,
+            [aiMsg.Construct.METAL] = 1,
+            [aiMsg.Construct.ENERGY] = 1,
+            [aiMsg.Construct.ECONOMY] = 1,
+            [aiMsg.Construct.DEFENCE] = 1,
+        })
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID0, msg)
 end
 
 function widget:RecvLuaMsg(message, playerID)

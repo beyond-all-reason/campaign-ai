@@ -965,9 +965,9 @@ void CBuilderManager::DelBuildZone(CGridRegion::Id zoneId)
 		return;
 	}
 	SBuildZone& bz = it->second;
-	for (IBuilderTask* task : bz.buildTasks) {
+	decltype(bz.buildTasks) tmpTasks = bz.buildTasks;
+	for (IBuilderTask* task : tmpTasks) {
 		task->Abort();
-		taskToZone.erase(task);
 	}
 	circuit->GetTerrainManager()->MarkBuildZone(bz.region, NULL_ZONE);
 	buildZones.erase(zoneId);
