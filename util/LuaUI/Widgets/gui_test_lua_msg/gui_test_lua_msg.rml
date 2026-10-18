@@ -33,9 +33,11 @@
                     <button onclick="widget:PauseAI()">toggle AI</button>
                     <button class="danger" onclick="widget:SendCommand('spectator')">spectator</button>-->
                     <button onclick="widget:SendCommand('pause')">pause</button>
-                    <button onclick="widget:SendCommand('setspeed 1')">></button>
-                    <button onclick="widget:SendCommand('setspeed 10')">>></button>
-                    <button onclick="widget:SendCommand('setspeed 20')">>>></button>
+                    <button onclick="widget:SendCommand('setspeed 1')">x1</button>
+                    <button onclick="widget:SendCommand('setspeed 2')">x2</button>
+                    <button onclick="widget:SendCommand('setspeed 4')">x4</button>
+                    <button onclick="widget:SendCommand('setspeed 10')">x10</button>
+                    <button onclick="widget:SendCommand('setspeed 20')">x20</button>
                 </div>
             </div>
             <tabset class="content give intent-collapsible" data-class-collapsed="isCollapsed">

@@ -1692,8 +1692,8 @@ void CMilitaryManager::UpdateTriggersStep()
 	}
 	const AIFloat3& pos = unit->GetPos(circuit->GetLastFrame());
 
-	CGridRegion::Id zoneId = circuit->GetTerrainManager()->GetTriggerZoneId(pos);
 	CGridRegion::Id lastZoneId = taskF->GetZoneId();
+	CGridRegion::Id zoneId = circuit->GetTerrainManager()->GetTriggerZoneId(pos, lastZoneId);
 	if (lastZoneId != zoneId) {
 		taskF->SetZoneId(zoneId);
 		static_cast<CMilitaryScript*>(script)->TaskZoneChanged(unit, lastZoneId, zoneId);

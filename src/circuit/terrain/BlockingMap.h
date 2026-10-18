@@ -100,6 +100,10 @@ struct SBlockingMap {
 	std::vector<SBlockCellAlly> gridAlly;  // granularity Map::GetWidth / 16, Map::GetHeight / 16
 	int columnsAlly;
 	int rowsAlly;
+
+#ifdef DEBUG_VIS
+	SM GetCellMask(int x, int z) const;
+#endif
 };
 
 } // namespace circuit

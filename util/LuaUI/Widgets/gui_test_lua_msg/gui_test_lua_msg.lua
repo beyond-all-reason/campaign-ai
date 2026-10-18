@@ -274,8 +274,8 @@ function CreateSquad(squadID, pos, range, composition)
         :cmdDict(aiMsg.Topic.SQUAD_REQUEST_PARAMS, {
             [aiMsg.Squad.GATHER_RANGE] = range,
             [aiMsg.Squad.ATTACK_RANGE] = 512,
-            [aiMsg.Squad.REBUILD] = false and 1 or 0,
-            [aiMsg.Squad.RETREAT] = -1,  -- -1 or 0 or (0.0..1.0]
+            [aiMsg.Squad.REBUILD] = true and 1 or 0,
+            [aiMsg.Squad.RETREAT] = -1,  -- -1 or 0 or (0.0:1.0]
         })
         :paramArray(aiMsg.Squad.POSITION, pos)
         :cmdDict(aiMsg.Topic.SQUAD_REQUEST_COMPOSE, composition)

@@ -62,7 +62,7 @@
 #define MOVE_EPSILON		1e-1f
 
 // Balancing heuristics
-constexpr float MOVE_COST_MOD = 10.f;
+constexpr float MOVE_COST_MOD = 4.f;
 constexpr float THREAT_COST_MOD = 0.1f;
 
 using namespace NSMicroPather;

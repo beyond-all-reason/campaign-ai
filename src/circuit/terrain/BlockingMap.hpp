@@ -182,4 +182,11 @@ inline SBlockingMap::StructMask SBlockingMap::GetStructMask(StructType structTyp
 	return static_cast<StructMask>(1 << static_cast<ST>(structType));
 }
 
+#ifdef DEBUG_VIS
+inline SBlockingMap::SM SBlockingMap::GetCellMask(int x, int z) const
+{
+	const SBlockCell& cell = grid[z * columns + x];
+	return cell.blockerMask | static_cast<SM>(cell.structMask);
+}
+#endif
 } // namespace circuit
