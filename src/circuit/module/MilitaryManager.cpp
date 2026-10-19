@@ -1663,7 +1663,8 @@ void CMilitaryManager::DelTriggerZone(CGridRegion::Id zoneId)
 
 void CMilitaryManager::UpdateTriggersStep()
 {
-	if (taskTriggerIndex >= updateTasks.size()) {
+	unsigned int taskCount = updateTasks.size();
+	if (taskTriggerIndex >= taskCount) {
 		if (taskTriggerIndex == 0) {
 			return;
 		}
@@ -1674,8 +1675,8 @@ void CMilitaryManager::UpdateTriggersStep()
 	//       And the smallest unit that MAPI is interested to control is a squad.
 	//       Skip till next IFighterTask.
 	IUnitTask* task = updateTasks[taskTriggerIndex++];
-	while (task->GetType() != IUnitTask::Type::FIGHTER) {
-		if (taskTriggerIndex >= updateTasks.size()) {
+	while (task->IsDead() || (task->GetType() != IUnitTask::Type::FIGHTER)) {
+		if (taskTriggerIndex >= taskCount) {
 			return;
 		}
 		task = updateTasks[taskTriggerIndex++];

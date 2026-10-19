@@ -1642,7 +1642,9 @@ void CBuilderManager::UpdateAreaUsers()
 	for (auto& tasks : buildTasks) {
 		for (IBuilderTask* task : tasks) {
 			CCircuitDef* cdef = task->GetBuildDef();
-			// NOTE: timeout check is for scripted build-zones
+			// NOTE: To evade cancellation of scripted build-tasks - check timeout:
+			//       a task without timeout will be considered as persistent,
+			//       such as scripted for future time when builder arrives into area.
 			if ((cdef != nullptr) && (task->GetTarget() == nullptr) && (task->GetTimeout() > 0)
 				&& !IsBuilderInArea(cdef, task->GetPosition()))
 			{
