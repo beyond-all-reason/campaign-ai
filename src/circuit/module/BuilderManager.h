@@ -328,6 +328,7 @@ public:
 	void DelBuildZone(CGridRegion::Id zoneId);
 	void AddReservedZone(CGridRegion::Id zoneId, geom::CPolygon* poly);
 	void DelReservedZone(CGridRegion::Id zoneId);
+	void AddAllowedZone(CGridRegion::Id zoneId, geom::CPolygon* poly);
 
 private:
 	virtual IUnitTask* DefaultMakeTask(CCircuitUnit* unit) override;

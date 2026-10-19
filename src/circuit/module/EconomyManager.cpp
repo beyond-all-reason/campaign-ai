@@ -274,6 +274,7 @@ void CEconomyManager::InitHandlers()
 					pylonRange = range;
 					// Is it cdef.IncPurpose(); ?
 				}
+				SetBuildTypeToDef(cdef.GetId(), IBuilderTask::BuildType::PYLON);
 			}
 
 			// mex
@@ -292,6 +293,7 @@ void CEconomyManager::InitHandlers()
 				destroyedHandler[cdef.GetId()] = mexDestroyedHandler;
 				metalDefs.AddDef(&cdef);
 				cdef.SetIsMex(true);
+				SetBuildTypeToDef(cdef.GetId(), IBuilderTask::BuildType::MEX);
 				IncPurpose(cdef.GetId());  // avoid reclaiming of multi-purpose old converter/energy
 				continue;  // NOTE: won't deal with spot requirement if considered as anything else.
 			}
@@ -309,10 +311,12 @@ void CEconomyManager::InitHandlers()
 					finishedHandler[cdef.GetId()] = geoFinishedHandler;
 					destroyedHandler[cdef.GetId()] = geoDestroyedHandler;
 					geoDefs.AddDef(&cdef);
+					SetBuildTypeToDef(cdef.GetId(), IBuilderTask::BuildType::GEO);
 				} else {
 					finishedHandler[cdef.GetId()] = energyFinishedHandler;
 					destroyedHandler[cdef.GetId()] = energyDestroyedHandler;
 					energyDefs.AddDef(&cdef);
+					SetBuildTypeToDef(cdef.GetId(), IBuilderTask::BuildType::ENERGY);
 				}
 				isCategoryAssigned = true;
 				IncPurpose(cdef.GetId());  // avoid reclaiming of multi-purpose old converter/energy
@@ -327,6 +331,7 @@ void CEconomyManager::InitHandlers()
 					destroyedHandler[cdef.GetId()] = convertDestroyedHandler;
 					convertDefs.AddDef(&cdef);
 					isCategoryAssigned = true;
+					SetBuildTypeToDef(cdef.GetId(), IBuilderTask::BuildType::CONVERT);
 				}
 				IncPurpose(cdef.GetId());  // avoid reclaiming of multi-purpose old converter/energy
 			}
@@ -339,6 +344,7 @@ void CEconomyManager::InitHandlers()
 					destroyedHandler[cdef.GetId()] = storeDestroyedHandler;
 					storeMDefs.AddDef(&cdef);
 					isCategoryAssigned = true;
+					SetBuildTypeToDef(cdef.GetId(), IBuilderTask::BuildType::STORE);
 				}
 				IncPurpose(cdef.GetId());  // avoid reclaiming of multi-purpose old converter/energy
 			}
@@ -348,6 +354,7 @@ void CEconomyManager::InitHandlers()
 					destroyedHandler[cdef.GetId()] = storeDestroyedHandler;
 					storeEDefs.AddDef(&cdef);
 					isCategoryAssigned = true;
+					SetBuildTypeToDef(cdef.GetId(), IBuilderTask::BuildType::STORE);
 				}
 				IncPurpose(cdef.GetId());  // avoid reclaiming of multi-purpose old converter/energy
 			}
@@ -359,6 +366,7 @@ void CEconomyManager::InitHandlers()
 					destroyedHandler[cdef.GetId()] = airpadDestroyedHandler;
 					airpadDefs.AddDef(&cdef);
 					isCategoryAssigned = true;
+					SetBuildTypeToDef(cdef.GetId(), IBuilderTask::BuildType::STORE);
 				}
 				IncPurpose(cdef.GetId());  // avoid reclaiming of multi-purpose old converter/energy
 			}
@@ -874,6 +882,12 @@ void CEconomyManager::RemoveEconomyDefs(const std::set<CCircuitDef*>& buildDefs)
 //		circuit->LOG("%s | costM=%f | costE=%f | build_speed=%f | efficiency=%f", fi.cdef->GetDef()->GetName(),
 //				fi.cdef->GetCostM(), fi.cdef->GetCostE(), fi.cdef->GetBuildSpeed(), fi.score);
 //	}
+}
+
+IBuilderTask::BuildType CEconomyManager::GetBuildType(CCircuitDef::Id defId) const
+{
+	auto it = defToBuildType.find(defId);
+	return (it != defToBuildType.end()) ? it->second : IBuilderTask::BuildType::STORE;
 }
 
 const CEconomyManager::SSideInfo& CEconomyManager::GetSideInfo() const

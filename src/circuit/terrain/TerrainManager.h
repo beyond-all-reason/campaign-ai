@@ -27,8 +27,6 @@ namespace terrain {
 	struct SAreaData;
 }
 
-#define GRID_TRIGGER_STEP	64
-
 namespace circuit {
 
 class CCircuitAI;
@@ -36,6 +34,8 @@ class IBlockMask;
 class IPathQuery;
 class CPathInfo;
 class CCircuitUnit;
+
+static constexpr int GRID_TRIGGER_STEP = 64;
 
 class CTerrainManager final {  // <=> RAI's cBuilderPlacement
 public:
@@ -151,6 +151,8 @@ private:
 	void MarkZoneAlly(const springai::AIFloat3& pos, bool block);
 	void MarkZoneOwn(const springai::AIFloat3& pos, bool block);
 
+	bool isBuildFilterEnabled = false;
+
 	std::vector<CGridRegion::Id> triggerZone;
 	short triggerColumns;
 	short triggerRows;
@@ -177,6 +179,7 @@ public:
 	void MarkBuildZone(const CGridRegion& region, CGridRegion::Id zoneId);
 	void MarkReservedZone(const CGridRegion& region);
 	void UnmarkReservedZone(const CGridRegion& region);
+	void MarkAllowedZone(const CGridRegion& region);
 	void MarkTriggerZone(const CGridRegion& region, CGridRegion::Id zoneId);
 	CGridRegion::Id GetTriggerZoneId(const springai::AIFloat3& pos, CGridRegion::Id lastZoneId) const;
 

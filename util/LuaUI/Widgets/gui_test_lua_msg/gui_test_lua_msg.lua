@@ -693,6 +693,19 @@ function widget:SendNewBase()
         :toString()
     Spring.SendSkirmishAIMessage(teamID0, msg)
 end
+function widget:StartAllowedRegion()
+    newRegion = {}
+end
+function widget:EndAllowedRegion()
+    if newRegion and #newRegion >= 6 then
+        reservedZoneID = reservedZoneID + 1
+        local msg = aiMsg.MsgBuilder.new()
+            :cmdDictArray(aiMsg.Topic.ALLOWED_REGION_ID, reservedZoneID, newRegion)
+            :toString()
+        Spring.SendSkirmishAIMessage(teamID0, msg)
+    end
+    newRegion = false
+end
 
 function widget:UnitFinished(unitID, unitDefID, unitTeam)
 	if unitTeam == teamID0 and  unitDefID == nameToDefID["armlab"] then

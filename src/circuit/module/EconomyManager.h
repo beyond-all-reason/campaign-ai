@@ -9,6 +9,7 @@
 #define SRC_CIRCUIT_MODULE_ECONOMYMANAGER_H_
 
 #include "module/Module.h"
+#include "task/builder/BuilderTask.h"
 #include "util/AvailList.h"
 
 #include "AIFloat3.h"
@@ -75,6 +76,11 @@ public:
 	CCircuitDef* GetLowEnergy(const springai::AIFloat3& pos, float& outMake, const CCircuitUnit* builder = nullptr) const;
 	void AddEconomyDefs(const std::set<CCircuitDef*>& buildDefs);  // add available economy defs
 	void RemoveEconomyDefs(const std::set<CCircuitDef*>& buildDefs);
+
+	void SetBuildTypeToDef(CCircuitDef::Id defId, IBuilderTask::BuildType bt) {
+		defToBuildType[defId] = bt;
+	}
+	IBuilderTask::BuildType GetBuildType(CCircuitDef::Id defId) const;  // Script API
 
 	const SSideInfo& GetSideInfo() const;
 	const std::vector<SSideInfo>& GetSideInfos() const { return sideInfos; }
@@ -308,6 +314,8 @@ private:
 
 	std::shared_ptr<IMainJob> morph;
 	std::set<CCircuitUnit*> morphees;
+
+	std::unordered_map<CCircuitDef::Id, IBuilderTask::BuildType> defToBuildType;
 
 	// Script API
 	bool isScriptFactory = false;

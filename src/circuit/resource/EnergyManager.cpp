@@ -76,4 +76,19 @@ bool CEnergyManager::IsSpotValid(int index, const AIFloat3& pos) const
 	return geom::is_equal_pos(GetSpots()[index], pos);
 }
 
+const int CEnergyManager::FindNearestSpot(const AIFloat3& pos) const
+{
+	const CEnergyData::Geos& spots = GetSpots();
+	float sqBestDist = std::numeric_limits<float>::max();
+	int idx = -1;
+	for (int i = 0; i < (int)spots.size(); ++i) {
+		float sqDist = pos.SqDistance2D(spots[i]);
+		if (sqDist < sqBestDist) {
+			sqDist = sqBestDist;
+			idx = i;
+		}
+	}
+	return idx;
+}
+
 } // namespace circuit

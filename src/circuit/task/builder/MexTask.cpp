@@ -24,14 +24,18 @@ namespace circuit {
 using namespace springai;
 
 CBMexTask::CBMexTask(ITaskModule* mgr, Priority priority,
-					 CCircuitDef* buildDef, int spotId, const AIFloat3& position,
+					 CCircuitDef* buildDef, int sptId, const AIFloat3& position,
 					 SResource cost, int timeout)
 		: IBuilderTask(mgr, priority, buildDef, position, Type::BUILDER, BuildType::MEX, cost, 0.f, timeout)
-		, spotId(spotId)
+		, spotId(sptId)
 		, blockCount(0)
 {
 	SetBuildPos(position);
-	manager->GetCircuit()->GetEconomyManager()->SetOpenMexSpot(spotId, false);
+	CCircuitAI* circuit = manager->GetCircuit();
+	if (spotId < 0) {  // created by script
+		spotId = circuit->GetMetalManager()->FindNearestSpot(position);
+	}
+	circuit->GetEconomyManager()->SetOpenMexSpot(spotId, false);
 }
 
 CBMexTask::CBMexTask(ITaskModule* mgr)

@@ -122,6 +122,8 @@
                 <panel>
                 <div class="grid commands">
                     <button onclick="widget:SendNewBase()">base</button>
+                    <button onclick="widget:StartAllowedRegion()">start allowed</button>
+                    <button onclick="widget:EndAllowedRegion()">end allowed</button>
                 </div>
                 </panel>
             </tabset>

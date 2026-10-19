@@ -252,6 +252,7 @@ void CMilitaryManager::InitHandlers()
 	const float retMod = retreat.get((unsigned)2, 1.0f).asFloat();
 	const float commMod = root["quota"]["thr_mod"].get("comm", 1.f).asFloat();
 	std::vector<CCircuitDef*> builders;
+	CEconomyManager* economyMgr = circuit->GetEconomyManager();
 
 	for (CCircuitDef& cdef : circuit->GetCircuitDefs()) {
 		if (cdef.IsBuilder()) {
@@ -290,21 +291,26 @@ void CMilitaryManager::InitHandlers()
 					createdHandler[unitDefId] = superCreatedHandler;
 					finishedHandler[unitDefId] = superFinishedHandler;
 					destroyedHandler[unitDefId] = superDestroyedHandler;
+					economyMgr->SetBuildTypeToDef(cdef.GetId(), IBuilderTask::BuildType::BIG_GUN);
 				}
 			} else if (cdef.IsAttrStock()) {
 				finishedHandler[unitDefId] = stockFinishedHandler;
 				destroyedHandler[unitDefId] = stockDestroyedHandler;
+				economyMgr->SetBuildTypeToDef(cdef.GetId(), IBuilderTask::BuildType::BUNKER);
 			} else if (cdef.IsAttrFence()) {
 				finishedHandler[unitDefId] = fenceFinishedHandler;
 				destroyedHandler[unitDefId] = fenceDestroyedHandler;
+				economyMgr->SetBuildTypeToDef(cdef.GetId(), IBuilderTask::BuildType::DEFENCE);
 			}
 			if (cdef.GetDef()->GetRadarRadius() > 1.f) {
 				radarDefs.AddDef(&cdef);
 				cdef.SetIsRadar(true);
+				economyMgr->SetBuildTypeToDef(cdef.GetId(), IBuilderTask::BuildType::RADAR);
 			}
 			if (cdef.GetDef()->GetSonarRadius() > 1.f) {
 				sonarDefs.AddDef(&cdef);
 				cdef.SetIsSonar(true);
+				economyMgr->SetBuildTypeToDef(cdef.GetId(), IBuilderTask::BuildType::SONAR);
 			}
 		}
 	}

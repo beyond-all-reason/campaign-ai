@@ -60,6 +60,22 @@ class Manager {
 		reservedZones.clear();
 	}
 
+	bool AddAllowedZone(const array<string>& in params) {
+		// params contains "<RegionID>=<x1>,<z1>,<x2>,<z2>,<x3>,<z3>"
+		const array<string>@ region_points = params[0].split(LuaMsg::SEP_KEY_VALUE);
+		Id regionId = parseInt(region_points[0]);
+		if (reservedZones.contains(regionId))
+			return false;
+
+		reservedZones.insert(regionId);
+		const array<AIFloat3>@ verts = ParseVerts(region_points[1]);
+		aiBuilderMgr.AddAllowedZone(regionId, CPolygon(verts));
+
+		for (uint i = 0; i < verts.length(); ++i)  // FIXME: DEBUG
+			AiAddLine(verts[i], verts[(i+1) % verts.length()]);
+		return true;
+	}
+
 	bool AddTriggerZone(const string& in param) {
 		// param contains "<RegionID>=<x1>,<z1>,<x2>,<z2>,<x3>,<z3>"
 		const array<string>@ region_points = param.split(LuaMsg::SEP_KEY_VALUE);

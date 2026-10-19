@@ -783,6 +783,7 @@ void CInitScript::RegisterMgr()
 	r = engine->RegisterObjectMethod("CTerrainManager", "float SetAllyZoneRange(float)", asMETHOD(CTerrainManager, SetAllyZoneRange), asCALL_THISCALL); ASSERT(r >= 0);
 
 	r = engine->RegisterObjectProperty("CSetupManager", "const CCircuitDef@ commChoice", asOFFSET(CSetupManager, commChoice)); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CSetupManager", "void SetBasePos(const AIFloat3& in)", asMETHOD(CSetupManager, SetBasePos), asCALL_THISCALL); ASSERT(r >= 0);
 
 	CEnemyManager* enemyMgr = circuit->GetEnemyManager();
 	r = engine->RegisterObjectType("CEnemyManager", 0, asOBJ_REF | asOBJ_NOHANDLE); ASSERT(r >= 0);

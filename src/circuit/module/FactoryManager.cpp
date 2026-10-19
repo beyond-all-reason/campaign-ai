@@ -291,6 +291,7 @@ void CFactoryManager::InitHandlers()
 			idleHandler[unitDefId] = factoryIdleHandler;
 			destroyedHandler[unitDefId] = factoryDestroyedHandler;
 			economyMgr->AddFactoryDef(&cdef);
+			economyMgr->SetBuildTypeToDef(cdef.GetId(), IBuilderTask::BuildType::FACTORY);
 		} else if (cdef.IsAbleToAssist()
 			&& (std::max(cdef.GetDef()->GetXSize(), cdef.GetDef()->GetZSize()) * SQUARE_SIZE < cdef.GetBuildDistance()))
 		{
@@ -299,6 +300,7 @@ void CFactoryManager::InitHandlers()
 			idleHandler[unitDefId] = assistIdleHandler;
 			destroyedHandler[unitDefId] = assistDestroyedHandler;
 			economyMgr->AddAssistDef(&cdef);
+			economyMgr->SetBuildTypeToDef(cdef.GetId(), IBuilderTask::BuildType::NANO);
 		}
 	}
 }

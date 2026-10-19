@@ -75,6 +75,7 @@ CBuilderScript::CBuilderScript(CScriptManager* scr, CBuilderManager* mgr)
 	r = engine->RegisterObjectMethod("CBuilderManager", "void DelBuildZone(Id)", asMETHOD(CBuilderManager, DelBuildZone), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CBuilderManager", "void AddReservedZone(Id, CPolygon@+)", asMETHOD(CBuilderManager, AddReservedZone), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CBuilderManager", "void DelReservedZone(Id)", asMETHOD(CBuilderManager, DelReservedZone), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CBuilderManager", "void AddAllowedZone(Id, CPolygon@+)", asMETHOD(CBuilderManager, AddAllowedZone), asCALL_THISCALL); ASSERT(r >= 0);
 }
 
 CBuilderScript::~CBuilderScript()

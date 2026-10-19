@@ -818,6 +818,7 @@ class SResourceInfo{
 class CEconomyManager{
 	float GetMetalMake(const CCircuitDef@) const;
 	float GetEnergyMake(const CCircuitDef@) const;
+	int GetBuildType(int) const;
 	const SResourceInfo metal;
 	const SResourceInfo energy;
 	bool isMetalEmpty;

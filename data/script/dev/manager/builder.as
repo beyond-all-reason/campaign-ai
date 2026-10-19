@@ -10,8 +10,9 @@ bool isConstructionScripted = false;
 
 IUnitTask@ AiMakeTask(CCircuitUnit@ unit)
 {
-	if (isConstructionScripted)
-		return Base::mgr.GetTaskToBuild(unit);
+	IUnitTask@ task = Base::mgr.GetTaskToBuild(unit);
+	if (task !is null || isConstructionScripted)
+		return task;
 	return aiBuilderMgr.DefaultMakeTask(unit);
 }
 

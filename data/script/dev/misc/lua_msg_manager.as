@@ -54,6 +54,7 @@ class Manager {
 			{formatInt(ELuaMsg::BUILD_REGION_CLEAR), LuaMsgFunc(this.BuildRegionClear)},
 			{formatInt(ELuaMsg::RESERVED_REGION_ID), LuaMsgFunc(this.MakeReservedRegion)},
 			{formatInt(ELuaMsg::RESERVED_REGION_CLEAR), LuaMsgFunc(this.ReservedRegionClear)},
+			{formatInt(ELuaMsg::ALLOWED_REGION_ID), LuaMsgFunc(this.MakeAllowedRegion)},
 			{formatInt(ELuaMsg::TRIGGER_REGION_ID), LuaMsgFunc(this.MakeTriggerRegion)},
 			{formatInt(ELuaMsg::TRIGGER_REGION_CLEAR), LuaMsgFunc(this.TriggerRegionClear)}
 		};
@@ -229,6 +230,10 @@ class Manager {
 
 	void ReservedRegionClear(const array<string>& in params) {
 		Region::mgr.ClearReservedZones();
+	}
+
+	void MakeAllowedRegion(const array<string>& in params) {
+		Region::mgr.AddAllowedZone(params);
 	}
 
 	void MakeTriggerRegion(const array<string>& in params) {

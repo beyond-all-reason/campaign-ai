@@ -57,6 +57,7 @@ CTerrainManager::CTerrainManager(CCircuitAI* circuit, CTerrainData* terrainData)
 	SBlockingMap::SBlockCell cell = {0};
 	blockingMap.grid.resize(blockingMap.columns * blockingMap.rows, cell);
 	blockingMap.gridZone.resize(blockingMap.columns * blockingMap.rows, NULL_ZONE);
+	blockingMap.gridAllow.resize(blockingMap.columns * blockingMap.rows, STRUCT_BIT(NONE));
 
 	blockingMap.columnsLow = mapWidth / (GRID_RATIO_LOW * 2);
 	blockingMap.rowsLow = mapHeight / (GRID_RATIO_LOW * 2);
@@ -650,6 +651,18 @@ AIFloat3 CTerrainManager::GetBusPos(CCircuitDef* facDef, const AIFloat3& pos, in
 AIFloat3 CTerrainManager::FindBuildSite(CCircuitDef* cdef, const AIFloat3& pos,
 		float searchRadius, int facing, bool isIgnore, bool isHighRes)
 {
+//	TerrainPredicate predicate;
+//	if (isBuildFilterEnabled) {
+//		predicate = [this](const AIFloat3& p) {
+//			short x = short(p.x / BUILD_SQUARE_SIZE);
+//			short z = short(p.z / BUILD_SQUARE_SIZE);
+//			return blockingMap.IsAllowedZone(x, z, SBlockingMap::StructMask::ALL);
+//		};
+//	} else {
+//		predicate = [](const AIFloat3& p) {
+//			return true;
+//		};
+//	}
 	TerrainPredicate predicate = [](const AIFloat3& p) {
 		return true;
 	};
@@ -1591,7 +1604,7 @@ void CTerrainManager::FillBuildZone(const CGridRegion& region, const CCircuitDef
 		for (int z = s1.y; z < s2.y; ++z) {
 			for (int x = s1.x; x < s2.x; ++x) {
 				if (!blockingMap.IsBuildZone(x, z, zoneId)
-					|| blockingMap.IsBlocked(x, z, static_cast<SBlockingMap::SM>(SBlockingMap::StructMask::ALL)))
+					|| blockingMap.IsBlocked(x, z, STRUCT_BIT(ALL)))
 				{
 					return false;
 				}
@@ -1610,10 +1623,10 @@ void CTerrainManager::FillBuildZone(const CGridRegion& region, const CCircuitDef
 			return;
 		}
 
-		const float posX = x * GRID_BUILD_STEP + SQUARE_SIZE;
-		const float posZ = z * GRID_BUILD_STEP + SQUARE_SIZE;
-		const int cornerX1 = int(posX / GRID_BUILD_STEP) - (xsize / 2);
-		const int cornerZ1 = int(posZ / GRID_BUILD_STEP) - (zsize / 2);
+		const float posX = x * BUILD_SQUARE_SIZE + SQUARE_SIZE;
+		const float posZ = z * BUILD_SQUARE_SIZE + SQUARE_SIZE;
+		const int cornerX1 = int(posX / BUILD_SQUARE_SIZE) - (xsize / 2);
+		const int cornerZ1 = int(posZ / BUILD_SQUARE_SIZE) - (zsize / 2);
 
 		int2 s1(cornerX1, cornerZ1);
 		int2 s2(s1.x + xsize, s1.y + zsize);
@@ -1650,6 +1663,21 @@ void CTerrainManager::UnmarkReservedZone(const CGridRegion& region)
 	region.ProcessRegion([this](short x, short z) {
 		blockingMap.DelBlocker(x, z, SBlockingMap::StructType::RESERVED);
 		blockingMap.SetBuildZone(x, z, NULL_ZONE);
+	});
+}
+
+void CTerrainManager::MarkAllowedZone(const CGridRegion& region)
+{
+	if (!isBuildFilterEnabled) {
+		isBuildFilterEnabled = true;
+		for (int z = 0; z < blockingMap.rows; ++z) {
+			for (int x = 0; x < blockingMap.columns; ++x) {
+				blockingMap.AddBlocker(x, z, SBlockingMap::StructType::RESERVED);
+			}
+		}
+	}
+	region.ProcessRegion([this](short x, short z) {
+		blockingMap.DelBlocker(x, z, SBlockingMap::StructType::RESERVED);
 	});
 }
 
@@ -2268,7 +2296,7 @@ void CTerrainManager::ToggleWidgetDraw()
 
 	isWidgetDrawing = (result == "1");
 	if (isWidgetDrawing) {
-		cmd = utils::int_to_string(GRID_BUILD_STEP, "ai_grid_size:%i 0");
+		cmd = utils::int_to_string(BUILD_SQUARE_SIZE, "ai_grid_size:%i 0");
 		circuit->GetLua()->CallRules(cmd.c_str(), cmd.size());
 
 		UpdateVis();

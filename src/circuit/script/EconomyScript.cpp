@@ -41,6 +41,7 @@ CEconomyScript::CEconomyScript(CScriptManager* scr, CEconomyManager* mgr)
 	r = engine->RegisterObjectProperty("CEconomyManager", "float startMexTravel", asOFFSET(CEconomyManager, startMexTravel)); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CEconomyManager", "float GetMetalMake(const CCircuitDef@) const", asMETHOD(CEconomyManager, GetMetalMake), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CEconomyManager", "float GetEnergyMake(const CCircuitDef@) const", asMETHOD(CEconomyManager, GetEnergyMake), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CEconomyManager", "Type GetBuildType(Id) const", asMETHOD(CEconomyManager, GetBuildType), asCALL_THISCALL); ASSERT(r >= 0);
 
 	r = engine->RegisterObjectProperty("CEconomyManager", "bool isScriptFactory", asOFFSET(CEconomyManager, isScriptFactory)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CEconomyManager", "bool isScriptStorage", asOFFSET(CEconomyManager, isScriptStorage)); ASSERT(r >= 0);

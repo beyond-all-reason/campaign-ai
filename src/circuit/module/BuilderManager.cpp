@@ -942,7 +942,7 @@ bool CBuilderManager::CanUpGeo(CCircuitDef* cdef) const
 
 void CBuilderManager::AddBuildZone(CGridRegion::Id zoneId, geom::CPolygon* poly, CCircuitDef* buildDef)
 {
-	auto [it, success] = buildZones.emplace(zoneId, SBuildZone{CGridRegion(zoneId, poly, GRID_BUILD_STEP), buildDef});
+	auto [it, success] = buildZones.emplace(zoneId, SBuildZone{CGridRegion(zoneId, poly, BUILD_SQUARE_SIZE), buildDef});
 	if (!success) {
 		return;
 	}
@@ -975,7 +975,7 @@ void CBuilderManager::DelBuildZone(CGridRegion::Id zoneId)
 
 void CBuilderManager::AddReservedZone(CGridRegion::Id zoneId, geom::CPolygon* poly)
 {
-	auto [it, success] = buildZones.emplace(zoneId, SBuildZone{CGridRegion(zoneId, poly, GRID_BUILD_STEP), nullptr});
+	auto [it, success] = buildZones.emplace(zoneId, SBuildZone{CGridRegion(zoneId, poly, BUILD_SQUARE_SIZE), nullptr});
 	if (!success) {
 		return;
 	}
@@ -992,6 +992,18 @@ void CBuilderManager::DelReservedZone(CGridRegion::Id zoneId)
 	SBuildZone& bz = it->second;
 	circuit->GetTerrainManager()->UnmarkReservedZone(bz.region);
 	buildZones.erase(zoneId);
+}
+
+void CBuilderManager::AddAllowedZone(CGridRegion::Id zoneId, geom::CPolygon* poly)
+{
+	auto [it, success] = buildZones.emplace(zoneId, SBuildZone{CGridRegion(zoneId, poly, BUILD_SQUARE_SIZE), nullptr});
+	if (!success) {
+		return;
+	}
+	SBuildZone& bz = it->second;
+	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
+//	terrainMgr->MarkBuildZone(bz.region, zoneId);
+	terrainMgr->MarkAllowedZone(bz.region);
 }
 
 IUnitTask* CBuilderManager::DefaultMakeTask(CCircuitUnit* unit)
