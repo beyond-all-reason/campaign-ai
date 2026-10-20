@@ -145,7 +145,7 @@ void ITaskModule::Update()
 		updateIterator = 0;
 	}
 
-	int lastFrame = GetCircuit()->GetLastFrame();
+	const int lastFrame = GetCircuit()->GetLastFrame();
 	// stagger the Update's
 	unsigned int n = (updateTasks.size() / TEAM_SLOWUPDATE_RATE) + 1;
 

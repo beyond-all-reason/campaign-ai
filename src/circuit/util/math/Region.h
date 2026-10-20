@@ -93,6 +93,6 @@ private:
 	float area;
 };
 
-} // namespace utils
+} // namespace geom
 
 #endif // SRC_CIRCUIT_UTIL_MATH_REGION_H_

@@ -8,6 +8,7 @@
 #include "terrain/TerrainManager.h"
 #include "terrain/BlockRectangle.h"
 #include "terrain/BlockCircle.h"
+#include "terrain/GridRegion.h"
 #include "terrain/path/PathFinder.h"
 #include "terrain/path/QueryPathWide.h"
 #include "map/ThreatMap.h"
@@ -51,10 +52,11 @@ CTerrainManager::CTerrainManager(CCircuitAI* circuit, CTerrainData* terrainData)
 	CMap* map = circuit->GetMap();
 	int mapWidth = map->GetWidth();
 	int mapHeight = map->GetHeight();
-	blockingMap.columns = mapWidth / 2;  // build-step = 2 * SQUARE_SIZE
+	blockingMap.columns = mapWidth / 2;  // GRID_BUILD_STEP = 2 * SQUARE_SIZE
 	blockingMap.rows = mapHeight / 2;
 	SBlockingMap::SBlockCell cell = {0};
 	blockingMap.grid.resize(blockingMap.columns * blockingMap.rows, cell);
+	blockingMap.gridZone.resize(blockingMap.columns * blockingMap.rows, NULL_ZONE);
 
 	blockingMap.columnsLow = mapWidth / (GRID_RATIO_LOW * 2);
 	blockingMap.rowsLow = mapHeight / (GRID_RATIO_LOW * 2);
@@ -65,6 +67,10 @@ CTerrainManager::CTerrainManager(CCircuitAI* circuit, CTerrainData* terrainData)
 	blockingMap.rowsAlly = mapHeight / (GRID_RATIO_ALLY * 2);
 	SBlockingMap::SBlockCellAlly cellAlly = {0};
 	blockingMap.gridAlly.resize(blockingMap.columnsAlly * blockingMap.rowsAlly, cellAlly);
+
+	triggerColumns = mapWidth / (GRID_TRIGGER_STEP / SQUARE_SIZE);
+	short triggerRows = mapHeight / (GRID_TRIGGER_STEP / SQUARE_SIZE);
+	triggerZone.resize(triggerColumns * triggerRows, NULL_ZONE);
 }
 
 CTerrainManager::~CTerrainManager()
@@ -363,6 +369,8 @@ void CTerrainManager::Init()
 			blockingMap.MarkBlocker(blockingMap.columns - i - 1, j, SBlockingMap::StructType::TERRA, notIgnoreMask);
 		}
 	}
+
+	circuit->GetSetupManager()->SetLanePos(GetTerrainCenter());
 }
 
 void CTerrainManager::AddBlocker(CCircuitDef* cdef, const AIFloat3& pos, int facing, bool isOffset)
@@ -1568,6 +1576,95 @@ void CTerrainManager::FillParentBusNodes(CPathInfo* pathInfo)
 			return;
 		}
 	}
+}
+
+void CTerrainManager::FillBuildZone(const CGridRegion& region, const CCircuitDef* buildDef, ZoneFunc visitor)
+{
+	CMap* map = circuit->GetMap();
+	int facing = 0;  // TODO: param
+	UnitDef* unitDef = buildDef->GetDef();
+	const int xsize = (((facing & 1) == 0) ? unitDef->GetXSize() : unitDef->GetZSize()) / 2;
+	const int zsize = (((facing & 1) == 1) ? unitDef->GetXSize() : unitDef->GetZSize()) / 2;
+
+	CGridRegion::Id zoneId = region.GetId();
+	auto isOpenSite = [this, zoneId](const int2& s1, const int2& s2) {
+		for (int z = s1.y; z < s2.y; ++z) {
+			for (int x = s1.x; x < s2.x; ++x) {
+				if (!blockingMap.IsBuildZone(x, z, zoneId)
+					|| blockingMap.IsBlocked(x, z, static_cast<SBlockingMap::SM>(SBlockingMap::StructMask::ALL)))
+				{
+					return false;
+				}
+			}
+		}
+		return true;
+	};
+
+	short usedX = -1, usedZ = -1;
+	region.ProcessRegion([=, this, &usedX, &usedZ](short x, short z) {
+		if (usedZ == z) {
+			if (x - usedX < xsize) {
+				return;
+			}
+		} else if (z - usedZ < zsize) {
+			return;
+		}
+
+		const float posX = x * GRID_BUILD_STEP + SQUARE_SIZE;
+		const float posZ = z * GRID_BUILD_STEP + SQUARE_SIZE;
+		const int cornerX1 = int(posX / GRID_BUILD_STEP) - (xsize / 2);
+		const int cornerZ1 = int(posZ / GRID_BUILD_STEP) - (zsize / 2);
+
+		int2 s1(cornerX1, cornerZ1);
+		int2 s2(s1.x + xsize, s1.y + zsize);
+		if (!blockingMap.IsInBounds(s1, s2) || !isOpenSite(s1, s2)) {
+			return;
+		}
+
+		AIFloat3 probePos(posX, 0, posZ);
+		if (map->IsPossibleToBuildAt(buildDef->GetDef(), probePos, facing)) {
+			visitor(probePos);
+			usedX = x; usedZ = z;
+		}
+	});
+}
+
+void CTerrainManager::MarkBuildZone(const CGridRegion& region, CGridRegion::Id zoneId)
+{
+	region.ProcessRegion([this, zoneId](short x, short z) {
+		blockingMap.SetBuildZone(x, z, zoneId);
+	});
+}
+
+void CTerrainManager::MarkReservedZone(const CGridRegion& region)
+{
+	CGridRegion::Id zoneId = region.GetId();
+	region.ProcessRegion([this, zoneId](short x, short z) {
+		blockingMap.AddBlocker(x, z, SBlockingMap::StructType::RESERVED);
+		blockingMap.SetBuildZone(x, z, zoneId);
+	});
+}
+
+void CTerrainManager::UnmarkReservedZone(const CGridRegion& region)
+{
+	region.ProcessRegion([this](short x, short z) {
+		blockingMap.DelBlocker(x, z, SBlockingMap::StructType::RESERVED);
+		blockingMap.SetBuildZone(x, z, NULL_ZONE);
+	});
+}
+
+void CTerrainManager::MarkTriggerZone(const CGridRegion& region, CGridRegion::Id zoneId)
+{
+	region.ProcessRegion([this, zoneId](short x, short z) {
+		triggerZone[z * triggerColumns + x] = zoneId;
+	});
+}
+
+CGridRegion::Id CTerrainManager::GetTriggerZoneId(const AIFloat3& pos) const
+{
+	short x = short(pos.x / GRID_TRIGGER_STEP);
+	short z = short(pos.z / GRID_TRIGGER_STEP);
+	return triggerZone[z * triggerColumns + x];
 }
 
 void CTerrainManager::SnapPosition(AIFloat3& position)

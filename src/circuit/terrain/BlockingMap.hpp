@@ -140,6 +140,16 @@ inline void SBlockingMap::DelZoneOwn(int xAlly, int zAlly)
 	--cell.ownCount;
 }
 
+inline bool SBlockingMap::IsBuildZone(short x, short z, CGridRegion::Id zoneId) const
+{
+	return gridZone[z * columns + x] == zoneId;
+}
+
+inline void SBlockingMap::SetBuildZone(short x, short z, CGridRegion::Id zoneId)
+{
+	gridZone[z * columns + x] = zoneId;
+}
+
 inline bool SBlockingMap::IsInBounds(const int2& r1, const int2& r2) const
 {
 	return (r1.x >= 0) && (r1.y >= 0) && (r2.x < columns) && (r2.y < rows);

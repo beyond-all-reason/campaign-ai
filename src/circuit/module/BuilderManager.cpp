@@ -814,6 +814,11 @@ void CBuilderManager::DequeueTask(IUnitTask* task, bool done)
 				} break;
 				default: {
 					unfinishedUnits.erase(taskB->GetTarget());
+					auto itZ = taskToZone.find(taskB);
+					if (itZ != taskToZone.end()) {
+						itZ->second->buildTasks.erase(taskB);
+						taskToZone.erase(itZ);
+					}
 				} break;
 			}
 			tasks.erase(it);
@@ -933,6 +938,60 @@ bool CBuilderManager::CanUpGeo(CCircuitDef* cdef) const
 {
 	auto it = workerDefs.find(cdef);
 	return (it != workerDefs.end()) && it->second.canUpGeo;
+}
+
+void CBuilderManager::AddBuildZone(CGridRegion::Id zoneId, geom::CPolygon* poly, CCircuitDef* buildDef)
+{
+	auto [it, success] = buildZones.emplace(zoneId, SBuildZone{CGridRegion(zoneId, poly, GRID_BUILD_STEP), buildDef});
+	if (!success) {
+		return;
+	}
+	SBuildZone& bz = it->second;
+	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
+	terrainMgr->MarkBuildZone(bz.region, zoneId);
+	terrainMgr->FillBuildZone(bz.region, buildDef, [this, &bz](const AIFloat3& pos) {
+		IBuilderTask* task = Enqueue(TaskB::Common(IBuilderTask::BuildType::ENERGY,
+				IBuilderTask::Priority::HIGH, bz.buildDef, pos, 0.f, true, -1));
+		task->SetBuildPos(pos);
+		bz.buildTasks.insert(task);
+		taskToZone[task] = &bz;
+	});
+}
+
+void CBuilderManager::DelBuildZone(CGridRegion::Id zoneId)
+{
+	auto it = buildZones.find(zoneId);
+	if (it == buildZones.end()) {
+		return;
+	}
+	SBuildZone& bz = it->second;
+	for (IBuilderTask* task : bz.buildTasks) {
+		task->Abort();
+		taskToZone.erase(task);
+	}
+	circuit->GetTerrainManager()->MarkBuildZone(bz.region, NULL_ZONE);
+	buildZones.erase(zoneId);
+}
+
+void CBuilderManager::AddReservedZone(CGridRegion::Id zoneId, geom::CPolygon* poly)
+{
+	auto [it, success] = buildZones.emplace(zoneId, SBuildZone{CGridRegion(zoneId, poly, GRID_BUILD_STEP), nullptr});
+	if (!success) {
+		return;
+	}
+	SBuildZone& bz = it->second;
+	circuit->GetTerrainManager()->MarkReservedZone(bz.region);
+}
+
+void CBuilderManager::DelReservedZone(CGridRegion::Id zoneId)
+{
+	auto it = buildZones.find(zoneId);
+	if (it == buildZones.end()) {
+		return;
+	}
+	SBuildZone& bz = it->second;
+	circuit->GetTerrainManager()->UnmarkReservedZone(bz.region);
+	buildZones.erase(zoneId);
 }
 
 IUnitTask* CBuilderManager::DefaultMakeTask(CCircuitUnit* unit)
@@ -1583,7 +1642,12 @@ void CBuilderManager::UpdateAreaUsers()
 	for (auto& tasks : buildTasks) {
 		for (IBuilderTask* task : tasks) {
 			CCircuitDef* cdef = task->GetBuildDef();
-			if ((cdef != nullptr) && (task->GetTarget() == nullptr) && !IsBuilderInArea(cdef, task->GetPosition())) {
+			// NOTE: To evade cancellation of scripted build-tasks - check timeout:
+			//       a task without timeout will be considered as persistent,
+			//       such as scripted for future time when builder arrives into area.
+			if ((cdef != nullptr) && (task->GetTarget() == nullptr) && (task->GetTimeout() > 0)
+				&& !IsBuilderInArea(cdef, task->GetPosition()))
+			{
 				removeTasks.insert(task);
 			}
 		}

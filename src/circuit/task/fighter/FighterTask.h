@@ -52,6 +52,13 @@ public:
 
 	const std::set<CCircuitUnit*>& GetShields() const { return shields; }
 
+	virtual CCircuitUnit* GetLeader() const {
+		return units.empty() ? nullptr : *units.begin();
+	}
+
+	int GetZoneId() const { return zoneId; }
+	void SetZoneId(int regionId) { zoneId = regionId; }
+
 protected:
 	void SetTarget(CEnemyInfo* enemy);
 	void Attack(CCircuitUnit* unit, const int frame);
@@ -69,6 +76,8 @@ protected:
 	static F3Vec enemyPositions;  // NOTE: micro-opt
 
 	int attackFrame;
+
+	int zoneId = 0;  // trigger region
 
 	// Script API
 	float attackRange = -1.f;  // direct attack range; -1: default calculation

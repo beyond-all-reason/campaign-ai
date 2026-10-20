@@ -44,6 +44,16 @@ local topic = {
 	SQUAD_PARAMS = 214,
 	SQUAD_PATH_PARAMS = 215,
 	SQUAD_ESCORT = 216,
+
+	BUILD_REGION_ID = 301,
+	BUILD_REGION_CLEAR = 302,
+	TRIGGER_REGION_ID = 321,
+	TRIGGER_REGION_CLEAR = 322,
+}
+
+local signal = {
+	TRIGGER_REGION_ENTER = 301,
+	TRIGGER_REGION_EXIT = 302,
 }
 
 local parameter = {
@@ -130,6 +140,7 @@ MsgBuilder.__tostring = MsgBuilder.toString
 
 return {
 	Topic = topic,
+	Signal = signal,
 	Param = parameter,
 	Task = task,
 	Path = pathing,

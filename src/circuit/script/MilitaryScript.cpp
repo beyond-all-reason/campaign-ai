@@ -40,6 +40,8 @@ CMilitaryScript::CMilitaryScript(CScriptManager* scr, CMilitaryManager* mgr)
 	r = engine->RegisterObjectProperty("CMilitaryManager", "const float armyCost", asOFFSET(CMilitaryManager, armyCost)); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CMilitaryManager", "IUnitTask@+ GetTaskById(Id) const", asMETHOD(CMilitaryManager, GetTaskById), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CMilitaryManager", "void AssignTask(CCircuitUnit@, IUnitTask@+)", asMETHODPR(CMilitaryManager, AssignTask, (CCircuitUnit*, IUnitTask*), void), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CMilitaryManager", "void AddTriggerZone(Id, CPolygon@+)", asMETHOD(CMilitaryManager, AddTriggerZone), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CMilitaryManager", "void DelTriggerZone(Id)", asMETHOD(CMilitaryManager, DelTriggerZone), asCALL_THISCALL); ASSERT(r >= 0);
 
 	// NOTE: Config's "quota" scattered across CMilitaryManager, CEnemyManager, CThreatMap, CFactoryManager, CSetupManager
 	r = engine->RegisterObjectType("SQuotaMilitary", 0, asOBJ_REF | asOBJ_NOCOUNT); ASSERT(r >= 0);
@@ -78,6 +80,7 @@ bool CMilitaryScript::Init()
 	InitModule(mod);
 	militaryInfo.makeDefence = script->GetFunc(mod, "void AiMakeDefence(int, const AIFloat3& in)");
 	militaryInfo.taskResigned = script->GetFunc(mod, "void AiTaskResigned(CCircuitUnit@)");
+	militaryInfo.taskZoneChanged = script->GetFunc(mod, "void AiTaskZoneChanged(CCircuitUnit@, int, int)");
 	return true;
 }
 
@@ -101,6 +104,19 @@ void CMilitaryScript::TaskResigned(CCircuitUnit* unit)
 	}
 	asIScriptContext* ctx = script->PrepareContext(militaryInfo.taskResigned);
 	ctx->SetArgObject(0, unit);
+	script->Exec(ctx);
+	script->ReturnContext(ctx);
+}
+
+void CMilitaryScript::TaskZoneChanged(CCircuitUnit* unit, int srcZoneId, int dstZoneId)
+{
+	if (militaryInfo.taskZoneChanged == nullptr) {
+		return;
+	}
+	asIScriptContext* ctx = script->PrepareContext(militaryInfo.taskZoneChanged);
+	ctx->SetArgObject(0, unit);
+	ctx->SetArgDWord(1, srcZoneId);
+	ctx->SetArgDWord(2, dstZoneId);
 	script->Exec(ctx);
 	script->ReturnContext(ctx);
 }

@@ -2,6 +2,7 @@
 #include "../../lua_msg.as"
 #include "../manager/factory.as"
 #include "squad.as"
+#include "region.as"
 
 
 namespace LuaMsg {
@@ -29,7 +30,12 @@ class Manager {
 			{formatInt(ELuaMsg::SQUAD_TASK), LuaMsgFunc(this.SquadTask)},
 			{formatInt(ELuaMsg::SQUAD_PARAMS), LuaMsgFunc(this.SquadParams)},
 			{formatInt(ELuaMsg::SQUAD_PATH_PARAMS), LuaMsgFunc(this.SquadPathParams)},
-			{formatInt(ELuaMsg::SQUAD_ESCORT), LuaMsgFunc(this.SquadEscort)}
+			{formatInt(ELuaMsg::SQUAD_ESCORT), LuaMsgFunc(this.SquadEscort)},
+
+			{formatInt(ELuaMsg::BUILD_REGION_ID), LuaMsgFunc(this.MakeBuildRegion)},
+			{formatInt(ELuaMsg::BUILD_REGION_CLEAR), LuaMsgFunc(this.BuildRegionClear)},
+			{formatInt(ELuaMsg::TRIGGER_REGION_ID), LuaMsgFunc(this.MakeTriggerRegion)},
+			{formatInt(ELuaMsg::TRIGGER_REGION_CLEAR), LuaMsgFunc(this.TriggerRegionClear)}
 		};
 	}
 
@@ -141,6 +147,23 @@ class Manager {
 
 	void SquadEscort(const array<string>& in params) {
 		Squad::mgr.SetSquadEscort(params);
+	}
+
+	// Region
+	void MakeBuildRegion(const array<string>& in params) {
+		Region::mgr.AddBuildZone(params);
+	}
+
+	void BuildRegionClear(const array<string>& in params) {
+		Region::mgr.ClearBuildZones();
+	}
+
+	void MakeTriggerRegion(const array<string>& in params) {
+		Region::mgr.AddTriggerZone(params[0]);
+	}
+
+	void TriggerRegionClear(const array<string>& in params) {
+		Region::mgr.ClearTriggerZones();
 	}
 
 	/*
