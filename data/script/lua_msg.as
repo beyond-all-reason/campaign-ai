@@ -28,8 +28,7 @@ enum ELuaMsg {
 
 	SET_FACTORY_ACTIVE               =  13,
 
-	SCRIPT_CONSTRUCTION_PARAMS       =  15,
-	SET_SCRIPT_RECRUIT               =  16,  // boolean
+	AI_CONSTRUCTION_PARAMS           =  16,
 
 	// Base starts at 100
 	BASE_ID                          = 101,
@@ -51,11 +50,14 @@ enum ELuaMsg {
 	SQUAD_PATH_PARAMS                = 215,
 	SQUAD_ESCORT                     = 216,
 
+	// Region starts at 300
 	BUILD_REGION_ID                  = 301,
 	BUILD_REGION_CLEAR               = 302,
 	RESERVED_REGION_ID               = 303,
 	RESERVED_REGION_CLEAR            = 304,
 	ALLOWED_REGION_ID                = 305,
+	ALLOWED_REGION_CLEAR             = 306,
+	ALLOWED_GRID_FILL                = 307,
 	TRIGGER_REGION_ID                = 321,
 	TRIGGER_REGION_CLEAR             = 322,
 }

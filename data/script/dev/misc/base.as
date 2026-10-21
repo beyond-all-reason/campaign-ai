@@ -1,5 +1,6 @@
 #include "../../task.as"
 #include "../../lua_msg.as"
+#include "../manager/builder.as"
 
 
 namespace Base {
@@ -110,22 +111,6 @@ class Manager {
 		return base;
 	}
 
-	private IUnitTask@ EnqueueBuildTask(BuildTask@ bt) {
-		Task::BuildType buildType = Task::BuildType(aiEconomyMgr.GetBuildType(bt.unitDefId));
-		switch (buildType) {
-		case Task::BuildType::FACTORY:
-			return aiBuilderMgr.Enqueue(TaskB::Factory(Task::Priority::HIGH,
-					ai.GetCircuitDef(bt.unitDefId), bt.pos, null, 0.f));
-		case Task::BuildType::MEX:
-		case Task::BuildType::GEO:
-			return aiBuilderMgr.Enqueue(TaskB::Spot(buildType, Task::Priority::HIGH,
-					ai.GetCircuitDef(bt.unitDefId), bt.pos, -1));
-		default:
-			return aiBuilderMgr.Enqueue(TaskB::Common(buildType, Task::Priority::HIGH,
-					ai.GetCircuitDef(bt.unitDefId), bt.pos, 0.f));
-		}
-	}
-
 	// Invoked by Builder::AiMakeTask
 	IBuilderTask@ GetTaskToBuild(CCircuitUnit@ unit) {
 		// NOTE: Builder controller periodically re-evaluates assigned task.
@@ -144,7 +129,7 @@ class Manager {
 			if (!unit.circuitDef.CanBuild(bt.unitDefId))
 				continue;
 			if (bt.task is null) {
-				IUnitTask@ task = EnqueueBuildTask(bt);
+				IUnitTask@ task = aiBuilderMgr.Enqueue(Builder::MakeBuildRecord(bt.unitDefId, bt.pos));
 				taskToPlan.insert(task.id, @bt);
 				@bt.task = cast<IBuilderTask>(task);
 			}

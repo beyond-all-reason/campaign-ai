@@ -400,6 +400,7 @@ class CProfiler{
 class CSetupManager{
 	void SetWaterHarmful(bool);
 	dictionary@ GetModOptions();
+	void SetBasePos(const AIFloat3&in);
 	const CCircuitDef@ commChoice;
 }
 class AIFloat3{
@@ -910,10 +911,15 @@ class CBuilderManager{
 	uint GetWorkerCount() const;
 	IUnitTask@ GetTaskById(int) const;
 	void AssignTask(CCircuitUnit@, IUnitTask@);
-	void AddBuildZone(int, CPolygon@, CCircuitDef@);
+	void AddBuildZone(int, CPolygon@, SBuildTask&in, int);
 	void DelBuildZone(int);
+	void FillBuildZone(int, bool);
+	IBuilderTask@ BuildNextSlot(int);
 	void AddReservedZone(int, CPolygon@);
 	void DelReservedZone(int);
+	void AddAllowedZone(int, CPolygon@, int);
+	void DelAllowedZone(int);
+	void FillAllowedGrid(int);
 	int dangerHysteresis;
 }
 class SFightTask{

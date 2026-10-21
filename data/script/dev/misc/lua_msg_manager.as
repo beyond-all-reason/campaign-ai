@@ -11,13 +11,14 @@ namespace LuaMsg {
 
 // Must match the Lua definitions
 enum EConstructParam {
-	ASSIGNMENT = 1,
-	FACTORY    = 2,
-	STORAGE    = 3,
-	METAL      = 4,
-	ENERGY     = 5,
-	ECONOMY    = 6,
-	DEFENCE    = 7,
+	RECRUIT    = 1,
+	BUILD_TASK = 2,
+	FACTORY    = 3,
+	STORAGE    = 4,
+	METAL      = 5,
+	ENERGY     = 6,
+	ECONOMY    = 7,
+	DEFENCE    = 8,
 }
 
 class Manager {
@@ -31,8 +32,7 @@ class Manager {
 
 			{formatInt(ELuaMsg::SET_UNITDEF_RETREAT_HP), LuaMsgFunc(this.SetUnitDefRetreat)},
 			{formatInt(ELuaMsg::SET_FACTORY_ACTIVE), LuaMsgFunc(this.SetFactoryActive)},
-			{formatInt(ELuaMsg::SCRIPT_CONSTRUCTION_PARAMS), LuaMsgFunc(this.SetScriptConstruction)},
-			{formatInt(ELuaMsg::SET_SCRIPT_RECRUIT), LuaMsgFunc(this.SetScriptRecruit)},
+			{formatInt(ELuaMsg::AI_CONSTRUCTION_PARAMS), LuaMsgFunc(this.SetConstructionParams)},
 
 			{formatInt(ELuaMsg::BASE_ID), LuaMsgFunc(this.SelectBaseId)},
 			{formatInt(ELuaMsg::BASE_ADD_PLAN), LuaMsgFunc(this.BaseAddPlan)},
@@ -55,6 +55,8 @@ class Manager {
 			{formatInt(ELuaMsg::RESERVED_REGION_ID), LuaMsgFunc(this.MakeReservedRegion)},
 			{formatInt(ELuaMsg::RESERVED_REGION_CLEAR), LuaMsgFunc(this.ReservedRegionClear)},
 			{formatInt(ELuaMsg::ALLOWED_REGION_ID), LuaMsgFunc(this.MakeAllowedRegion)},
+			{formatInt(ELuaMsg::ALLOWED_REGION_CLEAR), LuaMsgFunc(this.AllowedRegionClear)},
+			{formatInt(ELuaMsg::ALLOWED_GRID_FILL), LuaMsgFunc(this.AllowedGridFill)},
 			{formatInt(ELuaMsg::TRIGGER_REGION_ID), LuaMsgFunc(this.MakeTriggerRegion)},
 			{formatInt(ELuaMsg::TRIGGER_REGION_CLEAR), LuaMsgFunc(this.TriggerRegionClear)}
 		};
@@ -124,13 +126,16 @@ class Manager {
 			aiFactoryMgr.SetIsActiveFactory(parseInt(unitIds[i]), isActive);
 	}
 
-	void SetScriptConstruction(const array<string>& in params) {
+	void SetConstructionParams(const array<string>& in params) {
 		for (uint i = 0; i < params.length(); ++i) {
 			// params contains "<EConstructParam>=<bool>" pairs
 			const array<string>@ kv = params[i].split(LuaMsg::SEP_KEY_VALUE);
-			const bool isScripted = kv[1] != "0";
+			const bool isScripted = kv[1] == "0";
 			switch (parseInt(kv[0])) {
-			case EConstructParam::ASSIGNMENT: {
+			case EConstructParam::RECRUIT: {
+				Factory::isRecruitScripted = isScripted;
+			} break;
+			case EConstructParam::BUILD_TASK: {
 				Builder::isConstructionScripted = isScripted;
 			} break;
 			case EConstructParam::FACTORY: {
@@ -154,10 +159,6 @@ class Manager {
 			default: break;
 			}
 		}
-	}
-
-	void SetScriptRecruit(const array<string>& in params) {
-		Factory::isRecruitScripted = params[0] != "0";
 	}
 
 	// Base
@@ -221,7 +222,7 @@ class Manager {
 	}
 
 	void BuildRegionClear(const array<string>& in params) {
-		Region::mgr.ClearBuildZones();
+		Region::mgr.ClearBuildZones(params);
 	}
 
 	void MakeReservedRegion(const array<string>& in params) {
@@ -229,11 +230,19 @@ class Manager {
 	}
 
 	void ReservedRegionClear(const array<string>& in params) {
-		Region::mgr.ClearReservedZones();
+		Region::mgr.ClearReservedZones(params);
 	}
 
 	void MakeAllowedRegion(const array<string>& in params) {
 		Region::mgr.AddAllowedZone(params);
+	}
+
+	void AllowedRegionClear(const array<string>& in params) {
+		Region::mgr.ClearAllowedZones(params);
+	}
+
+	void AllowedGridFill(const array<string>& in params) {
+		Region::mgr.FillAllowedGrid(parseInt(params[0]));
 	}
 
 	void MakeTriggerRegion(const array<string>& in params) {
@@ -241,7 +250,7 @@ class Manager {
 	}
 
 	void TriggerRegionClear(const array<string>& in params) {
-		Region::mgr.ClearTriggerZones();
+		Region::mgr.ClearTriggerZones(params);
 	}
 
 	/*

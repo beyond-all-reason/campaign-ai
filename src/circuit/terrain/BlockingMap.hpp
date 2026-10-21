@@ -25,7 +25,7 @@ inline bool SBlockingMap::IsBlocked(int x, int z, SM notIgnoreMask) const
 {
 	const int idx = z * columns + x;
 	const SBlockCell& cell = grid[idx];
-	return (cell.blockerMask & notIgnoreMask) || static_cast<SM>(cell.structMask) || !IsAllowedZone(x, z, notIgnoreMask);
+	return (cell.blockerMask & notIgnoreMask) || static_cast<SM>(cell.structMask);
 }
 
 inline bool SBlockingMap::IsBlockedLow(int xLow, int zLow, SM notIgnoreMask) const
@@ -151,12 +151,12 @@ inline void SBlockingMap::SetBuildZone(short x, short z, CGridRegion::Id zoneId)
 	gridZone[z * columns + x] = zoneId;
 }
 
-inline bool SBlockingMap::IsAllowedZone(short x, short z, SM structMask) const
+inline bool SBlockingMap::IsAllowed(short x, short z, SM structMask) const
 {
 	return gridAllow[z * columns + x] & structMask;
 }
 
-inline void SBlockingMap::SetAllowedZone(short x, short z, SM structMask)
+inline void SBlockingMap::SetAllowed(short x, short z, SM structMask)
 {
 	gridAllow[z * columns + x] = structMask;
 }

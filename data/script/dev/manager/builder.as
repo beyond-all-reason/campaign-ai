@@ -1,5 +1,6 @@
 #include "../../unit.as"
 #include "../misc/base.as"
+#include "../misc/region.as"
 
 
 namespace Builder {
@@ -26,6 +27,7 @@ void AiTaskRemoved(IUnitTask@ task, bool done)
 		return;
 	IBuilderTask@ taskB = cast<IBuilderTask>(task);
 	done ? Base::mgr.BaseTaskFinished(taskB) : Base::mgr.BaseTaskCanceled(taskB);
+	Region::mgr.BuildNextSlot(task.id);
 }
 
 void AiTaskAssigned(CCircuitUnit@ unit)
@@ -78,6 +80,25 @@ void AiSave(OStream& ostream)
 {
 	ostream << Id(energizer1 !is null ? energizer1.id : -1)
 			<< Id(energizer2 !is null ? energizer2.id : -1);
+}
+
+/*
+ * Utilities
+ */
+SBuildTask MakeBuildRecord(Id unitDefId, AIFloat3 pos = -RgtVector)
+{
+	Task::BuildType buildType = Task::BuildType(aiEconomyMgr.GetBuildType(unitDefId));
+	Task::Priority priority = Task::Priority::HIGH;
+	CCircuitDef@ cdef = ai.GetCircuitDef(unitDefId);
+	switch (buildType) {
+	case Task::BuildType::FACTORY:
+		return TaskB::Factory(priority, cdef, pos, null, 0.f, false, true, -1);
+	case Task::BuildType::MEX:
+	case Task::BuildType::GEO:
+		return TaskB::Spot(buildType, priority, cdef, pos, -1, true, -1);
+	default:
+		return TaskB::Common(buildType, priority, cdef, pos, 0.f, true, -1);
+	}
 }
 
 }  // namespace Builder

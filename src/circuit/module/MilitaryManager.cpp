@@ -1672,12 +1672,12 @@ void CMilitaryManager::DelTriggerZone(CGridRegion::Id zoneId)
 
 void CMilitaryManager::UpdateTriggersStep()
 {
-	unsigned int taskCount = updateTasks.size();
+	const unsigned int taskCount = updateTasks.size();
 	if (taskTriggerIndex >= taskCount) {
-		if (taskTriggerIndex == 0) {
+		taskTriggerIndex = 0;
+		if (taskCount == 0) {
 			return;
 		}
-		taskTriggerIndex = 0;
 	}
 
 	// NOTE: Squad operates only with classes that has IFighterTask as a base.

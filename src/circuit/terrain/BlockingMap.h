@@ -60,8 +60,8 @@ struct SBlockingMap {
 
 	inline bool IsBuildZone(short x, short z, CGridRegion::Id zoneId) const;
 	inline void SetBuildZone(short x, short z, CGridRegion::Id zoneId);
-	inline bool IsAllowedZone(short x, short z, SM structMask) const;
-	inline void SetAllowedZone(short x, short z, SM structMask);
+	inline bool IsAllowed(short x, short z, SM structMask) const;
+	inline void SetAllowed(short x, short z, SM structMask);
 
 	inline bool IsInBounds(const int2& r1, const int2& r2) const;
 	inline bool IsInBounds(int x, int z) const;

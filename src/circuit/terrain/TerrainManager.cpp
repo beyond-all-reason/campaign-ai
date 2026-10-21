@@ -57,7 +57,7 @@ CTerrainManager::CTerrainManager(CCircuitAI* circuit, CTerrainData* terrainData)
 	SBlockingMap::SBlockCell cell = {0};
 	blockingMap.grid.resize(blockingMap.columns * blockingMap.rows, cell);
 	blockingMap.gridZone.resize(blockingMap.columns * blockingMap.rows, NULL_ZONE);
-	blockingMap.gridAllow.resize(blockingMap.columns * blockingMap.rows, STRUCT_BIT(NONE));
+	blockingMap.gridAllow.resize(blockingMap.columns * blockingMap.rows, STRUCT_BIT(ALL));
 
 	blockingMap.columnsLow = mapWidth / (GRID_RATIO_LOW * 2);
 	blockingMap.rowsLow = mapHeight / (GRID_RATIO_LOW * 2);
@@ -651,18 +651,6 @@ AIFloat3 CTerrainManager::GetBusPos(CCircuitDef* facDef, const AIFloat3& pos, in
 AIFloat3 CTerrainManager::FindBuildSite(CCircuitDef* cdef, const AIFloat3& pos,
 		float searchRadius, int facing, bool isIgnore, bool isHighRes)
 {
-//	TerrainPredicate predicate;
-//	if (isBuildFilterEnabled) {
-//		predicate = [this](const AIFloat3& p) {
-//			short x = short(p.x / BUILD_SQUARE_SIZE);
-//			short z = short(p.z / BUILD_SQUARE_SIZE);
-//			return blockingMap.IsAllowedZone(x, z, SBlockingMap::StructMask::ALL);
-//		};
-//	} else {
-//		predicate = [](const AIFloat3& p) {
-//			return true;
-//		};
-//	}
 	TerrainPredicate predicate = [](const AIFloat3& p) {
 		return true;
 	};
@@ -706,7 +694,7 @@ AIFloat3 CTerrainManager::FindBuildSite(CCircuitDef* cdef, const AIFloat3& pos,
 	auto isOpenSite = [this, notIgnore](const int2& s1, const int2& s2) {
 		for (int z = s1.y; z < s2.y; ++z) {
 			for (int x = s1.x; x < s2.x; ++x) {
-				if (blockingMap.IsBlocked(x, z, notIgnore)) {
+				if (blockingMap.IsBlocked(x, z, notIgnore) || !blockingMap.IsAllowed(x, z, STRUCT_BIT(ALL))) {
 					return false;
 				}
 			}
@@ -1009,7 +997,7 @@ AIFloat3 CTerrainManager::FindBuildSiteLow(CCircuitDef* cdef, const AIFloat3& po
 	auto isOpenSite = [this, notIgnore](const int2& s1, const int2& s2) {
 		for (int z = s1.y; z < s2.y; z++) {
 			for (int x = s1.x; x < s2.x; x++) {
-				if (blockingMap.IsBlocked(x, z, notIgnore)) {
+				if (blockingMap.IsBlocked(x, z, notIgnore) || !blockingMap.IsAllowed(x, z, STRUCT_BIT(ALL))) {
 					return false;
 				}
 			}
@@ -1100,7 +1088,9 @@ AIFloat3 CTerrainManager::FindBuildSiteByMask(CCircuitDef* cdef, const AIFloat3&
 						}																					\
 					} break;																				\
 					case IBlockMask::BlockType::STRUCT: {													\
-						if (blockingMap.IsBlocked(x, z, notIgnore)) {										\
+						if (blockingMap.IsBlocked(x, z, notIgnore)											\
+							|| !blockingMap.IsAllowed(x, z, static_cast<SBlockingMap::SM>(structMask)))		\
+						{																					\
 							return false;																	\
 						}																					\
 					} break;																				\
@@ -1219,7 +1209,9 @@ AIFloat3 CTerrainManager::FindBuildSiteByMaskLow(CCircuitDef* cdef, const AIFloa
 						break;																				\
 					}																						\
 					case IBlockMask::BlockType::STRUCT: {													\
-						if (blockingMap.IsBlocked(x, z, notIgnore)) {										\
+						if (blockingMap.IsBlocked(x, z, notIgnore)											\
+							|| !blockingMap.IsAllowed(x, z, static_cast<SBlockingMap::SM>(structMask)))		\
+						{																					\
 							return false;																	\
 						}																					\
 						break;																				\
@@ -1591,15 +1583,14 @@ void CTerrainManager::FillParentBusNodes(CPathInfo* pathInfo)
 	}
 }
 
-void CTerrainManager::FillBuildZone(const CGridRegion& region, const CCircuitDef* buildDef, ZoneFunc visitor)
+void CTerrainManager::FillBuildZone(const CGridRegion& region, const CCircuitDef* buildDef, int facing, ZoneFunc visitor)
 {
 	CMap* map = circuit->GetMap();
-	int facing = 0;  // TODO: param
 	UnitDef* unitDef = buildDef->GetDef();
 	const int xsize = (((facing & 1) == 0) ? unitDef->GetXSize() : unitDef->GetZSize()) / 2;
 	const int zsize = (((facing & 1) == 1) ? unitDef->GetXSize() : unitDef->GetZSize()) / 2;
 
-	CGridRegion::Id zoneId = region.GetId();
+	const CGridRegion::Id zoneId = region.GetId();
 	auto isOpenSite = [this, zoneId](const int2& s1, const int2& s2) {
 		for (int z = s1.y; z < s2.y; ++z) {
 			for (int x = s1.x; x < s2.x; ++x) {
@@ -1666,19 +1657,16 @@ void CTerrainManager::UnmarkReservedZone(const CGridRegion& region)
 	});
 }
 
-void CTerrainManager::MarkAllowedZone(const CGridRegion& region)
+void CTerrainManager::MarkAllowedZone(const CGridRegion& region, SBlockingMap::SM mask)
 {
-	if (!isBuildFilterEnabled) {
-		isBuildFilterEnabled = true;
-		for (int z = 0; z < blockingMap.rows; ++z) {
-			for (int x = 0; x < blockingMap.columns; ++x) {
-				blockingMap.AddBlocker(x, z, SBlockingMap::StructType::RESERVED);
-			}
-		}
-	}
-	region.ProcessRegion([this](short x, short z) {
-		blockingMap.DelBlocker(x, z, SBlockingMap::StructType::RESERVED);
+	region.ProcessRegion([this, mask](short x, short z) {
+		blockingMap.SetAllowed(x, z, mask);
 	});
+}
+
+void CTerrainManager::FillAllowedGrid(SBlockingMap::SM mask)
+{
+	blockingMap.gridAllow.assign(blockingMap.gridAllow.size(), mask);
 }
 
 void CTerrainManager::MarkTriggerZone(const CGridRegion& region, CGridRegion::Id zoneId)

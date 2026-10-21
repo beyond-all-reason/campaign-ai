@@ -324,11 +324,16 @@ public:
 	void DecGuardCount() { --guardCount; }
 
 	// Script API
-	void AddBuildZone(CGridRegion::Id zoneId, geom::CPolygon* poly, CCircuitDef* buildDef);
+	void AddBuildZone(CGridRegion::Id zoneId, geom::CPolygon* poly,
+					  const TaskB::SBuildTask& taskRecord, int facing = 0);
 	void DelBuildZone(CGridRegion::Id zoneId);
+	void FillBuildZone(CGridRegion::Id zoneId, bool isSimult = false);
+	IBuilderTask* BuildNextSlot(CGridRegion::Id zoneId);
 	void AddReservedZone(CGridRegion::Id zoneId, geom::CPolygon* poly);
 	void DelReservedZone(CGridRegion::Id zoneId);
-	void AddAllowedZone(CGridRegion::Id zoneId, geom::CPolygon* poly);
+	void AddAllowedZone(CGridRegion::Id zoneId, geom::CPolygon* poly, int mask);
+	void DelAllowedZone(CGridRegion::Id zoneId);
+	void FillAllowedGrid(int mask);
 
 private:
 	virtual IUnitTask* DefaultMakeTask(CCircuitUnit* unit) override;
@@ -378,8 +383,12 @@ private:
 
 	struct SBuildZone {  // Custom build zone
 		CGridRegion region;
-		CCircuitDef* buildDef;
+		TaskB::SBuildTask taskRecord;
+		int facing;
 		std::set<IBuilderTask*> buildTasks;
+		std::vector<springai::AIFloat3> slots;
+		unsigned int slotIdx = 0;
+		void ResetSlots() { slots.clear(); slotIdx = 0; }
 	};
 	std::map<CGridRegion::Id, SBuildZone> buildZones;
 	std::map<IBuilderTask*, SBuildZone*> taskToZone;

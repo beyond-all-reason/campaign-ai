@@ -26,8 +26,7 @@ local topic = { -- Message topic
 
 	SET_FACTORY_ACTIVE = 13,
 
-	SCRIPT_CONSTRUCTION_PARAMS = 15, -- construct params
-	SET_SCRIPT_RECRUIT = 16, -- boolean
+	AI_CONSTRUCTION_PARAMS = 16, -- construct params
 
 	-- Base starts at 100
 	BASE_ID = 101,
@@ -54,6 +53,8 @@ local topic = { -- Message topic
 	RESERVED_REGION_ID = 303,
 	RESERVED_REGION_CLEAR = 304,
 	ALLOWED_REGION_ID = 305,
+	ALLOWED_REGION_CLEAR = 306,
+	ALLOWED_GRID_FILL = 307,
 	TRIGGER_REGION_ID = 321,
 	TRIGGER_REGION_CLEAR = 322,
 }
@@ -67,13 +68,14 @@ local signal = { -- Trigger signal
 }
 
 local construct = {
-	ASSIGNMENT = 1,
-	FACTORY = 2,
-	STORAGE = 3,
-	METAL = 4,
-	ENERGY = 5,
-	ECONOMY = 6,
-	DEFENCE = 7,
+	RECRUIT = 1,
+	BUILD_TASK = 2,
+	FACTORY = 3,
+	STORAGE = 4,
+	METAL = 5,
+	ENERGY = 6,
+	ECONOMY = 7,
+	DEFENCE = 8,
 }
 
 local plan = { -- Build plan params
@@ -108,6 +110,33 @@ local pathing = { -- Pathing params
 	IGNORE_THREAT = 2,
 	AVOID_THREAT = 3,
 	USE_END_POS = 4,
+}
+
+local region = {
+	STRUCT_TYPE = 1,
+	STRUCT_MASK = 2,
+}
+
+local structType = { -- Must match the AI SBlockingMap::StructType definitions
+	FACTORY = 0,
+	MEX = 1,
+	GEO = 2,
+	PYLON = 3,
+	CONVERT = 4,
+	ENGY_LOW = 5,
+	ENGY_MID = 6,
+	ENGY_HIGH = 7,
+	DEF_LOW = 8,
+	DEF_MID = 9,
+	DEF_HIGH = 10,
+	SPECIAL = 11,
+	NANO = 12,
+	TERRA = 13,
+	UNKNOWN = 14,
+	RESERVED = 15,
+	-- struct masks
+	NONE = 0,
+	ALL = 0xFFFF,
 }
 
 local MsgBuilder = {}
@@ -154,6 +183,15 @@ function MsgBuilder:addValue(value)
 	return self
 end
 
+function MsgBuilder:paramValue(param, value)
+	self.buffer[#self.buffer] = self.buffer[#self.buffer]
+		.. delimiter.SEP_PARAM
+		.. param
+		.. delimiter.SEP_KEY_VALUE
+		.. value
+	return self
+end
+
 function MsgBuilder:paramArray(param, values)
 	self.buffer[#self.buffer] = self.buffer[#self.buffer]
 		.. delimiter.SEP_PARAM
@@ -178,5 +216,7 @@ return {
 	Squad = squad,
 	Task = task,
 	Path = pathing,
+	Region = region,
+	StructType = structType,
 	MsgBuilder = MsgBuilder,
 }

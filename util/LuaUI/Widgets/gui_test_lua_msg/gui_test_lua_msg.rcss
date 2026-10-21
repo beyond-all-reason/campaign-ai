@@ -528,6 +528,5 @@ tab:hover {
 
 tab:active, tab.selected {
     background-color: #1a1a1a;
-    border-bottom: 2px solid #007acc;
     font-weight: bold;
 }
