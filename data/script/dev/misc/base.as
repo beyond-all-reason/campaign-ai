@@ -6,11 +6,21 @@
 namespace Base {
 
 // Must match the Lua definitions
+enum EBaseParam {
+	POSITION             =  1,
+	METAL_POS            =  2,
+	ENERGY_CHEAP_POS     =  3,
+	ENERGY_MODERATE_POS  =  4,
+	ENERGY_EXPENSIVE_POS =  5,
+
+	RECLAIM_CONVERT      = 11,
+	RECLAIM_ENERGY       = 12,
+}
+
 enum EPlanParam {
 	UNITDEF  = 1,
 	POSITION = 2,
-	ZONE     = 3,
-	REBUILD  = 4,
+	REBUILD  = 3,
 }
 
 class Base {
@@ -18,20 +28,24 @@ class Base {
 		id = p_id;
 	}
 
+	void adjustCenter(const AIFloat3& in pos) {
+		const float weight = 1.0 / plans.length();
+		center += (pos - center) * weight;
+	}
+
 	Id id;
 
 	array<BuildTask@> plans;
-	map<Id, array<BuildTask@>@> udToPlan;  // UnitDefId: BuildTask
-	set<Id> tasks;  // IBuilderTask.id for cleanup
-
-	AIFloat3 pos;  // nominal center
-	set<Id> buildings;  // UnitID
+	AIFloat3 center;  // nominal center
 }
 
 class BuildTask {
+	bool opEquals(const BuildTask& in other) const {
+		return (this.unitDefId == other.unitDefId && this.pos == other.pos);
+	}
+
 	Id unitDefId = -1;
-	AIFloat3 pos;  // either single position
-	Id zoneId = -1;  // or dedicated zone
+	AIFloat3 pos;
 	Base@ base = null;
 	IBuilderTask@ task = null;
 	bool isDone = false;
@@ -39,7 +53,13 @@ class BuildTask {
 }
 
 class Manager {
-	private void ParseBasePlanParams(const array<string>& in params, Base@ base) {
+	private AIFloat3 ParsePosition(const string& in param) {
+		// param contains "<posX>,<posZ>"
+		const array<string>@ posStr = param.split(LuaMsg::SEP_SUBPARAM);
+		return AIFloat3(parseFloat(posStr[0]), 0.f, parseFloat(posStr[1]));
+	}
+
+	private BuildTask@ ParseBasePlanParams(const array<string>& in params) {
 		BuildTask bt;
 		for (uint i = 0; i < params.length(); ++i) {
 			// params contains "<EPlanParam>=<positional_values>" pairs
@@ -47,17 +67,9 @@ class Manager {
 			switch (parseInt(kv[0])) {  // kv[0]="<EPlanParam>"
 			case EPlanParam::UNITDEF: {  // kv[1]="<unitDefId>"
 				bt.unitDefId = parseInt(kv[1]);
-				if (!base.udToPlan.contains(bt.unitDefId))
-					base.udToPlan.insert(bt.unitDefId, {});
 			} break;
 			case EPlanParam::POSITION: {  // kv[1]="<posX>,<posZ>"
-				const array<string>@ posStr = kv[1].split(LuaMsg::SEP_SUBPARAM);
-				bt.pos.x = parseFloat(posStr[0]);
-				bt.pos.z = parseFloat(posStr[1]);
-			} break;
-			case EPlanParam::ZONE: {  // kv[1]="<regionId>"
-				// TODO
-				bt.zoneId = parseInt(kv[1]);
+				bt.pos = ParsePosition(kv[1]);
 			} break;
 			case EPlanParam::REBUILD: {  // kv[1]="<bool>"
 				bt.isRebuild = kv[1] != "0";
@@ -65,9 +77,7 @@ class Manager {
 			default: break;
 			}
 		}
-		@bt.base = base;
-		base.udToPlan[bt.unitDefId].insertLast(@bt);
-		base.plans.insertLast(@bt);
+		return @bt;
 	}
 
 	// Invoked by LuaMsg::Manager::SelectBaseId
@@ -86,7 +96,10 @@ class Manager {
 		if (selBase is null)
 			return false;
 
-		ParseBasePlanParams(params, selBase);
+		BuildTask@ bt = ParseBasePlanParams(params);
+		@bt.base = selBase;
+		selBase.plans.insertLast(@bt);
+		selBase.adjustCenter(bt.pos);
 		return true;
 	}
 
@@ -94,7 +107,14 @@ class Manager {
 	bool DelBasePlan(const array<string>& in params) {
 		if (selBase is null)
 			return false;
-		return true;
+
+		BuildTask@ bt = ParseBasePlanParams(params);
+		for (uint i = 0; i < selBase.plans.length(); ++i)
+			if (selBase.plans[i] == bt) {
+				selBase.plans.removeAt(i);
+				return true;
+			}
+		return false;
 	}
 
 	private Base@ GetNearestBase(const AIFloat3& in pos) {
@@ -102,7 +122,7 @@ class Manager {
 		float sqLeastDist = BIG_FLOAT;
 		for (auto it = bases.begin(); it++;) {
 			Base@ checkBase = it.current_value();
-			float sqDist = pos.SqDistance2D(checkBase.pos);
+			float sqDist = pos.SqDistance2D(checkBase.center);
 			if (sqLeastDist <= sqDist)
 				continue;
 			sqLeastDist = sqDist;
@@ -145,19 +165,95 @@ class Manager {
 		if (!success)
 			return;
 
-		bt.isDone = true;
-		// TODO: Remove BuildTask out of plan if isRebuild=false
 		taskToPlan.erase(task.id);
+		if (bt.isRebuild) {
+			unitToPlan.insert(task.target.id, @bt);
+			bt.isDone = true;
+			@bt.task = null;
+			return;
+		}
+
+		const int idx = bt.base.plans.findByRef(bt);
+		bt.base.plans.removeAt(idx);
 	}
 
 	// Invoked by Builder::AiTaskRemoved done=false
 	void BaseTaskCanceled(IBuilderTask@ task) {
+		bool success;
+		BuildTask@ bt = taskToPlan.find(task.id, success);
+		if (!success)
+			return;
+
 		taskToPlan.erase(task.id);
-		// TODO: Repeat if isRebuild
+		@bt.task = null;
+	}
+
+	// Invoked by Main::AiUnitDestroyed
+	void UnitDestroyed(CCircuitUnit@ unit) {
+		bool success;
+		BuildTask@ bt = unitToPlan.find(unit.id, success);
+		if (!success)
+			return;
+
+		bt.isDone = false;
+	}
+
+	// Invoked by LuaMsg::Manager::BaseCancel
+	void FreeBase(Id baseId) {
+		bool success;
+		Base@ base = bases.find(baseId, success);
+		if (!success)
+			return;
+
+		array<Id> remTasks;
+		for (auto it = taskToPlan.begin(); it++;) {
+			BuildTask@ bt = it.current_value();
+			if (bt.base is base) {
+				@bt.base = null;
+				remTasks.insertLast(it.current_key());
+			}
+		}
+		foreach (Id taskId : remTasks)
+			taskToPlan.erase(taskId);
+
+		bases.erase(baseId);
+	}
+
+	// Invoked by LuaMsg::Manager::BaseParams
+	void SetBaseParams(const array<string>& in params) {
+		for (uint i = 0; i < params.length(); ++i) {
+			// params contains "<EBaseParam>=<values>" pairs
+			const array<string>@ kv = params[i].split(LuaMsg::SEP_KEY_VALUE);
+			switch (parseInt(kv[0])) {
+			case EBaseParam::POSITION: {  // kv[1]="<posX>,<posZ>"
+				aiSetupMgr.SetBasePos(ParsePosition(kv[1]));
+			} break;
+			case EBaseParam::METAL_POS: {  // kv[1]="<posX>,<posZ>"
+				aiSetupMgr.baseMetalPos = ParsePosition(kv[1]);
+			} break;
+			case EBaseParam::ENERGY_CHEAP_POS: {  // kv[1]="<posX>,<posZ>"
+				aiSetupMgr.baseEnergy1Pos = ParsePosition(kv[1]);
+			} break;
+			case EBaseParam::ENERGY_MODERATE_POS: {  // kv[1]="<posX>,<posZ>"
+				aiSetupMgr.baseEnergy2Pos = ParsePosition(kv[1]);
+			} break;
+			case EBaseParam::ENERGY_EXPENSIVE_POS: {  // kv[1]="<posX>,<posZ>"
+				aiSetupMgr.baseEnergy3Pos = ParsePosition(kv[1]);
+			} break;
+			case EBaseParam::RECLAIM_CONVERT: {  // kv[1]="<ratio>"
+				aiEconomyMgr.reclConvertEff = parseFloat(kv[1]);
+			} break;
+			case EBaseParam::RECLAIM_ENERGY: {  // kv[1]="<ratio>"
+				aiEconomyMgr.reclEnergyEff = parseFloat(kv[1]);
+			} break;
+			default: break;
+			}
+		}
 	}
 
 	private map<Id, Base@> bases;  // owner
 	private map<Id, BuildTask@> taskToPlan;  // IBuilderTask.id => BuildTask
+	private map<Id, BuildTask@> unitToPlan;  // CCircuitUnit.id => BuildTask
 
 	private Base@ selBase = null;  // Selected state
 }

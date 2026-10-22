@@ -22,8 +22,8 @@
             </handle>
             <div class="content give intent-collapsible" data-class-collapsed="isCollapsed">
                 <div class="grid commands">
-                    <button onclick="widget:SendCommand('cheat')">cheat</button>
-<!--                    <button onclick="widget:SendCommand('globallos')">global los</button>
+<!--                    <button onclick="widget:SendCommand('cheat')">cheat</button>
+                    <button onclick="widget:SendCommand('globallos')">global los</button>
                     <button onclick="widget:SendCommand('godmode')">godmode</button>
                     <button onclick="widget:SendCommand('nocost')">nocost</button>
                     <button onclick="widget:SendCommand('atm')">atm</button>
@@ -121,12 +121,28 @@
                 <tab>Base</tab>
                 <panel>
                 <div class="grid commands">
-                    <button onclick="widget:SendNewBase()">base</button>
+                    <button onclick="widget:SendBasePos()">base pos</button>
+                    <button onclick="widget:SendMetalPos()">metal pos</button>
+                    <button onclick="widget:SendCheapEnergyPos()">cheap energy pos</button>
+                    <button onclick="widget:SendModerateEnergyPos()">moderate energy pos</button>
+                    <button onclick="widget:SendExpensiveEnergyPos()">expensive energy pos</button>
+                </div>
+                <div class="grid commands">
+                    <button onclick="widget:SendReclaimConvertEff()">reclaim convert efficiency</button>
+                    <button onclick="widget:SendReclaimEnergyEff()">ereclaim energy efficiency</button>
+                </div>
+                <div class="grid commands">
+                    <button onclick="widget:SendNewBase()">base loadout</button>
                     <button onclick="widget:StartAllowedRegion()">start allowed</button>
                     <button onclick="widget:EndAllowedRegion()">end allowed</button>
                     <button onclick="widget:ClearAllowed()">clear allowed</button>
                     <button onclick="widget:AllowNone()">forbid all</button>
                     <button onclick="widget:AllowAll()">allow all</button>
+                </div>
+                <div class="grid commands">
+                    <button onclick="widget:SendMexCap(0.2, false)">mex 0.3</button>
+                    <button onclick="widget:SendMexCap(0.5, true)">mex 0.5</button>
+                    <button onclick="widget:SendMexCap(2.0, false)">mex 2.0</button>
                 </div>
                 </panel>
             </tabset>

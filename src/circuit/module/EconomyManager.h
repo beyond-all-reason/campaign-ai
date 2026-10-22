@@ -80,7 +80,9 @@ public:
 	void SetBuildTypeToDef(CCircuitDef::Id defId, IBuilderTask::BuildType bt) {
 		defToBuildType[defId] = bt;
 	}
-	IBuilderTask::BuildType GetBuildType(CCircuitDef::Id defId) const;  // Script API
+	// Script API
+	IBuilderTask::BuildType GetBuildType(CCircuitDef::Id defId) const;
+	void SetMexCap(float percent, bool isAlly);
 
 	const SSideInfo& GetSideInfo() const;
 	const std::vector<SSideInfo>& GetSideInfos() const { return sideInfos; }

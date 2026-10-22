@@ -333,7 +333,6 @@ public:
 	void DelReservedZone(CGridRegion::Id zoneId);
 	void AddAllowedZone(CGridRegion::Id zoneId, geom::CPolygon* poly, int mask);
 	void DelAllowedZone(CGridRegion::Id zoneId);
-	void FillAllowedGrid(int mask);
 
 private:
 	virtual IUnitTask* DefaultMakeTask(CCircuitUnit* unit) override;

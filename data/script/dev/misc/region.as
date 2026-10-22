@@ -5,7 +5,7 @@
 namespace Region {
 
 enum ERegionParam {
-	STRUCT_TYPE = 1,
+	UNITDEF_ID  = 1,
 	STRUCT_MASK = 2,
 }
 
@@ -128,13 +128,14 @@ class Manager {
 
 		int mask = 0;
 		if (params.length() > 1) {
-			// params[1] contains "STRUCT_TYPE=<type1>,<type2>,<type3>" or "STRUCT_MASK=<mask>"
+			// params[1] contains "UNITDEF_ID=<id1>,<id2>,<id3>" or "STRUCT_MASK=<mask>"
 			const array<string>@ paramType_values = params[1].split(LuaMsg::SEP_KEY_VALUE);
 			switch (parseInt(paramType_values[0])) {
-			case ERegionParam::STRUCT_TYPE: {
+			case ERegionParam::UNITDEF_ID: {
 				const array<string>@ maskTypes = paramType_values[1].split(LuaMsg::SEP_SUBPARAM);
 				for (uint i = 0; i < maskTypes.length(); ++i) {
-					mask |= 1 << parseInt(maskTypes[i]);
+					const int unitDefId = parseInt(maskTypes[i]);
+					mask |= aiTerrainMgr.GetStructMask(unitDefId);
 				}
 			} break;
 			case ERegionParam::STRUCT_MASK: {
@@ -168,7 +169,7 @@ class Manager {
 	}
 
 	void FillAllowedGrid(int mask) {
-		aiBuilderMgr.FillAllowedGrid(mask);
+		aiTerrainMgr.FillAllowedGrid(mask);
 	}
 
 	bool AddTriggerZone(const string& in param) {

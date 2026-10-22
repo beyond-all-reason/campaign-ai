@@ -24,10 +24,8 @@ enum ELuaMsg {
 
 	SET_UNITDEF_RETREAT_HP           =  11,
 
-	REGION_AVOID                     =  12,
-
 	SET_FACTORY_ACTIVE               =  13,
-
+	SET_MEX_CAP                      =  14,
 	AI_CONSTRUCTION_PARAMS           =  16,
 
 	// Base starts at 100

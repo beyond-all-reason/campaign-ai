@@ -181,6 +181,9 @@ public:
 	void FillAllowedGrid(SBlockingMap::SM mask);
 	void MarkTriggerZone(const CGridRegion& region, CGridRegion::Id zoneId);
 	CGridRegion::Id GetTriggerZoneId(const springai::AIFloat3& pos, CGridRegion::Id lastZoneId) const;
+	// Script API
+	SBlockingMap::StructType GetStructType(CCircuitDef::Id unitDefId);
+	SBlockingMap::StructMask GetStructMask(CCircuitDef::Id unitDefId);
 
 	int GetConvertStoP() const { return terrainData->convertStoP; }
 	int GetSectorXSize() const { return terrainData->sectorXSize; }

@@ -22,10 +22,8 @@ local topic = { -- Message topic
 
 	SET_UNITDEF_RETREAT_HP = 11,
 
-	REGION_AVOID = 12,
-
 	SET_FACTORY_ACTIVE = 13,
-
+	SET_MEX_CAP = 14,
 	AI_CONSTRUCTION_PARAMS = 16, -- construct params
 
 	-- Base starts at 100
@@ -48,6 +46,7 @@ local topic = { -- Message topic
 	SQUAD_PATH_PARAMS = 215,
 	SQUAD_ESCORT = 216,
 
+	-- Region starts at 300
 	BUILD_REGION_ID = 301,
 	BUILD_REGION_CLEAR = 302,
 	RESERVED_REGION_ID = 303,
@@ -67,7 +66,7 @@ local signal = { -- Trigger signal
 	REGION_EXIT = 302,
 }
 
-local construct = {
+local construct = { -- Default AI logic options
 	RECRUIT = 1,
 	BUILD_TASK = 2,
 	FACTORY = 3,
@@ -78,11 +77,23 @@ local construct = {
 	DEFENCE = 8,
 }
 
+local base = {
+	-- Base building anchors
+	POSITION = 1,
+	METAL_POS = 2,
+	ENERGY_CHEAP_POS = 3,
+	ENERGY_MODERATE_POS = 4,
+	ENERGY_EXPENSIVE_POS = 5,
+
+	-- Base maintenance parameters
+	RECLAIM_CONVERT = 11, -- efficiency ratio threshold
+	RECLAIM_ENERGY = 12, -- efficiency ratio threshold
+}
+
 local plan = { -- Build plan params
 	UNITDEF = 1,
 	POSITION = 2,
-	ZONE = 3,
-	REBUILD = 4,
+	REBUILD = 3,
 }
 
 local squad = { -- Squad params
@@ -113,28 +124,11 @@ local pathing = { -- Pathing params
 }
 
 local region = {
-	STRUCT_TYPE = 1,
+	UNITDEF_ID = 1,
 	STRUCT_MASK = 2,
 }
 
-local structType = { -- Must match the AI SBlockingMap::StructType definitions
-	FACTORY = 0,
-	MEX = 1,
-	GEO = 2,
-	PYLON = 3,
-	CONVERT = 4,
-	ENGY_LOW = 5,
-	ENGY_MID = 6,
-	ENGY_HIGH = 7,
-	DEF_LOW = 8,
-	DEF_MID = 9,
-	DEF_HIGH = 10,
-	SPECIAL = 11,
-	NANO = 12,
-	TERRA = 13,
-	UNKNOWN = 14,
-	RESERVED = 15,
-	-- struct masks
+local structMask = { -- Must match the AI SBlockingMap::StructMask definitions
 	NONE = 0,
 	ALL = 0xFFFF,
 }
@@ -212,11 +206,12 @@ return {
 	Topic = topic,
 	Signal = signal,
 	Construct = construct,
+	Base = base,
 	Plan = plan,
 	Squad = squad,
 	Task = task,
 	Path = pathing,
 	Region = region,
-	StructType = structType,
+	StructMask = structMask,
 	MsgBuilder = MsgBuilder,
 }

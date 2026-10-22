@@ -32,11 +32,14 @@ class Manager {
 
 			{formatInt(ELuaMsg::SET_UNITDEF_RETREAT_HP), LuaMsgFunc(this.SetUnitDefRetreat)},
 			{formatInt(ELuaMsg::SET_FACTORY_ACTIVE), LuaMsgFunc(this.SetFactoryActive)},
+			{formatInt(ELuaMsg::SET_MEX_CAP), LuaMsgFunc(this.SetMexCap)},
 			{formatInt(ELuaMsg::AI_CONSTRUCTION_PARAMS), LuaMsgFunc(this.SetConstructionParams)},
 
 			{formatInt(ELuaMsg::BASE_ID), LuaMsgFunc(this.SelectBaseId)},
 			{formatInt(ELuaMsg::BASE_ADD_PLAN), LuaMsgFunc(this.BaseAddPlan)},
 			{formatInt(ELuaMsg::BASE_DEL_PLAN), LuaMsgFunc(this.BaseDelPlan)},
+			{formatInt(ELuaMsg::BASE_CANCEL), LuaMsgFunc(this.BaseCancel)},
+			{formatInt(ELuaMsg::BASE_PARAMS), LuaMsgFunc(this.BaseParams)},
 
 			{formatInt(ELuaMsg::SQUAD_REQUEST_ID), LuaMsgFunc(this.SelectSquadRequestId)},
 			{formatInt(ELuaMsg::SQUAD_REQUEST_COMPOSE), LuaMsgFunc(this.SquadRequestCompose)},
@@ -126,6 +129,11 @@ class Manager {
 			aiFactoryMgr.SetIsActiveFactory(parseInt(unitIds[i]), isActive);
 	}
 
+	void SetMexCap(const array<string>& in params) {
+		// params contains "<mex_percent>;<is_allyteam>"
+		aiEconomyMgr.SetMexCap(parseFloat(params[0]), params[1] != "0");
+	}
+
 	void SetConstructionParams(const array<string>& in params) {
 		for (uint i = 0; i < params.length(); ++i) {
 			// params contains "<EConstructParam>=<bool>" pairs
@@ -172,6 +180,14 @@ class Manager {
 
 	void BaseDelPlan(const array<string>& in params) {
 		Base::mgr.DelBasePlan(params);
+	}
+
+	void BaseCancel(const array<string>& in params) {
+		Base::mgr.FreeBase(parseInt(params[0]));
+	}
+
+	void BaseParams(const array<string>& in params) {
+		Base::mgr.SetBaseParams(params);
 	}
 
 	// Squad Request

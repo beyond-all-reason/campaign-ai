@@ -402,6 +402,11 @@ class CSetupManager{
 	dictionary@ GetModOptions();
 	void SetBasePos(const AIFloat3&in);
 	const CCircuitDef@ commChoice;
+	AIFloat3 basePos;
+	AIFloat3 baseMetalPos;
+	AIFloat3 baseEnergy1Pos;
+	AIFloat3 baseEnergy2Pos;
+	AIFloat3 baseEnergy3Pos;
 }
 class AIFloat3{
 	AIFloat3();
@@ -465,6 +470,7 @@ class AIFloat3{
 	float z;
 }
 class CPolygon{
+	CPolygon(const array<AIFloat3>@);
 	int GetRefCount() const;
 	AIFloat3[]@ GetVerts() const;
 	bool ContainsPoint(const AIFloat3&in) const;
@@ -820,6 +826,7 @@ class CEconomyManager{
 	float GetMetalMake(const CCircuitDef@) const;
 	float GetEnergyMake(const CCircuitDef@) const;
 	int GetBuildType(int) const;
+	void SetMexCap(float, bool);
 	const SResourceInfo metal;
 	const SResourceInfo energy;
 	bool isMetalEmpty;
@@ -919,7 +926,6 @@ class CBuilderManager{
 	void DelReservedZone(int);
 	void AddAllowedZone(int, CPolygon@, int);
 	void DelAllowedZone(int);
-	void FillAllowedGrid(int);
 	int dangerHysteresis;
 }
 class SFightTask{
@@ -967,6 +973,9 @@ class CTerrainManager{
 	bool IsWaterAVoid() const;
 	float GetLandPercent() const;
 	float SetAllyZoneRange(float);
+	void FillAllowedGrid(uint16);
+	uint16 GetStructType(int);
+	uint16 GetStructMask(int);
 }
 class CEnemyManager{
 	float GetEnemyThreat(int) const;

@@ -831,11 +831,9 @@ void CBuilderManager::DequeueTask(IUnitTask* task, bool done)
 
 void CBuilderManager::FallbackTask(CCircuitUnit* unit)
 {
-	DequeueTask(unit->GetTask());
+	AbortTask(unit->GetTask());
 
-	const int frame = circuit->GetLastFrame();
-	const AIFloat3& pos = unit->GetPos(frame);
-	IUnitTask* task = Enqueue(TaskB::Patrol(IBuilderTask::Priority::LOW, pos, FRAMES_PER_SEC * 5));
+	IUnitTask* task = Enqueue(TaskB::Patrol(IBuilderTask::Priority::LOW, -RgtVector, FRAMES_PER_SEC * 5));
 	task->AssignTo(unit);
 	task->Start(unit);
 	static_cast<CBuilderScript*>(script)->TaskAssigned(unit);
@@ -1062,11 +1060,6 @@ void CBuilderManager::DelAllowedZone(CGridRegion::Id zoneId)
 	}
 	SBuildZone& bz = it->second;
 	circuit->GetTerrainManager()->MarkAllowedZone(bz.region, STRUCT_BIT(ALL));
-}
-
-void CBuilderManager::FillAllowedGrid(int mask)
-{
-	circuit->GetTerrainManager()->FillAllowedGrid(static_cast<SBlockingMap::SM>(mask));
 }
 
 IUnitTask* CBuilderManager::DefaultMakeTask(CCircuitUnit* unit)

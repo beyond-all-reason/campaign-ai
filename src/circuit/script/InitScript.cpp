@@ -781,9 +781,17 @@ void CInitScript::RegisterMgr()
 	r = engine->RegisterObjectMethod("CTerrainManager", "bool IsWaterAVoid() const", asMETHOD(CTerrainManager, IsWaterAVoid), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CTerrainManager", "float GetLandPercent() const", asMETHOD(CTerrainManager, GetLandPercent), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CTerrainManager", "float SetAllyZoneRange(float)", asMETHOD(CTerrainManager, SetAllyZoneRange), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CTerrainManager", "void FillAllowedGrid(uint16)", asMETHOD(CTerrainManager, FillAllowedGrid), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CTerrainManager", "uint16 GetStructType(Id)", asMETHOD(CTerrainManager, GetStructType), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CTerrainManager", "uint16 GetStructMask(Id)", asMETHOD(CTerrainManager, GetStructMask), asCALL_THISCALL); ASSERT(r >= 0);
 
 	r = engine->RegisterObjectProperty("CSetupManager", "const CCircuitDef@ commChoice", asOFFSET(CSetupManager, commChoice)); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CSetupManager", "void SetBasePos(const AIFloat3& in)", asMETHOD(CSetupManager, SetBasePos), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("CSetupManager", "AIFloat3 basePos", asOFFSET(CSetupManager, basePos)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("CSetupManager", "AIFloat3 baseMetalPos", asOFFSET(CSetupManager, metalBase)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("CSetupManager", "AIFloat3 baseEnergy1Pos", asOFFSET(CSetupManager, smallEnergyPos)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("CSetupManager", "AIFloat3 baseEnergy2Pos", asOFFSET(CSetupManager, energyBase)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("CSetupManager", "AIFloat3 baseEnergy3Pos", asOFFSET(CSetupManager, energyBase2)); ASSERT(r >= 0);
 
 	CEnemyManager* enemyMgr = circuit->GetEnemyManager();
 	r = engine->RegisterObjectType("CEnemyManager", 0, asOBJ_REF | asOBJ_NOHANDLE); ASSERT(r >= 0);

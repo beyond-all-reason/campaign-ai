@@ -662,7 +662,7 @@ int CCircuitAI::Init(int skirmishAIId, const SSkirmishAICallback* sAICallback)
 		return ERROR_INIT;
 	}
 #ifdef DEBUG_LOG
-	script->DumpASPredefined();
+//	script->DumpASPredefined();
 #endif
 
 	// Delay threat ranges initialization from allyTeam->Init()

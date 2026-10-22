@@ -610,9 +610,7 @@ void CEconomyManager::Init()
 
 	const Json::Value& econ = circuit->GetSetupManager()->GetConfig()["economy"];
 	const Json::Value& mexCap = econ["mex_max"];
-	const float mm = mexCap.get((unsigned)0, 2.f).asFloat();
-	mexMax = (mm < 1.f) ? decltype(mexMax)(mm * spSize) : std::numeric_limits<decltype(mexMax)>::max();
-	isAllyMexMax = mexCap.get((unsigned)1, true).asBool();
+	SetMexCap(mexCap.get((unsigned)0, 2.f).asFloat(), mexCap.get((unsigned)1, true).asBool());
 
 	const Json::Value& pull = econ["ms_pull"];
 	mspInfos.resize(pull.size());
@@ -888,6 +886,13 @@ IBuilderTask::BuildType CEconomyManager::GetBuildType(CCircuitDef::Id defId) con
 {
 	auto it = defToBuildType.find(defId);
 	return (it != defToBuildType.end()) ? it->second : IBuilderTask::BuildType::STORE;
+}
+
+void CEconomyManager::SetMexCap(float percent, bool isAlly)
+{
+	const size_t spSize = circuit->GetMetalManager()->GetSpots().size();
+	mexMax = (percent < 1.f) ? decltype(mexMax)(percent * spSize) : std::numeric_limits<decltype(mexMax)>::max();
+	isAllyMexMax = isAlly;
 }
 
 const CEconomyManager::SSideInfo& CEconomyManager::GetSideInfo() const

@@ -1700,6 +1700,21 @@ CGridRegion::Id CTerrainManager::GetTriggerZoneId(const AIFloat3& pos, CGridRegi
 	return zoneId;
 }
 
+SBlockingMap::StructType CTerrainManager::GetStructType(CCircuitDef::Id unitDefId)
+{
+	auto it = blockInfos.find(unitDefId);
+	if (it != blockInfos.end()) {
+		IBlockMask* mask = it->second;
+		return mask->GetStructType();
+	}
+	return SBlockingMap::StructType::UNKNOWN;
+}
+
+SBlockingMap::StructMask CTerrainManager::GetStructMask(CCircuitDef::Id unitDefId)
+{
+	return SBlockingMap::GetStructMask(GetStructType(unitDefId));
+}
+
 void CTerrainManager::SnapPosition(AIFloat3& position)
 {
 	// NOTE: Build-cells have size of (SQURE_SIZE * 2)=16 elmos.
