@@ -34,13 +34,15 @@ class Manager {
 		int facing = parseInt(params[2]);
 		aiBuilderMgr.AddBuildZone(regionId, CPolygon(verts), Builder::MakeBuildRecord(unitDefId), facing);
 
-		const int simult = (params.length() > 3) ? parseInt(params[3]) : 0;
-		const bool isSimult = simult <= 0;
-		aiBuilderMgr.FillBuildZone(regionId, isSimult);
+		// NOTE: BuildZone can be instantly filled with BuildTasks: works for air, traps land constructors.
+		//       Building a zone with only 1-5 tasks simultaneously helps to avoid land traps.
+		const int simultaneous = (params.length() > 3) ? parseInt(params[3]) : 0;
+		const bool isSimultaneous = simultaneous <= 0;
+		aiBuilderMgr.FillBuildZone(regionId, isSimultaneous);
 
-		if (!isSimult) {  // Start build-chain that will be continued by Manager::BuildNextSlot
-			for (int i = 0; i < simult; ++i) {
-				IBuilderTask@ task = aiBuilderMgr.BuildNextSlot(regionId);
+		if (!isSimultaneous) {  // Start build-chain that will be continued by Manager::BuildNextSlot
+			for (int i = 0; i < simultaneous; ++i) {
+				IBuilderTask@ task = aiBuilderMgr.EnqueueBuildTaskForZone(regionId);
 				if (task !is null)
 					taskToZone.insert(task.id, regionId);
 				else
@@ -48,8 +50,6 @@ class Manager {
 			}
 		}
 
-		for (uint i = 0; i < verts.length(); ++i)  // FIXME: DEBUG
-			AiAddLine(verts[i], verts[(i+1) % verts.length()]);
 		return true;
 	}
 
@@ -69,19 +69,29 @@ class Manager {
 		}
 	}
 
-	// Invoked by Builder::AiTaskRemoved
-	void BuildNextSlot(Id prevTaskId) {
-		bool success;
-		Id regioId = taskToZone.find(prevTaskId, success);
-		auto it = taskToZone.find_iterator(prevTaskId);
+	private Id RemoveZoneBuildTask(Id taskId) {
+		auto it = taskToZone.find_iterator(taskId);
 		if (it == taskToZone.end())
-			return;
+			return -1;
 
 		Id regionId = it.current_value();
 		taskToZone.erase(it);
-		IBuilderTask@ task = aiBuilderMgr.BuildNextSlot(regionId);
+		return regionId;
+	}
+
+	private void CreateNewZoneBuildTask(Id regionId) {
+		IBuilderTask@ task = aiBuilderMgr.EnqueueBuildTaskForZone(regionId);
 		if (task !is null)
 			taskToZone.insert(task.id, regionId);
+	}
+
+	// Invoked by Builder::AiTaskRemoved
+	void BuildNextSlot(Id prevTaskId) {
+		Id regionId = RemoveZoneBuildTask(prevTaskId);
+		if (regionId <= 0)
+			return;
+
+		CreateNewZoneBuildTask(regionId);
 	}
 
 	bool AddReservedZone(const array<string>& in params) {
@@ -95,8 +105,6 @@ class Manager {
 		const array<AIFloat3>@ verts = ParseVerts(region_points[1]);
 		aiBuilderMgr.AddReservedZone(regionId, CPolygon(verts));
 
-		for (uint i = 0; i < verts.length(); ++i)  // FIXME: DEBUG
-			AiAddLine(verts[i], verts[(i+1) % verts.length()]);
 		return true;
 	}
 
@@ -132,9 +140,9 @@ class Manager {
 			const array<string>@ paramType_values = params[1].split(LuaMsg::SEP_KEY_VALUE);
 			switch (parseInt(paramType_values[0])) {
 			case ERegionParam::UNITDEF_ID: {
-				const array<string>@ maskTypes = paramType_values[1].split(LuaMsg::SEP_SUBPARAM);
-				for (uint i = 0; i < maskTypes.length(); ++i) {
-					const int unitDefId = parseInt(maskTypes[i]);
+				const array<string>@ buildMaskTypes = paramType_values[1].split(LuaMsg::SEP_SUBPARAM);
+				for (uint i = 0; i < buildMaskTypes.length(); ++i) {
+					const int unitDefId = parseInt(buildMaskTypes[i]);
 					mask |= aiTerrainMgr.GetStructMask(unitDefId);
 				}
 			} break;
@@ -147,8 +155,6 @@ class Manager {
 
 		aiBuilderMgr.AddAllowedZone(regionId, CPolygon(verts), mask);
 
-		for (uint i = 0; i < verts.length(); ++i)  // FIXME: DEBUG
-			AiAddLine(verts[i], verts[(i+1) % verts.length()]);
 		return true;
 	}
 
@@ -183,8 +189,6 @@ class Manager {
 		const array<AIFloat3>@ verts = ParseVerts(region_points[1]);
 		aiMilitaryMgr.AddTriggerZone(regionId, CPolygon(verts));
 
-		for (uint i = 0; i < verts.length(); ++i)  // FIXME: DEBUG
-			AiAddLine(verts[i], verts[(i+1) % verts.length()]);
 		return true;
 	}
 

@@ -1684,6 +1684,8 @@ CGridRegion::Id CTerrainManager::GetTriggerZoneId(const AIFloat3& pos, CGridRegi
 {
 	short x = short(pos.x / GRID_TRIGGER_STEP);
 	short z = short(pos.z / GRID_TRIGGER_STEP);
+	assert((0 <= x) && (x < triggerColumns));
+	assert((0 <= z) && (z < triggerRows));
 	const int idx = z * triggerColumns + x;
 	// Anti-Jittering 1-cell delay: avoid zone switching when moving on the edge
 	CGridRegion::Id zoneId = triggerZone[idx];

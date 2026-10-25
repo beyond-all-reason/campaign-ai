@@ -74,7 +74,7 @@ CBuilderScript::CBuilderScript(CScriptManager* scr, CBuilderManager* mgr)
 	r = engine->RegisterObjectMethod("CBuilderManager", "void AddBuildZone(Id, CPolygon@+, SBuildTask& in, int)", asMETHOD(CBuilderManager, AddBuildZone), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CBuilderManager", "void DelBuildZone(Id)", asMETHOD(CBuilderManager, DelBuildZone), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CBuilderManager", "void FillBuildZone(Id, bool)", asMETHOD(CBuilderManager, FillBuildZone), asCALL_THISCALL); ASSERT(r >= 0);
-	r = engine->RegisterObjectMethod("CBuilderManager", "IBuilderTask@+ BuildNextSlot(Id)", asMETHOD(CBuilderManager, BuildNextSlot), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CBuilderManager", "IBuilderTask@+ EnqueueBuildTaskForZone(Id)", asMETHOD(CBuilderManager, EnqueueBuildTaskForZone), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CBuilderManager", "void AddReservedZone(Id, CPolygon@+)", asMETHOD(CBuilderManager, AddReservedZone), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CBuilderManager", "void DelReservedZone(Id)", asMETHOD(CBuilderManager, DelReservedZone), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CBuilderManager", "void AddAllowedZone(Id, CPolygon@+, int)", asMETHOD(CBuilderManager, AddAllowedZone), asCALL_THISCALL); ASSERT(r >= 0);

@@ -35,10 +35,10 @@ class Manager {
 			{formatInt(ELuaMsg::SET_MEX_CAP), LuaMsgFunc(this.SetMexCap)},
 			{formatInt(ELuaMsg::AI_CONSTRUCTION_PARAMS), LuaMsgFunc(this.SetConstructionParams)},
 
-			{formatInt(ELuaMsg::BASE_ID), LuaMsgFunc(this.SelectBaseId)},
-			{formatInt(ELuaMsg::BASE_ADD_PLAN), LuaMsgFunc(this.BaseAddPlan)},
-			{formatInt(ELuaMsg::BASE_DEL_PLAN), LuaMsgFunc(this.BaseDelPlan)},
-			{formatInt(ELuaMsg::BASE_CANCEL), LuaMsgFunc(this.BaseCancel)},
+			{formatInt(ELuaMsg::BASE_PLAN_ID), LuaMsgFunc(this.SelectBuildPlanId)},
+			{formatInt(ELuaMsg::BASE_ADD_BUILDTASK), LuaMsgFunc(this.AddBuildTask)},
+			{formatInt(ELuaMsg::BASE_DEL_BUILDTASK), LuaMsgFunc(this.DelBuildTask)},
+			{formatInt(ELuaMsg::BASE_PLAN_CANCEL), LuaMsgFunc(this.BuildPlanCancel)},
 			{formatInt(ELuaMsg::BASE_PARAMS), LuaMsgFunc(this.BaseParams)},
 
 			{formatInt(ELuaMsg::SQUAD_REQUEST_ID), LuaMsgFunc(this.SelectSquadRequestId)},
@@ -170,20 +170,20 @@ class Manager {
 	}
 
 	// Base
-	void SelectBaseId(const array<string>& in params) {
-		Base::mgr.SelectBase(parseInt(params[0]));
+	void SelectBuildPlanId(const array<string>& in params) {
+		Base::mgr.SelectBuildPlan(parseInt(params[0]));
 	}
 
-	void BaseAddPlan(const array<string>& in params) {
-		Base::mgr.AddBasePlan(params);
+	void AddBuildTask(const array<string>& in params) {
+		Base::mgr.AddToBuildPlan(params);
 	}
 
-	void BaseDelPlan(const array<string>& in params) {
-		Base::mgr.DelBasePlan(params);
+	void DelBuildTask(const array<string>& in params) {
+		Base::mgr.RemoveFromBuildPlan(params);
 	}
 
-	void BaseCancel(const array<string>& in params) {
-		Base::mgr.FreeBase(parseInt(params[0]));
+	void BuildPlanCancel(const array<string>& in params) {
+		Base::mgr.FreeBuildPlan(parseInt(params[0]));
 	}
 
 	void BaseParams(const array<string>& in params) {

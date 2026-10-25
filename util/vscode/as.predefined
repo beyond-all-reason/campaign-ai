@@ -921,7 +921,7 @@ class CBuilderManager{
 	void AddBuildZone(int, CPolygon@, SBuildTask&in, int);
 	void DelBuildZone(int);
 	void FillBuildZone(int, bool);
-	IBuilderTask@ BuildNextSlot(int);
+	IBuilderTask@ EnqueueBuildTaskForZone(int);
 	void AddReservedZone(int, CPolygon@);
 	void DelReservedZone(int);
 	void AddAllowedZone(int, CPolygon@, int);

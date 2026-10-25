@@ -29,7 +29,6 @@ void AiTaskResigned(CCircuitUnit@ unit)
 
 void AiTaskZoneChanged(CCircuitUnit@ unit, int srcZoneId, int dstZoneId)
 {
-	AiAddPoint(unit.GetPos(ai.frame), "" + srcZoneId + "=>" + dstZoneId);  // FIXME: DEBUG
 	Squad::mgr.SquadZoneChanged(unit, srcZoneId, dstZoneId);
 }
 

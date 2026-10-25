@@ -732,24 +732,24 @@ end
 
 function widget:SendNewBase()
     local msg = aiMsg.MsgBuilder.new()
-        :cmdValue(aiMsg.Topic.BASE_ID, baseID1)
-        :cmdDict(aiMsg.Topic.BASE_ADD_PLAN, {
+        :cmdValue(aiMsg.Topic.BASE_PLAN_ID, baseID1)
+        :cmdDict(aiMsg.Topic.BASE_ADD_BUILDTASK, {
             [aiMsg.Plan.UNITDEF] = nameToDefID["armmex"],
         })
         :paramArray(aiMsg.Plan.POSITION, {333, 6913})
-        :cmdDict(aiMsg.Topic.BASE_ADD_PLAN, {
+        :cmdDict(aiMsg.Topic.BASE_ADD_BUILDTASK, {
             [aiMsg.Plan.UNITDEF] = nameToDefID["armmex"],
         })
         :paramArray(aiMsg.Plan.POSITION, {460, 6509})
-        :cmdDict(aiMsg.Topic.BASE_ADD_PLAN, {
+        :cmdDict(aiMsg.Topic.BASE_ADD_BUILDTASK, {
             [aiMsg.Plan.UNITDEF] = nameToDefID["armmex"],
         })
         :paramArray(aiMsg.Plan.POSITION, {862, 6866})
-        :cmdDict(aiMsg.Topic.BASE_ADD_PLAN, {
+        :cmdDict(aiMsg.Topic.BASE_ADD_BUILDTASK, {
             [aiMsg.Plan.UNITDEF] = nameToDefID["armlab"],
         })
         :paramArray(aiMsg.Plan.POSITION, {621, 6696})
-        :cmdDict(aiMsg.Topic.BASE_ADD_PLAN, {
+        :cmdDict(aiMsg.Topic.BASE_ADD_BUILDTASK, {
             [aiMsg.Plan.UNITDEF] = nameToDefID["armsolar"],
             [aiMsg.Plan.REBUILD] = 1,
         })

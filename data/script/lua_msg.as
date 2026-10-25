@@ -29,10 +29,10 @@ enum ELuaMsg {
 	AI_CONSTRUCTION_PARAMS           =  16,
 
 	// Base starts at 100
-	BASE_ID                          = 101,
-	BASE_ADD_PLAN                    = 102,
-	BASE_DEL_PLAN                    = 103,
-	BASE_CANCEL                      = 104,
+	BASE_PLAN_ID                     = 101,
+	BASE_ADD_BUILDTASK               = 102,
+	BASE_DEL_BUILDTASK               = 103,
+	BASE_PLAN_CANCEL                 = 104,
 	BASE_PARAMS                      = 105,
 
 	// Squad Request starts at 200

@@ -23,19 +23,19 @@ enum EPlanParam {
 	REBUILD  = 3,
 }
 
-class Base {
-	Base(Id p_id) {
+class BuildPlan {
+	BuildPlan(Id p_id) {
 		id = p_id;
 	}
 
 	void adjustCenter(const AIFloat3& in pos) {
-		const float weight = 1.0 / plans.length();
+		const float weight = 1.0 / buildTasks.length();
 		center += (pos - center) * weight;
 	}
 
 	Id id;
 
-	array<BuildTask@> plans;
+	array<BuildTask@> buildTasks;
 	AIFloat3 center;  // nominal center
 }
 
@@ -46,7 +46,7 @@ class BuildTask {
 
 	Id unitDefId = -1;
 	AIFloat3 pos;
-	Base@ base = null;
+	BuildPlan@ plan = null;
 	IBuilderTask@ task = null;
 	bool isDone = false;
 	bool isRebuild = false;
@@ -59,7 +59,7 @@ class Manager {
 		return AIFloat3(parseFloat(posStr[0]), 0.f, parseFloat(posStr[1]));
 	}
 
-	private BuildTask@ ParseBasePlanParams(const array<string>& in params) {
+	private BuildTask@ ParseBuildTaskParams(const array<string>& in params) {
 		BuildTask bt;
 		for (uint i = 0; i < params.length(); ++i) {
 			// params contains "<EPlanParam>=<positional_values>" pairs
@@ -80,77 +80,77 @@ class Manager {
 		return @bt;
 	}
 
-	// Invoked by LuaMsg::Manager::SelectBaseId
-	void SelectBase(Id baseId) {
+	// Invoked by LuaMsg::Manager::SelectBuildPlanId
+	void SelectBuildPlan(Id planId) {
 		bool success;
-		Base@ base = bases.find(baseId, success);
+		BuildPlan@ plan = plans.find(planId, success);
 		if (!success) {
-			@base = Base(baseId);
-			bases.insert(base.id, @base);
+			@plan = BuildPlan(planId);
+			plans.insert(plan.id, @plan);
 		}
-		@selBase = base;
+		@selBuildPlan = plan;
 	}
 
-	// Invoked by LuaMsg::Manager::BaseAddPlan
-	bool AddBasePlan(const array<string>& in params) {
-		if (selBase is null)
+	// Invoked by LuaMsg::Manager::AddBuildTask
+	bool AddToBuildPlan(const array<string>& in params) {
+		if (selBuildPlan is null)
 			return false;
 
-		BuildTask@ bt = ParseBasePlanParams(params);
-		@bt.base = selBase;
-		selBase.plans.insertLast(@bt);
-		selBase.adjustCenter(bt.pos);
+		BuildTask@ bt = ParseBuildTaskParams(params);
+		@bt.plan = selBuildPlan;
+		selBuildPlan.buildTasks.insertLast(@bt);
+		selBuildPlan.adjustCenter(bt.pos);
 		return true;
 	}
 
-	// Invoked by LuaMsg::Manager::BaseDelPlan
-	bool DelBasePlan(const array<string>& in params) {
-		if (selBase is null)
+	// Invoked by LuaMsg::Manager::DelBuildTask
+	bool RemoveFromBuildPlan(const array<string>& in params) {
+		if (selBuildPlan is null)
 			return false;
 
-		BuildTask@ bt = ParseBasePlanParams(params);
-		for (uint i = 0; i < selBase.plans.length(); ++i)
-			if (selBase.plans[i] == bt) {
-				selBase.plans.removeAt(i);
+		BuildTask@ bt = ParseBuildTaskParams(params);
+		for (uint i = 0; i < selBuildPlan.buildTasks.length(); ++i)
+			if (selBuildPlan.buildTasks[i] == bt) {
+				selBuildPlan.buildTasks.removeAt(i);
 				return true;
 			}
 		return false;
 	}
 
-	private Base@ GetNearestBase(const AIFloat3& in pos) {
-		Base@ base = null;
+	private BuildPlan@ GetNearestBuildPlan(const AIFloat3& in pos) {
+		BuildPlan@ plan = null;
 		float sqLeastDist = BIG_FLOAT;
-		for (auto it = bases.begin(); it++;) {
-			Base@ checkBase = it.current_value();
-			float sqDist = pos.SqDistance2D(checkBase.center);
+		for (auto it = plans.begin(); it++;) {
+			BuildPlan@ checkPlan = it.current_value();
+			float sqDist = pos.SqDistance2D(checkPlan.center);
 			if (sqLeastDist <= sqDist)
 				continue;
 			sqLeastDist = sqDist;
-			@base = checkBase;
+			@plan = checkPlan;
 		}
-		return base;
+		return plan;
 	}
 
 	// Invoked by Builder::AiMakeTask
 	IBuilderTask@ GetTaskToBuild(CCircuitUnit@ unit) {
 		// NOTE: Builder controller periodically re-evaluates assigned task.
-		//       Return cached base one to save performance.
-		if (taskToPlan.contains(unit.task.id))
+		//       Return cached task to save performance.
+		if (taskToBuildTask.contains(unit.task.id))
 			return cast<IBuilderTask>(unit.task);
 
-		Base@ base = GetNearestBase(unit.GetPos(ai.frame));
-		if (base is null)
+		BuildPlan@ plan = GetNearestBuildPlan(unit.GetPos(ai.frame));
+		if (plan is null)
 			return null;
 
-		for (uint i = 0; i < base.plans.length(); ++i) {
-			BuildTask@ bt = base.plans[i];
+		for (uint i = 0; i < plan.buildTasks.length(); ++i) {
+			BuildTask@ bt = plan.buildTasks[i];
 			if (bt.isDone)
 				continue;
 			if (!unit.circuitDef.CanBuild(bt.unitDefId))
 				continue;
 			if (bt.task is null) {
 				IUnitTask@ task = aiBuilderMgr.Enqueue(Builder::MakeBuildRecord(bt.unitDefId, bt.pos));
-				taskToPlan.insert(task.id, @bt);
+				taskToBuildTask.insert(task.id, @bt);
 				@bt.task = cast<IBuilderTask>(task);
 			}
 			return bt.task;
@@ -159,64 +159,68 @@ class Manager {
 	}
 
 	// Invoked by Builder::AiTaskRemoved done=true
-	void BaseTaskFinished(IBuilderTask@ task) {
+	void BuildTaskFinished(IBuilderTask@ task) {
 		bool success;
-		BuildTask@ bt = taskToPlan.find(task.id, success);
+		BuildTask@ bt = taskToBuildTask.find(task.id, success);
 		if (!success)
 			return;
 
-		taskToPlan.erase(task.id);
+		taskToBuildTask.erase(task.id);
 		if (bt.isRebuild) {
-			unitToPlan.insert(task.target.id, @bt);
+			unitToBuildTask.insert(task.target.id, @bt);
 			bt.isDone = true;
 			@bt.task = null;
 			return;
 		}
 
-		const int idx = bt.base.plans.findByRef(bt);
-		bt.base.plans.removeAt(idx);
+		const int idx = bt.plan.buildTasks.findByRef(bt);
+		bt.plan.buildTasks.removeAt(idx);
 	}
 
 	// Invoked by Builder::AiTaskRemoved done=false
-	void BaseTaskCanceled(IBuilderTask@ task) {
+	void BuildTaskCanceled(IBuilderTask@ task) {
 		bool success;
-		BuildTask@ bt = taskToPlan.find(task.id, success);
+		BuildTask@ bt = taskToBuildTask.find(task.id, success);
 		if (!success)
 			return;
 
-		taskToPlan.erase(task.id);
+		taskToBuildTask.erase(task.id);
 		@bt.task = null;
 	}
 
 	// Invoked by Main::AiUnitDestroyed
-	void UnitDestroyed(CCircuitUnit@ unit) {
+	void OnUnitDestroyed(CCircuitUnit@ unit) {
 		bool success;
-		BuildTask@ bt = unitToPlan.find(unit.id, success);
+		BuildTask@ bt = unitToBuildTask.find(unit.id, success);
 		if (!success)
 			return;
 
 		bt.isDone = false;
 	}
 
-	// Invoked by LuaMsg::Manager::BaseCancel
-	void FreeBase(Id baseId) {
-		bool success;
-		Base@ base = bases.find(baseId, success);
-		if (!success)
-			return;
-
+	private void ClearBuildPlan(BuildPlan@ plan) {
 		array<Id> remTasks;
-		for (auto it = taskToPlan.begin(); it++;) {
+		for (auto it = taskToBuildTask.begin(); it++;) {
 			BuildTask@ bt = it.current_value();
-			if (bt.base is base) {
-				@bt.base = null;
+			if (bt.plan is plan) {
+				@bt.plan = null;
 				remTasks.insertLast(it.current_key());
 			}
 		}
 		foreach (Id taskId : remTasks)
-			taskToPlan.erase(taskId);
+			taskToBuildTask.erase(taskId);
+	}
 
-		bases.erase(baseId);
+	// Invoked by LuaMsg::Manager::BuildPlanCancel
+	void FreeBuildPlan(Id buildPlanId) {
+		bool success;
+		BuildPlan@ plan = plans.find(buildPlanId, success);
+		if (!success)
+			return;
+
+		ClearBuildPlan(plan);
+
+		plans.erase(buildPlanId);
 	}
 
 	// Invoked by LuaMsg::Manager::BaseParams
@@ -251,11 +255,11 @@ class Manager {
 		}
 	}
 
-	private map<Id, Base@> bases;  // owner
-	private map<Id, BuildTask@> taskToPlan;  // IBuilderTask.id => BuildTask
-	private map<Id, BuildTask@> unitToPlan;  // CCircuitUnit.id => BuildTask
+	private map<Id, BuildPlan@> plans;  // owner
+	private map<Id, BuildTask@> taskToBuildTask;  // IBuilderTask.id => BuildTask
+	private map<Id, BuildTask@> unitToBuildTask;  // CCircuitUnit.id => BuildTask
 
-	private Base@ selBase = null;  // Selected state
+	private BuildPlan@ selBuildPlan = null;  // Selected state
 }
 
 Manager mgr;

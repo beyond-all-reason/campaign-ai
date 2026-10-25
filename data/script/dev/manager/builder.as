@@ -26,7 +26,7 @@ void AiTaskRemoved(IUnitTask@ task, bool done)
 	if (task.GetType() != Task::Type::BUILDER)
 		return;
 	IBuilderTask@ taskB = cast<IBuilderTask>(task);
-	done ? Base::mgr.BaseTaskFinished(taskB) : Base::mgr.BaseTaskCanceled(taskB);
+	done ? Base::mgr.BuildTaskFinished(taskB) : Base::mgr.BuildTaskCanceled(taskB);
 	Region::mgr.BuildNextSlot(task.id);
 }
 

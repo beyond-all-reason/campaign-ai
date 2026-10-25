@@ -610,7 +610,9 @@ void CEconomyManager::Init()
 
 	const Json::Value& econ = circuit->GetSetupManager()->GetConfig()["economy"];
 	const Json::Value& mexCap = econ["mex_max"];
-	SetMexCap(mexCap.get((unsigned)0, 2.f).asFloat(), mexCap.get((unsigned)1, true).asBool());
+	constexpr float MEX_CAP_PERCENT = 2.f;  // 200%
+	constexpr bool IS_MEX_CAP_PER_ALLYTEAM = true;
+	SetMexCap(mexCap.get((unsigned)0, MEX_CAP_PERCENT).asFloat(), mexCap.get((unsigned)1, IS_MEX_CAP_PER_ALLYTEAM).asBool());
 
 	const Json::Value& pull = econ["ms_pull"];
 	mspInfos.resize(pull.size());

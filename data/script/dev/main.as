@@ -73,17 +73,15 @@ void AiMessage(const string& in data, int fromTeamId)  // AiSendMessage(msg, toT
 
 void AiUnitFinished(CCircuitUnit@ unit)
 {
-	// NOTE: Experimental. May be deprecated.
 	// Duplicates module's AiUnitAdded, but for any unit.
 	units.insert(unit.id, @unit);
 }
 
 void AiUnitDestroyed(CCircuitUnit@ unit)
 {
-	// NOTE: Experimental. May be deprecated
 	// Duplicates module's AiUnitRemoved, but for any unit.
 	units.erase(unit.id);
-	Base::mgr.UnitDestroyed(unit);
+	Base::mgr.OnUnitDestroyed(unit);
 }
 
 }  // namespace Main

@@ -325,10 +325,10 @@ public:
 
 	// Script API
 	void AddBuildZone(CGridRegion::Id zoneId, geom::CPolygon* poly,
-					  const TaskB::SBuildTask& taskRecord, int facing = 0);
+					  const TaskB::SBuildTask& taskRecord, int buildFacing = 0);
 	void DelBuildZone(CGridRegion::Id zoneId);
-	void FillBuildZone(CGridRegion::Id zoneId, bool isSimult = false);
-	IBuilderTask* BuildNextSlot(CGridRegion::Id zoneId);
+	void FillBuildZone(CGridRegion::Id zoneId, bool isSimultaneous = false);
+	IBuilderTask* EnqueueBuildTaskForZone(CGridRegion::Id zoneId);
 	void AddReservedZone(CGridRegion::Id zoneId, geom::CPolygon* poly);
 	void DelReservedZone(CGridRegion::Id zoneId);
 	void AddAllowedZone(CGridRegion::Id zoneId, geom::CPolygon* poly, int mask);

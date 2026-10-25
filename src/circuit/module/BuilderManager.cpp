@@ -939,12 +939,12 @@ bool CBuilderManager::CanUpGeo(CCircuitDef* cdef) const
 }
 
 void CBuilderManager::AddBuildZone(CGridRegion::Id zoneId, geom::CPolygon* poly,
-		const TaskB::SBuildTask& taskRecord, int facing)
+		const TaskB::SBuildTask& taskRecord, int buildFacing)
 {
 	auto [it, success] = buildZones.emplace(zoneId, SBuildZone{
 		CGridRegion(zoneId, poly, BUILD_SQUARE_SIZE),
 		taskRecord,
-		facing,
+		buildFacing,
 	});
 	if (!success) {
 		return;
@@ -960,7 +960,7 @@ void CBuilderManager::DelBuildZone(CGridRegion::Id zoneId)
 		return;
 	}
 	SBuildZone& bz = it->second;
-	decltype(bz.buildTasks) tmpTasks = bz.buildTasks;
+	auto tmpTasks = bz.buildTasks;
 	for (IBuilderTask* task : tmpTasks) {
 		task->Abort();
 	}
@@ -968,7 +968,7 @@ void CBuilderManager::DelBuildZone(CGridRegion::Id zoneId)
 	buildZones.erase(zoneId);
 }
 
-void CBuilderManager::FillBuildZone(CGridRegion::Id zoneId, bool isSimult)
+void CBuilderManager::FillBuildZone(CGridRegion::Id zoneId, bool isSimultaneous)
 {
 	auto it = buildZones.find(zoneId);
 	if (it == buildZones.end()) {
@@ -978,7 +978,7 @@ void CBuilderManager::FillBuildZone(CGridRegion::Id zoneId, bool isSimult)
 	bz.ResetSlots();
 	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
 	CTerrainManager::ZoneFunc fillFunc;
-	if (isSimult) {
+	if (isSimultaneous) {
 		fillFunc = [this, &bz](const AIFloat3& pos) {
 			bz.taskRecord.position = pos;
 			IBuilderTask* task = Enqueue(bz.taskRecord);
@@ -997,7 +997,7 @@ void CBuilderManager::FillBuildZone(CGridRegion::Id zoneId, bool isSimult)
 	terrainMgr->FillBuildZone(bz.region, bz.taskRecord.buildDef, bz.facing, fillFunc);
 }
 
-IBuilderTask* CBuilderManager::BuildNextSlot(CGridRegion::Id zoneId)
+IBuilderTask* CBuilderManager::EnqueueBuildTaskForZone(CGridRegion::Id zoneId)
 {
 	auto it = buildZones.find(zoneId);
 	if (it == buildZones.end()) {
