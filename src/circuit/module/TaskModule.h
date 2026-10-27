@@ -66,8 +66,13 @@ public:
 	float GetMetalPull() const { return metalPull; }
 
 protected:
+	void SetUpdateIdleEnabled(bool isEnabled, int interval, int offset);
+	void SetUpdateEnabled(bool isEnabled, int interval, int offset);
+	void SetWatchdogEnabled(bool isEnabled, int interval, int offset);
+
 	void UpdateIdle();
 	void Update();
+	virtual void Watchdog() = 0;
 
 	virtual void Load(std::istream& is) override;
 	virtual void Save(std::ostream& os) const override;
@@ -75,6 +80,10 @@ protected:
 	CNilTask* nilTask;
 	CIdleTask* idleTask;
 	CPlayerTask* playerTask;
+
+	std::shared_ptr<IMainJob> updateIdleJob;
+	std::shared_ptr<IMainJob> updateJob;
+	std::shared_ptr<IMainJob> watchdogJob;
 
 	std::vector<IUnitTask*> updateTasks;  // owner
 	unsigned int updateIterator;

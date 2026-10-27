@@ -526,17 +526,14 @@ void CMilitaryManager::Init()
 
 		DiceBigGun();
 
+		SetUpdateIdleEnabled(true);
+		SetUpdateEnabled(true);
+		SetWatchdogEnabled(true);
 		CScheduler* scheduler = circuit->GetScheduler().get();
 		const int interval = 4;
 		const int offset = circuit->GetSkirmishAIId() % interval;
-		scheduler->RunJobEvery(CScheduler::GameJob(&CMilitaryManager::UpdateIdle, this), interval, offset + 0);
-		scheduler->RunJobEvery(CScheduler::GameJob(&CMilitaryManager::Update, this), 1/*interval / 2*/, offset + 1);
 		scheduler->RunJobEvery(CScheduler::GameJob(&CMilitaryManager::UpdateDefenceTasks, this), FRAMES_PER_SEC * 5, offset + 2);
 		scheduler->RunJobEvery(CScheduler::GameJob(&CMilitaryManager::UpdateTriggersStep, this), 1, offset + 3);
-
-		scheduler->RunJobEvery(CScheduler::GameJob(&CMilitaryManager::Watchdog, this),
-								FRAMES_PER_SEC * 60,
-								circuit->GetSkirmishAIId() * WATCHDOG_COUNT + 12);
 	};
 
 	circuit->GetSetupManager()->ExecOnFindStart(subinit);
@@ -1647,6 +1644,21 @@ float CMilitaryManager::GetRangeUnitCountCompensatorScale()
 //				threatRangeScaling.scale, totalEnemies, enemyCountMinToStartScaling, rateAdjPerUnit);
 	}
 	return threatRangeScaling.scale;
+}
+
+void CMilitaryManager::SetUpdateIdleEnabled(bool isEnabled)
+{
+	ITaskModule::SetUpdateIdleEnabled(isEnabled, 4, 0);
+}
+
+void CMilitaryManager::SetUpdateEnabled(bool isEnabled)
+{
+	ITaskModule::SetUpdateEnabled(isEnabled, 1, 1);
+}
+
+void CMilitaryManager::SetWatchdogEnabled(bool isEnabled)
+{
+	ITaskModule::SetWatchdogEnabled(isEnabled, FRAMES_PER_SEC * 60, 12);
 }
 
 void CMilitaryManager::AddTriggerZone(CGridRegion::Id zoneId, geom::CPolygon* poly)

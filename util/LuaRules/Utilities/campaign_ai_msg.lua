@@ -24,6 +24,7 @@ local topic = { -- Message topic
 
 	SET_FACTORY_ACTIVE = 13,
 	SET_MEX_CAP = 14,
+	AI_UPDATE_LOOP_PARAMS = 15,
 	AI_CONSTRUCTION_PARAMS = 16, -- construct params
 
 	-- Base starts at 100
@@ -64,6 +65,18 @@ local signal = { -- Trigger signal
 	SQUAD_DESTROYED = 202,
 	REGION_ENTER = 301,
 	REGION_EXIT = 302,
+}
+
+local updateLoop = {
+	MILITARY_UPDATE_IDLE = 1,
+	MILITARY_UPDATE = 2,
+	MILITARY_WATCHDOG = 3,
+	BUILDER_UPDATE_IDLE = 4,
+	BUILDER_UPDATE = 5,
+	BUILDER_WATCHDOG = 6,
+	FACTORY_UPDATE_IDLE = 7,
+	FACTORY_UPDATE = 8,
+	FACTORY_WATCHDOG = 9,
 }
 
 local construct = { -- Default AI logic options
@@ -205,6 +218,7 @@ MsgBuilder.__tostring = MsgBuilder.toString
 return {
 	Topic = topic,
 	Signal = signal,
+	UpdateLoop = updateLoop,
 	Construct = construct,
 	Base = base,
 	Plan = plan,

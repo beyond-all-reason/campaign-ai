@@ -10,6 +10,18 @@
 namespace LuaMsg {
 
 // Must match the Lua definitions
+enum EUpdateLoopParam {
+	MILITARY_UPDATE_IDLE = 1,
+	MILITARY_UPDATE      = 2,
+	MILITARY_WATCHDOG    = 3,
+	BUILDER_UPDATE_IDLE  = 4,
+	BUILDER_UPDATE       = 5,
+	BUILDER_WATCHDOG     = 6,
+	FACTORY_UPDATE_IDLE  = 7,
+	FACTORY_UPDATE       = 8,
+	FACTORY_WATCHDOG     = 9,
+}
+
 enum EConstructParam {
 	RECRUIT    = 1,
 	BUILD_TASK = 2,
@@ -33,6 +45,7 @@ class Manager {
 			{formatInt(ELuaMsg::SET_UNITDEF_RETREAT_HP), LuaMsgFunc(this.SetUnitDefRetreat)},
 			{formatInt(ELuaMsg::SET_FACTORY_ACTIVE), LuaMsgFunc(this.SetFactoryActive)},
 			{formatInt(ELuaMsg::SET_MEX_CAP), LuaMsgFunc(this.SetMexCap)},
+			{formatInt(ELuaMsg::AI_UPDATE_LOOP_PARAMS), LuaMsgFunc(this.SetUpdateLoopParams)},
 			{formatInt(ELuaMsg::AI_CONSTRUCTION_PARAMS), LuaMsgFunc(this.SetConstructionParams)},
 
 			{formatInt(ELuaMsg::BASE_PLAN_ID), LuaMsgFunc(this.SelectBuildPlanId)},
@@ -132,6 +145,44 @@ class Manager {
 	void SetMexCap(const array<string>& in params) {
 		// params contains "<mex_percent>;<is_allyteam>"
 		aiEconomyMgr.SetMexCap(parseFloat(params[0]), params[1] != "0");
+	}
+
+	void SetUpdateLoopParams(const array<string>& in params) {
+		for (uint i = 0; i < params.length(); ++i) {
+			// params contains "<EUpdateLoopParam>=<bool>" pairs
+			const array<string>@ kv = params[i].split(LuaMsg::SEP_KEY_VALUE);
+			const bool isEnabled = kv[1] != "0";
+			switch (parseInt(kv[0])) {
+			case EUpdateLoopParam::MILITARY_UPDATE_IDLE: {
+				aiMilitaryMgr.SetUpdateIdleEnabled(isEnabled);
+			} break;
+			case EUpdateLoopParam::MILITARY_UPDATE: {
+				aiMilitaryMgr.SetUpdateEnabled(isEnabled);
+			} break;
+			case EUpdateLoopParam::MILITARY_WATCHDOG: {
+				aiMilitaryMgr.SetWatchdogEnabled(isEnabled);
+			} break;
+			case EUpdateLoopParam::BUILDER_UPDATE_IDLE: {
+				aiBuilderMgr.SetUpdateIdleEnabled(isEnabled);
+			} break;
+			case EUpdateLoopParam::BUILDER_UPDATE: {
+				aiBuilderMgr.SetUpdateEnabled(isEnabled);
+			} break;
+			case EUpdateLoopParam::BUILDER_WATCHDOG: {
+				aiBuilderMgr.SetWatchdogEnabled(isEnabled);
+			} break;
+			case EUpdateLoopParam::FACTORY_UPDATE_IDLE: {
+				aiFactoryMgr.SetUpdateIdleEnabled(isEnabled);
+			} break;
+			case EUpdateLoopParam::FACTORY_UPDATE: {
+				aiFactoryMgr.SetUpdateEnabled(isEnabled);
+			} break;
+			case EUpdateLoopParam::FACTORY_WATCHDOG: {
+				aiFactoryMgr.SetWatchdogEnabled(isEnabled);
+			} break;
+			default: break;
+			}
+		}
 	}
 
 	void SetConstructionParams(const array<string>& in params) {

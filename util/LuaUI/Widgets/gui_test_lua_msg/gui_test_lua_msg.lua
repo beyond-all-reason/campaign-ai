@@ -798,6 +798,85 @@ function widget:SendMexCap(percent, isAllyTeam)
     Spring.SendSkirmishAIMessage(teamID0, msg)
 end
 
+function widget:AiSetState(state)
+    if state == 'passive' then
+        local msg = aiMsg.MsgBuilder.new()
+            :cmdDict(aiMsg.Topic.AI_UPDATE_LOOP_PARAMS, {
+                [aiMsg.UpdateLoop.MILITARY_UPDATE_IDLE] = 0,
+                [aiMsg.UpdateLoop.MILITARY_UPDATE] = 0,
+                [aiMsg.UpdateLoop.MILITARY_WATCHDOG] = 0,
+                [aiMsg.UpdateLoop.BUILDER_UPDATE_IDLE] = 0,
+                [aiMsg.UpdateLoop.BUILDER_UPDATE] = 0,
+                [aiMsg.UpdateLoop.BUILDER_WATCHDOG] = 0,
+                [aiMsg.UpdateLoop.FACTORY_UPDATE_IDLE] = 0,
+                [aiMsg.UpdateLoop.FACTORY_UPDATE] = 0,
+                [aiMsg.UpdateLoop.FACTORY_WATCHDOG] = 0,
+            })
+            :cmdDict(aiMsg.Topic.AI_CONSTRUCTION_PARAMS, {
+                [aiMsg.Construct.RECRUIT] = 0,
+                [aiMsg.Construct.BUILD_TASK] = 0,
+                [aiMsg.Construct.FACTORY] = 0,
+                [aiMsg.Construct.STORAGE] = 0,
+                [aiMsg.Construct.METAL] = 0,
+                [aiMsg.Construct.ENERGY] = 0,
+                [aiMsg.Construct.ECONOMY] = 0,
+                [aiMsg.Construct.DEFENCE] = 0,
+            })
+            :toString()
+        Spring.SendSkirmishAIMessage(teamID1, msg)
+    elseif state == 'defensive' then
+        local msg = aiMsg.MsgBuilder.new()
+            :cmdDict(aiMsg.Topic.AI_UPDATE_LOOP_PARAMS, {
+                [aiMsg.UpdateLoop.MILITARY_UPDATE_IDLE] = 1,
+                [aiMsg.UpdateLoop.MILITARY_UPDATE] = 1,
+                [aiMsg.UpdateLoop.MILITARY_WATCHDOG] = 1,
+                [aiMsg.UpdateLoop.BUILDER_UPDATE_IDLE] = 1,
+                [aiMsg.UpdateLoop.BUILDER_UPDATE] = 1,
+                [aiMsg.UpdateLoop.BUILDER_WATCHDOG] = 1,
+                [aiMsg.UpdateLoop.FACTORY_UPDATE_IDLE] = 0,
+                [aiMsg.UpdateLoop.FACTORY_UPDATE] = 0,
+                [aiMsg.UpdateLoop.FACTORY_WATCHDOG] = 0,
+            })
+            :cmdDict(aiMsg.Topic.AI_CONSTRUCTION_PARAMS, {
+                [aiMsg.Construct.RECRUIT] = 0,
+                [aiMsg.Construct.BUILD_TASK] = 0,
+                [aiMsg.Construct.FACTORY] = 0,
+                [aiMsg.Construct.STORAGE] = 0,
+                [aiMsg.Construct.METAL] = 0,
+                [aiMsg.Construct.ENERGY] = 0,
+                [aiMsg.Construct.ECONOMY] = 0,
+                [aiMsg.Construct.DEFENCE] = 0,
+            })
+            :toString()
+        Spring.SendSkirmishAIMessage(teamID1, msg)
+    elseif state == 'aggressive' then
+        local msg = aiMsg.MsgBuilder.new()
+            :cmdDict(aiMsg.Topic.AI_UPDATE_LOOP_PARAMS, {
+                [aiMsg.UpdateLoop.MILITARY_UPDATE_IDLE] = 1,
+                [aiMsg.UpdateLoop.MILITARY_UPDATE] = 1,
+                [aiMsg.UpdateLoop.MILITARY_WATCHDOG] = 1,
+                [aiMsg.UpdateLoop.BUILDER_UPDATE_IDLE] = 1,
+                [aiMsg.UpdateLoop.BUILDER_UPDATE] = 1,
+                [aiMsg.UpdateLoop.BUILDER_WATCHDOG] = 1,
+                [aiMsg.UpdateLoop.FACTORY_UPDATE_IDLE] = 1,
+                [aiMsg.UpdateLoop.FACTORY_UPDATE] = 1,
+                [aiMsg.UpdateLoop.FACTORY_WATCHDOG] = 1,
+            })
+            :cmdDict(aiMsg.Topic.AI_CONSTRUCTION_PARAMS, {
+                [aiMsg.Construct.RECRUIT] = 1,
+                [aiMsg.Construct.BUILD_TASK] = 1,
+                [aiMsg.Construct.FACTORY] = 1,
+                [aiMsg.Construct.STORAGE] = 1,
+                [aiMsg.Construct.METAL] = 1,
+                [aiMsg.Construct.ENERGY] = 1,
+                [aiMsg.Construct.ECONOMY] = 1,
+                [aiMsg.Construct.DEFENCE] = 1,
+            })
+            :toString()
+        Spring.SendSkirmishAIMessage(teamID1, msg)
+    end
+end
+
 function widget:UnitFinished(unitID, unitDefID, unitTeam)
 	if unitTeam == teamID0 and  unitDefID == nameToDefID["armlab"] then
         local msg = aiMsg.MsgBuilder.new()

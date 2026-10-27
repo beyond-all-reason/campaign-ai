@@ -6,6 +6,7 @@
  */
 
 #include "module/TaskModule.h"
+#include "scheduler/Scheduler.h"
 #include "script/TaskModuleScript.h"
 #include "task/NilTask.h"
 #include "task/IdleTask.h"
@@ -127,6 +128,55 @@ void ITaskModule::Resurrected(CCircuitUnit* unit)
 	CRetreatTask* task = EnqueueRetreat();
 	if (task != nullptr) {
 		AssignTask(unit, task);
+	}
+}
+
+void ITaskModule::SetUpdateIdleEnabled(bool isEnabled, int interval, int offset)
+{
+	if (isEnabled) {
+		if (updateIdleJob == nullptr) {
+			updateIdleJob = CScheduler::GameJob(&ITaskModule::UpdateIdle, this);
+			const int shift = circuit->GetSkirmishAIId() % interval;
+			// TODO: adjust frameOffset according to current frame and interval
+			circuit->GetScheduler()->RunJobEvery(updateIdleJob, interval, shift + offset);
+		}
+	} else {
+		if (updateIdleJob != nullptr) {
+			circuit->GetScheduler()->RemoveJob(updateIdleJob);
+			updateIdleJob = nullptr;
+		}
+	}
+}
+
+void ITaskModule::SetUpdateEnabled(bool isEnabled, int interval, int offset)
+{
+	if (isEnabled) {
+		if (updateJob == nullptr) {
+			updateJob = CScheduler::GameJob(&ITaskModule::Update, this);
+			const int shift = circuit->GetSkirmishAIId() % interval;
+			circuit->GetScheduler()->RunJobEvery(updateJob, interval, shift + offset);
+		}
+	} else {
+		if (updateJob != nullptr) {
+			circuit->GetScheduler()->RemoveJob(updateJob);
+			updateJob = nullptr;
+		}
+	}
+}
+
+void ITaskModule::SetWatchdogEnabled(bool isEnabled, int interval, int offset)
+{
+	if (isEnabled) {
+		if (watchdogJob == nullptr) {
+			watchdogJob = CScheduler::GameJob(&ITaskModule::Watchdog, this);
+			const int shift = circuit->GetSkirmishAIId() * WATCHDOG_COUNT;
+			circuit->GetScheduler()->RunJobEvery(watchdogJob, interval, shift + offset);
+		}
+	} else {
+		if (watchdogJob != nullptr) {
+			circuit->GetScheduler()->RemoveJob(watchdogJob);
+			watchdogJob = nullptr;
+		}
 	}
 }
 

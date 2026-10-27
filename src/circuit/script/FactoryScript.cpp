@@ -57,6 +57,9 @@ CFactoryScript::CFactoryScript(CScriptManager* scr, CFactoryManager* mgr)
 	r = engine->RegisterObjectProperty("CFactoryManager", "bool isAssistRequired", asOFFSET(CFactoryManager, isAssistRequired)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CFactoryManager", "float buildpowerRatio", asOFFSET(CFactoryManager, bpRatio)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CFactoryManager", "float responseWeight", asOFFSET(CFactoryManager, reWeight)); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CFactoryManager", "void SetUpdateIdleEnabled(bool)", asMETHOD(CFactoryManager, SetUpdateIdleEnabled), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CFactoryManager", "void SetUpdateEnabled(bool)", asMETHOD(CFactoryManager, SetUpdateEnabled), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CFactoryManager", "void SetWatchdogEnabled(bool)", asMETHOD(CFactoryManager, SetWatchdogEnabled), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CFactoryManager", "IUnitTask@+ GetTaskById(Id) const", asMETHOD(CFactoryManager, GetTaskById), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CFactoryManager", "void AssignTask(CCircuitUnit@, IUnitTask@+)", asMETHODPR(CFactoryManager, AssignTask, (CCircuitUnit*, IUnitTask*), void), asCALL_THISCALL); ASSERT(r >= 0);
 

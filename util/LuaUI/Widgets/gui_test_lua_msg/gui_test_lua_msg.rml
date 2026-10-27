@@ -145,6 +145,15 @@
                     <button onclick="widget:SendMexCap(2.0, false)">mex 2.0</button>
                 </div>
                 </panel>
+
+                <tab>AI State</tab>
+                <panel>
+                <div class="grid commands">
+                    <button onclick="widget:AiSetState('passive')">passive</button>
+                    <button onclick="widget:AiSetState('defensive')">defensive</button>
+                    <button onclick="widget:AiSetState('aggressive')">aggressive</button>
+                </div>
+                </panel>
             </tabset>
             <div class="collapse-button" data-event-click="toggleCollapse()" title="Minimize" data-class-collapsed="isCollapsed"></div>
         </div>

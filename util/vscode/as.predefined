@@ -869,6 +869,9 @@ class CFactoryManager{
 	CCircuitDef@ GetRoleDef(const CCircuitDef@, int) const;
 	int GetFactoryCount() const;
 	void SetIsActiveFactory(int, bool);
+	void SetUpdateIdleEnabled(bool);
+	void SetUpdateEnabled(bool);
+	void SetWatchdogEnabled(bool);
 	IUnitTask@ GetTaskById(int) const;
 	void AssignTask(CCircuitUnit@, IUnitTask@);
 	void SetTierWeights(const CCircuitDef@, int, int, float[]@);
@@ -916,6 +919,9 @@ class CBuilderManager{
 	IUnitTask@ Enqueue(const SServBTask&in);
 	IUnitTask@ EnqueueRetreat();
 	uint GetWorkerCount() const;
+	void SetUpdateIdleEnabled(bool);
+	void SetUpdateEnabled(bool);
+	void SetWatchdogEnabled(bool);
 	IUnitTask@ GetTaskById(int) const;
 	void AssignTask(CCircuitUnit@, IUnitTask@);
 	void AddBuildZone(int, CPolygon@, SBuildTask&in, int);
@@ -941,6 +947,9 @@ class CMilitaryManager{
 	IUnitTask@ EnqueueRetreat();
 	void DefaultMakeDefence(int, const AIFloat3&in);
 	uint GetGuardTaskNum() const;
+	void SetUpdateIdleEnabled(bool);
+	void SetUpdateEnabled(bool);
+	void SetWatchdogEnabled(bool);
 	IUnitTask@ GetTaskById(int) const;
 	void AssignTask(CCircuitUnit@, IUnitTask@);
 	void AddTriggerZone(int, CPolygon@);

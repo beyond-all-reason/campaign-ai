@@ -324,6 +324,9 @@ public:
 	void DecGuardCount() { --guardCount; }
 
 	// Script API
+	void SetUpdateIdleEnabled(bool isEnabled);
+	void SetUpdateEnabled(bool isEnabled);
+	void SetWatchdogEnabled(bool isEnabled);
 	void AddBuildZone(CGridRegion::Id zoneId, geom::CPolygon* poly,
 					  const TaskB::SBuildTask& taskRecord, int buildFacing = 0);
 	void DelBuildZone(CGridRegion::Id zoneId);
@@ -344,7 +347,7 @@ private:
 	void AddBuildList(CCircuitUnit* unit, int hiddenDefs);
 	void RemoveBuildList(CCircuitUnit* unit, int hiddenDefs);
 
-	void Watchdog();
+	virtual void Watchdog() override;
 
 	Handlers2 createdHandler;
 	Handlers1 finishedHandler;

@@ -26,6 +26,7 @@ enum ELuaMsg {
 
 	SET_FACTORY_ACTIVE               =  13,
 	SET_MEX_CAP                      =  14,
+	AI_UPDATE_LOOP_PARAMS            =  15,
 	AI_CONSTRUCTION_PARAMS           =  16,
 
 	// Base starts at 100

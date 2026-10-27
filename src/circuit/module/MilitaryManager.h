@@ -187,6 +187,9 @@ public:
 	float GetRangeUnitCountCompensatorScale();
 
 	// Script API
+	void SetUpdateIdleEnabled(bool isEnabled);
+	void SetUpdateEnabled(bool isEnabled);
+	void SetWatchdogEnabled(bool isEnabled);
 	void AddTriggerZone(CGridRegion::Id zoneId, geom::CPolygon* poly);
 	void DelTriggerZone(CGridRegion::Id zoneId);
 private:
@@ -194,7 +197,7 @@ private:
 
 	virtual IUnitTask* DefaultMakeTask(CCircuitUnit* unit) override;
 
-	void Watchdog();
+	virtual void Watchdog() override;
 
 	void AddArmyCost(CCircuitUnit* unit);
 	void DelArmyCost(CCircuitUnit* unit);
