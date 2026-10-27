@@ -131,53 +131,55 @@ void ITaskModule::Resurrected(CCircuitUnit* unit)
 	}
 }
 
-void ITaskModule::SetUpdateIdleEnabled(bool isEnabled, int interval, int offset)
+void ITaskModule::EnableJob(std::shared_ptr<IMainJob>& job, std::function<void ()> method,
+		int interval, int offset)
 {
-	if (isEnabled) {
-		if (updateIdleJob == nullptr) {
-			updateIdleJob = CScheduler::GameJob(&ITaskModule::UpdateIdle, this);
-			const int shift = circuit->GetSkirmishAIId() % interval;
-			// TODO: adjust frameOffset according to current frame and interval
-			circuit->GetScheduler()->RunJobEvery(updateIdleJob, interval, shift + offset);
-		}
-	} else {
-		if (updateIdleJob != nullptr) {
-			circuit->GetScheduler()->RemoveJob(updateIdleJob);
-			updateIdleJob = nullptr;
-		}
+	if (job == nullptr) {
+		job = CScheduler::GameJob(method);
+		circuit->GetScheduler()->RunJobEvery(job, interval, offset);
 	}
 }
 
-void ITaskModule::SetUpdateEnabled(bool isEnabled, int interval, int offset)
+void ITaskModule::DisableJob(std::shared_ptr<IMainJob>& job)
 {
-	if (isEnabled) {
-		if (updateJob == nullptr) {
-			updateJob = CScheduler::GameJob(&ITaskModule::Update, this);
-			const int shift = circuit->GetSkirmishAIId() % interval;
-			circuit->GetScheduler()->RunJobEvery(updateJob, interval, shift + offset);
-		}
-	} else {
-		if (updateJob != nullptr) {
-			circuit->GetScheduler()->RemoveJob(updateJob);
-			updateJob = nullptr;
-		}
+	if (job != nullptr) {
+		circuit->GetScheduler()->RemoveJob(job);
+		job = nullptr;
 	}
 }
 
-void ITaskModule::SetWatchdogEnabled(bool isEnabled, int interval, int offset)
+void ITaskModule::EnableUpdateIdle(int interval, int offset)
 {
-	if (isEnabled) {
-		if (watchdogJob == nullptr) {
-			watchdogJob = CScheduler::GameJob(&ITaskModule::Watchdog, this);
-			const int shift = circuit->GetSkirmishAIId() * WATCHDOG_COUNT;
-			circuit->GetScheduler()->RunJobEvery(watchdogJob, interval, shift + offset);
-		}
-	} else {
-		if (watchdogJob != nullptr) {
-			circuit->GetScheduler()->RemoveJob(watchdogJob);
-			watchdogJob = nullptr;
-		}
-	}
+	// TODO: adjust frameOffset according to current frame and interval
+	const int shift = circuit->GetSkirmishAIId() % interval;
+	EnableJob(updateIdleJob, [this]() { UpdateIdle(); }, interval, shift + offset);
+}
+
+void ITaskModule::DisableUpdateIdle()
+{
+	DisableJob(updateIdleJob);
+}
+
+void ITaskModule::EnableUpdate(int interval, int offset)
+{
+	const int shift = circuit->GetSkirmishAIId() % interval;
+	EnableJob(updateJob, [this]() { Update(); }, interval, shift + offset);
+}
+
+void ITaskModule::DisableUpdate()
+{
+	DisableJob(updateJob);
+}
+
+void ITaskModule::EnableWatchdog(int interval, int offset)
+{
+	const int shift = circuit->GetSkirmishAIId() * WATCHDOG_COUNT;
+	EnableJob(watchdogJob, [this]() { Watchdog(); }, interval, shift + offset);
+}
+
+void ITaskModule::DisableWatchdog()
+{
+	DisableJob(watchdogJob);
 }
 
 void ITaskModule::UpdateIdle()

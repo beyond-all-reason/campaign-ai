@@ -529,11 +529,8 @@ void CMilitaryManager::Init()
 		SetUpdateIdleEnabled(true);
 		SetUpdateEnabled(true);
 		SetWatchdogEnabled(true);
-		CScheduler* scheduler = circuit->GetScheduler().get();
-		const int interval = 4;
-		const int offset = circuit->GetSkirmishAIId() % interval;
-		scheduler->RunJobEvery(CScheduler::GameJob(&CMilitaryManager::UpdateDefenceTasks, this), FRAMES_PER_SEC * 5, offset + 2);
-		scheduler->RunJobEvery(CScheduler::GameJob(&CMilitaryManager::UpdateTriggersStep, this), 1, offset + 3);
+		SetDefenceTasksEnabled(true);
+		SetTriggersStepEnabled(true);
 	};
 
 	circuit->GetSetupManager()->ExecOnFindStart(subinit);
@@ -1648,17 +1645,37 @@ float CMilitaryManager::GetRangeUnitCountCompensatorScale()
 
 void CMilitaryManager::SetUpdateIdleEnabled(bool isEnabled)
 {
-	ITaskModule::SetUpdateIdleEnabled(isEnabled, 4, 0);
+	isEnabled ? EnableUpdateIdle(4, 0) : DisableUpdateIdle();
 }
 
 void CMilitaryManager::SetUpdateEnabled(bool isEnabled)
 {
-	ITaskModule::SetUpdateEnabled(isEnabled, 1, 1);
+	isEnabled ? EnableUpdate(1, 1) : DisableUpdate();
 }
 
 void CMilitaryManager::SetWatchdogEnabled(bool isEnabled)
 {
-	ITaskModule::SetWatchdogEnabled(isEnabled, FRAMES_PER_SEC * 60, 12);
+	isEnabled ? EnableWatchdog(FRAMES_PER_SEC * 60, 12) : DisableWatchdog();
+}
+
+void CMilitaryManager::SetDefenceTasksEnabled(bool isEnabled)
+{
+	if (isEnabled) {
+		constexpr int INTERVAL = 4;
+		const int shift = circuit->GetSkirmishAIId() % INTERVAL;
+		EnableJob(updateDefenceTasksJob, [this]() { UpdateDefenceTasks(); }, FRAMES_PER_SEC * 5, shift + 2);
+	} else {
+		DisableJob(updateDefenceTasksJob);
+	}
+}
+
+void CMilitaryManager::SetTriggersStepEnabled(bool isEnabled)
+{
+	if (isEnabled) {
+		EnableJob(updateTriggersStepJob, [this]() { UpdateTriggersStep(); }, 1, 0);
+	} else {
+		DisableJob(updateTriggersStepJob);
+	}
 }
 
 void CMilitaryManager::AddTriggerZone(CGridRegion::Id zoneId, geom::CPolygon* poly)

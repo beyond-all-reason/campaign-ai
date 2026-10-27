@@ -934,17 +934,17 @@ bool CBuilderManager::CanUpGeo(CCircuitDef* cdef) const
 
 void CBuilderManager::SetUpdateIdleEnabled(bool isEnabled)
 {
-	ITaskModule::SetUpdateIdleEnabled(isEnabled, 8, 0);
+	isEnabled ? EnableUpdateIdle(8, 0) : DisableUpdateIdle();
 }
 
 void CBuilderManager::SetUpdateEnabled(bool isEnabled)
 {
-	ITaskModule::SetUpdateEnabled(isEnabled, 1, 1);
+	isEnabled ? EnableUpdate(1, 1) : DisableUpdate();
 }
 
 void CBuilderManager::SetWatchdogEnabled(bool isEnabled)
 {
-	ITaskModule::SetWatchdogEnabled(isEnabled, FRAMES_PER_SEC * 60, 10);
+	isEnabled ? EnableWatchdog(FRAMES_PER_SEC * 60, 10) : DisableWatchdog();
 }
 
 void CBuilderManager::AddBuildZone(CGridRegion::Id zoneId, geom::CPolygon* poly,

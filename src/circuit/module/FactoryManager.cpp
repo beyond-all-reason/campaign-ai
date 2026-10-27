@@ -1152,17 +1152,17 @@ CCircuitDef* CFactoryManager::GetLargestDef(const CCircuitDef* facDef) const
 
 void CFactoryManager::SetUpdateIdleEnabled(bool isEnabled)
 {
-	ITaskModule::SetUpdateIdleEnabled(isEnabled, 4, 0);
+	isEnabled ? EnableUpdateIdle(4, 0) : DisableUpdateIdle();
 }
 
 void CFactoryManager::SetUpdateEnabled(bool isEnabled)
 {
-	ITaskModule::SetUpdateEnabled(isEnabled, 4, 2);
+	isEnabled ? EnableUpdate(4, 2) : DisableUpdate();
 }
 
 void CFactoryManager::SetWatchdogEnabled(bool isEnabled)
 {
-	ITaskModule::SetWatchdogEnabled(isEnabled, FRAMES_PER_SEC * 60, 11);
+	isEnabled ? EnableWatchdog(FRAMES_PER_SEC * 60, 11) : DisableWatchdog();
 }
 
 const CFactoryManager::SFactoryDef* CFactoryManager::GetFactoryDef(CCircuitDef* facDef) const

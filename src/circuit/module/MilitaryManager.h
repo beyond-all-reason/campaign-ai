@@ -190,6 +190,8 @@ public:
 	void SetUpdateIdleEnabled(bool isEnabled);
 	void SetUpdateEnabled(bool isEnabled);
 	void SetWatchdogEnabled(bool isEnabled);
+	void SetDefenceTasksEnabled(bool isEnabled);
+	void SetTriggersStepEnabled(bool isEnabled);
 	void AddTriggerZone(CGridRegion::Id zoneId, geom::CPolygon* poly);
 	void DelTriggerZone(CGridRegion::Id zoneId);
 private:
@@ -205,6 +207,9 @@ private:
 	CDefenceData::SDefPoint* FindClosestDefPoint(const springai::AIFloat3& pos);
 	CDefenceData::SDefPoint* FindClosestDefPoint(int cluster, const springai::AIFloat3& pos,
 			std::function<bool (const CDefenceData::SDefPoint&)> predicate = nullptr);
+
+	std::shared_ptr<IMainJob> updateDefenceTasksJob;
+	std::shared_ptr<IMainJob> updateTriggersStepJob;
 
 	Handlers2 createdHandler;
 	Handlers1 finishedHandler;

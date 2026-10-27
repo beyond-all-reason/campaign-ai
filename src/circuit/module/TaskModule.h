@@ -11,6 +11,7 @@
 #include "module/Module.h"
 
 #include <vector>
+#include <functional>
 
 namespace circuit {
 
@@ -66,9 +67,15 @@ public:
 	float GetMetalPull() const { return metalPull; }
 
 protected:
-	void SetUpdateIdleEnabled(bool isEnabled, int interval, int offset);
-	void SetUpdateEnabled(bool isEnabled, int interval, int offset);
-	void SetWatchdogEnabled(bool isEnabled, int interval, int offset);
+	void EnableJob(std::shared_ptr<IMainJob>& job, std::function<void ()> method,
+					int interval, int offset);
+	void DisableJob(std::shared_ptr<IMainJob>& job);
+	void EnableUpdateIdle(int interval, int offset);
+	void DisableUpdateIdle();
+	void EnableUpdate(int interval, int offset);
+	void DisableUpdate();
+	void EnableWatchdog(int interval, int offset);
+	void DisableWatchdog();
 
 	void UpdateIdle();
 	void Update();

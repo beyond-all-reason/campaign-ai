@@ -374,6 +374,10 @@ private:
 		int good;
 	} category;  // TODO: Move into GameAttribute? Or use locally
 
+	// Script API
+	bool isScriptUpdateEnabled = true;
+	bool isUnitActionsEnabled = true;
+
 public:
 	void PrepareAreaUpdate();
 

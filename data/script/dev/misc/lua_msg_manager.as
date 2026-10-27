@@ -11,15 +11,19 @@ namespace LuaMsg {
 
 // Must match the Lua definitions
 enum EUpdateLoopParam {
-	MILITARY_UPDATE_IDLE = 1,
-	MILITARY_UPDATE      = 2,
-	MILITARY_WATCHDOG    = 3,
-	BUILDER_UPDATE_IDLE  = 4,
-	BUILDER_UPDATE       = 5,
-	BUILDER_WATCHDOG     = 6,
-	FACTORY_UPDATE_IDLE  = 7,
-	FACTORY_UPDATE       = 8,
-	FACTORY_WATCHDOG     = 9,
+	MILITARY_UPDATE_IDLE   =  1,
+	MILITARY_UPDATE        =  2,
+	MILITARY_WATCHDOG      =  3,
+	MILITARY_DEFENCE_TASKS =  4,
+	MILITARY_TRIGGERS_STEP =  5,
+	BUILDER_UPDATE_IDLE    =  6,
+	BUILDER_UPDATE         =  7,
+	BUILDER_WATCHDOG       =  8,
+	FACTORY_UPDATE_IDLE    =  9,
+	FACTORY_UPDATE         = 10,
+	FACTORY_WATCHDOG       = 11,
+	SCRIPT_UPDATE          = 12,
+	UNIT_ACTIONS           = 13,
 }
 
 enum EConstructParam {
@@ -162,6 +166,12 @@ class Manager {
 			case EUpdateLoopParam::MILITARY_WATCHDOG: {
 				aiMilitaryMgr.SetWatchdogEnabled(isEnabled);
 			} break;
+			case EUpdateLoopParam::MILITARY_DEFENCE_TASKS: {
+				aiMilitaryMgr.SetDefenceTasksEnabled(isEnabled);
+			} break;
+			case EUpdateLoopParam::MILITARY_TRIGGERS_STEP: {
+				aiMilitaryMgr.SetTriggersStepEnabled(isEnabled);
+			} break;
 			case EUpdateLoopParam::BUILDER_UPDATE_IDLE: {
 				aiBuilderMgr.SetUpdateIdleEnabled(isEnabled);
 			} break;
@@ -179,6 +189,12 @@ class Manager {
 			} break;
 			case EUpdateLoopParam::FACTORY_WATCHDOG: {
 				aiFactoryMgr.SetWatchdogEnabled(isEnabled);
+			} break;
+			case EUpdateLoopParam::SCRIPT_UPDATE: {
+				ai.isScriptUpdateEnabled = isEnabled;
+			} break;
+			case EUpdateLoopParam::UNIT_ACTIONS: {
+				ai.isUnitActionsEnabled = isEnabled;
 			} break;
 			default: break;
 			}

@@ -536,6 +536,8 @@ class CCircuitAI{
 	const int skirmishAIId;
 	const int teamId;
 	const int allyTeamId;
+	bool isScriptUpdateEnabled;
+	bool isUnitActionsEnabled;
 }
 class CCircuitDef{
 	void SetMainRole(int);
@@ -950,6 +952,8 @@ class CMilitaryManager{
 	void SetUpdateIdleEnabled(bool);
 	void SetUpdateEnabled(bool);
 	void SetWatchdogEnabled(bool);
+	void SetDefenceTasksEnabled(bool);
+	void SetTriggersStepEnabled(bool);
 	IUnitTask@ GetTaskById(int) const;
 	void AssignTask(CCircuitUnit@, IUnitTask@);
 	void AddTriggerZone(int, CPolygon@);
