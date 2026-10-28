@@ -49,6 +49,7 @@ class Manager {
 			{formatInt(ELuaMsg::SET_UNITDEF_RETREAT_HP), LuaMsgFunc(this.SetUnitDefRetreat)},
 			{formatInt(ELuaMsg::SET_FACTORY_ACTIVE), LuaMsgFunc(this.SetFactoryActive)},
 			{formatInt(ELuaMsg::SET_MEX_CAP), LuaMsgFunc(this.SetMexCap)},
+			{formatInt(ELuaMsg::SET_ENGINE_EVENTS_ACTIVE), LuaMsgFunc(this.SetEngineEventsActive)},
 			{formatInt(ELuaMsg::AI_UPDATE_LOOP_PARAMS), LuaMsgFunc(this.SetUpdateLoopParams)},
 			{formatInt(ELuaMsg::AI_CONSTRUCTION_PARAMS), LuaMsgFunc(this.SetConstructionParams)},
 
@@ -141,7 +142,7 @@ class Manager {
 		// params is "<isActive>=<unitId1>,<unitId2>,<unitId3>,..."
 		const array<string>@ active_units = params[0].split(SEP_KEY_VALUE);
 		const array<string>@ unitIds = active_units[1].split(SEP_SUBPARAM);
-		bool isActive = active_units[0] != "0";
+		const bool isActive = active_units[0] != "0";
 		for (uint i = 0; i < unitIds.length(); ++i)
 			aiFactoryMgr.SetIsActiveFactory(parseInt(unitIds[i]), isActive);
 	}
@@ -149,6 +150,10 @@ class Manager {
 	void SetMexCap(const array<string>& in params) {
 		// params contains "<mex_percent>;<is_allyteam>"
 		aiEconomyMgr.SetMexCap(parseFloat(params[0]), params[1] != "0");
+	}
+
+	void SetEngineEventsActive(const array<string>& in params) {
+		ai.SetEngineEventsActive(params[0] != "0");
 	}
 
 	void SetUpdateLoopParams(const array<string>& in params) {

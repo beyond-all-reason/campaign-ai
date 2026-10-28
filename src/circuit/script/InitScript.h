@@ -114,7 +114,7 @@ private:
 	mutable spring::mutex mtx;
 	std::map<asIScriptContext*, CScriptDictionary*> takenContexts;
 
-#ifdef DEBUG_LOG
+#ifdef DUMP_AS_PREDEFINED
 public:
 	void DumpASPredefined();
 #endif

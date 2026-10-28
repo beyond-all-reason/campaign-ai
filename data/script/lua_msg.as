@@ -24,8 +24,9 @@ enum ELuaMsg {
 
 	SET_UNITDEF_RETREAT_HP           =  11,
 
-	SET_FACTORY_ACTIVE               =  13,
-	SET_MEX_CAP                      =  14,
+	SET_FACTORY_ACTIVE               =  12,
+	SET_MEX_CAP                      =  13,
+	SET_ENGINE_EVENTS_ACTIVE         =  14,
 	AI_UPDATE_LOOP_PARAMS            =  15,
 	AI_CONSTRUCTION_PARAMS           =  16,
 

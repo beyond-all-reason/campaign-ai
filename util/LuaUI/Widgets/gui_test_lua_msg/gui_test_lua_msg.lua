@@ -799,7 +799,17 @@ function widget:SendMexCap(percent, isAllyTeam)
 end
 
 function widget:AiSetState(state)
-    if state == 'passive' then
+    if state == 'enabled' then
+        local msg = aiMsg.MsgBuilder.new()
+            :cmdValue(aiMsg.Topic.SET_ENGINE_EVENTS_ACTIVE, 1)
+            :toString()
+        Spring.SendSkirmishAIMessage(teamID1, msg)
+    elseif state == 'disabled' then
+        local msg = aiMsg.MsgBuilder.new()
+            :cmdValue(aiMsg.Topic.SET_ENGINE_EVENTS_ACTIVE, 0)
+            :toString()
+        Spring.SendSkirmishAIMessage(teamID1, msg)
+    elseif state == 'passive' then
         local msg = aiMsg.MsgBuilder.new()
             :cmdDict(aiMsg.Topic.AI_UPDATE_LOOP_PARAMS, {
                 [aiMsg.UpdateLoop.MILITARY_UPDATE_IDLE] = 0,
@@ -941,7 +951,8 @@ function widget:SelectionChanged(selectedUnits)
 end
 
 function widget:GameStart()
-    ToggleScriptedRectruit()
+--     widget:ToggleScriptedRectruit()
+    widget:AiSetState('disabled')
 
     local msg = aiMsg.MsgBuilder.new()
         :cmdDict(aiMsg.Topic.AI_CONSTRUCTION_PARAMS, {

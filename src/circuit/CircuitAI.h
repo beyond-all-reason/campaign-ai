@@ -97,6 +97,8 @@ public:
 	int HandleEvent(int topic, const void* data);
 	void NotifyGameEnd();
 	void NotifyResign();
+	void NotifyInactive();
+	void NotifyActive();
 	void Resign(int newTeamId);
 	void MobileSlave(int newTeamId);
 private:
@@ -104,8 +106,7 @@ private:
 	int HandleGameEvent(int topic, const void* data);
 	int HandleEndEvent(int topic, const void* data);
 	int HandleResignEvent(int topic, const void* data);
-	int HandleGameIntent(int topic, const void* data);
-	int HandleEndIntent(int topic, const void* data);
+	int HandleInactiveEvent(int topic, const void* data);
 	EventHandlerPtr eventHandler;
 
 	int ownerTeamId;
@@ -186,6 +187,7 @@ public:
 
 private:
 	void UpdateActions();
+	void RefreshUnits();
 
 	Units teamUnits;  // owner
 	EnemyInfos enemyInfos;  // owner

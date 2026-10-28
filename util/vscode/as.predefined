@@ -510,6 +510,7 @@ class TypeMask{
 	uint mask;
 }
 class CCircuitAI{
+	void SetEngineEventsActive(bool);
 	CCircuitDef@ GetCircuitDef(const string&in);
 	CCircuitDef@ GetCircuitDef(int);
 	int GetDefCount() const;

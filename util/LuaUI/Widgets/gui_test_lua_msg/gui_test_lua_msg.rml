@@ -149,6 +149,10 @@
                 <tab>AI State</tab>
                 <panel>
                 <div class="grid commands">
+                    <button onclick="widget:AiSetState('enabled')">enable</button>
+                    <button onclick="widget:AiSetState('disabled')">disable</button>
+                </div>
+                <div class="grid commands">
                     <button onclick="widget:AiSetState('passive')">passive</button>
                     <button onclick="widget:AiSetState('defensive')">defensive</button>
                     <button onclick="widget:AiSetState('aggressive')">aggressive</button>
