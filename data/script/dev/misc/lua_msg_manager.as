@@ -37,6 +37,12 @@ enum EConstructParam {
 	DEFENCE    = 8,
 }
 
+enum EMilitaryParam {
+	SCOUTS_COUNT = 1,
+	ATTACK_POWER = 2,
+	RAID_POWER   = 3,
+}
+
 class Manager {
 	void InitHandlers() {
 		luaMsgHandlers = {
@@ -52,6 +58,7 @@ class Manager {
 			{formatInt(ELuaMsg::SET_ENGINE_EVENTS_ACTIVE), LuaMsgFunc(this.SetEngineEventsActive)},
 			{formatInt(ELuaMsg::AI_UPDATE_LOOP_PARAMS), LuaMsgFunc(this.SetUpdateLoopParams)},
 			{formatInt(ELuaMsg::AI_CONSTRUCTION_PARAMS), LuaMsgFunc(this.SetConstructionParams)},
+			{formatInt(ELuaMsg::AI_MILITARY_PARAMS), LuaMsgFunc(this.SetMilitaryParams)},
 
 			{formatInt(ELuaMsg::BASE_PLAN_ID), LuaMsgFunc(this.SelectBuildPlanId)},
 			{formatInt(ELuaMsg::BASE_ADD_BUILDTASK), LuaMsgFunc(this.AddBuildTask)},
@@ -235,6 +242,25 @@ class Manager {
 			} break;
 			case EConstructParam::DEFENCE: {
 				aiMilitaryMgr.isScriptDefence = isScripted;
+			} break;
+			default: break;
+			}
+		}
+	}
+
+	void SetMilitaryParams(const array<string>& in params) {
+		for (uint i = 0; i < params.length(); ++i) {
+			// params contains "<EMilitaryParam>=<value>" pairs
+			const array<string>@ kv = params[i].split(LuaMsg::SEP_KEY_VALUE);
+			switch (parseInt(kv[0])) {
+			case EMilitaryParam::SCOUTS_COUNT: {
+				aiMilitaryMgr.quota.scout = parseInt(kv[1]);
+			} break;
+			case EMilitaryParam::ATTACK_POWER: {
+				aiMilitaryMgr.quota.attack = parseFloat(kv[1]);
+			} break;
+			case EMilitaryParam::RAID_POWER: {
+				aiMilitaryMgr.quota.raid.min = parseFloat(kv[1]);
 			} break;
 			default: break;
 			}

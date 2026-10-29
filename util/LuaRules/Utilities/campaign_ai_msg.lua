@@ -21,12 +21,12 @@ local topic = { -- Message topic
 	DISABLE_UNITS_CONTROL = 5, -- array of unitIDs
 
 	SET_UNITDEF_RETREAT_HP = 11,
-
 	SET_FACTORY_ACTIVE = 12,
 	SET_MEX_CAP = 13,
 	SET_ENGINE_EVENTS_ACTIVE = 14,
 	AI_UPDATE_LOOP_PARAMS = 15,
 	AI_CONSTRUCTION_PARAMS = 16, -- construct params
+	AI_MILITARY_PARAMS = 17,
 
 	-- Base starts at 100
 	BASE_PLAN_ID = 101,
@@ -112,6 +112,12 @@ local plan = { -- Build plan params
 	UNITDEF = 1,
 	POSITION = 2,
 	REBUILD = 3,
+}
+
+local military = {
+	SCOUTS_COUNT = 1,
+	ATTACK_POWER = 2,
+	RAID_POWER = 3,
 }
 
 local squad = { -- Squad params
@@ -227,6 +233,7 @@ return {
 	Construct = construct,
 	Base = base,
 	Plan = plan,
+	Military = military,
 	Squad = squad,
 	Task = task,
 	Path = pathing,

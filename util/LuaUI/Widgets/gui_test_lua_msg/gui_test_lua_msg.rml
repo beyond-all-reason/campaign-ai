@@ -155,6 +155,7 @@
                 <div class="grid commands">
                     <button onclick="widget:AiSetState('passive')">passive</button>
                     <button onclick="widget:AiSetState('defensive')">defensive</button>
+                    <button onclick="widget:AiSetState('normal')">normal</button>
                     <button onclick="widget:AiSetState('aggressive')">aggressive</button>
                 </div>
                 </panel>

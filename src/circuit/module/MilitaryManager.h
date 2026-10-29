@@ -210,6 +210,8 @@ private:
 
 	std::shared_ptr<IMainJob> updateDefenceTasksJob;
 	std::shared_ptr<IMainJob> updateTriggersStepJob;
+	bool isDefenceTasksStarted = false;
+	bool isTriggersStepStarted = false;
 
 	Handlers2 createdHandler;
 	Handlers1 finishedHandler;

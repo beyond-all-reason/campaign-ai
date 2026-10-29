@@ -188,6 +188,7 @@ public:
 private:
 	void UpdateActions();
 	void RefreshUnits();
+	void InvalidateUnits();
 
 	Units teamUnits;  // owner
 	EnemyInfos enemyInfos;  // owner

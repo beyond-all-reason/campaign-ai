@@ -461,9 +461,15 @@ void CBuilderManager::ReadConfig()
 void CBuilderManager::Init()
 {
 	CSetupManager::StartFunc subinit = [this](const AIFloat3& pos) {
-		SetUpdateIdleEnabled(true);
-		SetUpdateEnabled(true);
-		SetWatchdogEnabled(true);
+		if (!isUpdateIdleStarted) {
+			SetUpdateIdleEnabled(true);
+		}
+		if (!isUpdateStarted) {
+			SetUpdateEnabled(true);
+		}
+		if (!isWatchdogStarted) {
+			SetWatchdogEnabled(true);
+		}
 	};
 
 	circuit->GetSetupManager()->ExecOnFindStart(subinit);
@@ -934,16 +940,22 @@ bool CBuilderManager::CanUpGeo(CCircuitDef* cdef) const
 
 void CBuilderManager::SetUpdateIdleEnabled(bool isEnabled)
 {
+	isUpdateIdleStarted = true;
+
 	isEnabled ? EnableUpdateIdle(8, 0) : DisableUpdateIdle();
 }
 
 void CBuilderManager::SetUpdateEnabled(bool isEnabled)
 {
+	isUpdateStarted = true;
+
 	isEnabled ? EnableUpdate(1, 1) : DisableUpdate();
 }
 
 void CBuilderManager::SetWatchdogEnabled(bool isEnabled)
 {
+	isWatchdogStarted = true;
+
 	isEnabled ? EnableWatchdog(FRAMES_PER_SEC * 60, 10) : DisableWatchdog();
 }
 

@@ -849,21 +849,62 @@ function widget:AiSetState(state)
                 [aiMsg.UpdateLoop.BUILDER_UPDATE_IDLE] = 1,
                 [aiMsg.UpdateLoop.BUILDER_UPDATE] = 1,
                 [aiMsg.UpdateLoop.BUILDER_WATCHDOG] = 1,
-                [aiMsg.UpdateLoop.FACTORY_UPDATE_IDLE] = 0,
-                [aiMsg.UpdateLoop.FACTORY_UPDATE] = 0,
-                [aiMsg.UpdateLoop.FACTORY_WATCHDOG] = 0,
+                [aiMsg.UpdateLoop.FACTORY_UPDATE_IDLE] = 1,
+                [aiMsg.UpdateLoop.FACTORY_UPDATE] = 1,
+                [aiMsg.UpdateLoop.FACTORY_WATCHDOG] = 1,
                 [aiMsg.UpdateLoop.SCRIPT_UPDATE] = 1,
                 [aiMsg.UpdateLoop.UNIT_ACTIONS] = 1,
             })
             :cmdDict(aiMsg.Topic.AI_CONSTRUCTION_PARAMS, {
-                [aiMsg.Construct.RECRUIT] = 0,
-                [aiMsg.Construct.BUILD_TASK] = 0,
+                [aiMsg.Construct.RECRUIT] = 1,
+                [aiMsg.Construct.BUILD_TASK] = 1,
                 [aiMsg.Construct.FACTORY] = 0,
-                [aiMsg.Construct.STORAGE] = 0,
+                [aiMsg.Construct.STORAGE] = 1,
                 [aiMsg.Construct.METAL] = 0,
-                [aiMsg.Construct.ENERGY] = 0,
+                [aiMsg.Construct.ENERGY] = 1,
                 [aiMsg.Construct.ECONOMY] = 0,
-                [aiMsg.Construct.DEFENCE] = 0,
+                [aiMsg.Construct.DEFENCE] = 1,
+            })
+            :cmdArray(aiMsg.Topic.SET_MEX_CAP, {-1, 0})
+            :cmdDict(aiMsg.Topic.AI_MILITARY_PARAMS, {
+                [aiMsg.Military.SCOUTS_COUNT] = 0,
+                [aiMsg.Military.ATTACK_POWER] = 1e38,
+                [aiMsg.Military.RAID_POWER] = 1e38,
+            })
+            :toString()
+        Spring.SendSkirmishAIMessage(teamID1, msg)
+    elseif state == 'normal' then
+        local msg = aiMsg.MsgBuilder.new()
+            :cmdDict(aiMsg.Topic.AI_UPDATE_LOOP_PARAMS, {
+                [aiMsg.UpdateLoop.MILITARY_UPDATE_IDLE] = 1,
+                [aiMsg.UpdateLoop.MILITARY_UPDATE] = 1,
+                [aiMsg.UpdateLoop.MILITARY_WATCHDOG] = 1,
+                [aiMsg.UpdateLoop.MILITARY_DEFENCE_TASKS] = 1,
+                [aiMsg.UpdateLoop.MILITARY_TRIGGERS_STEP] = 1,
+                [aiMsg.UpdateLoop.BUILDER_UPDATE_IDLE] = 1,
+                [aiMsg.UpdateLoop.BUILDER_UPDATE] = 1,
+                [aiMsg.UpdateLoop.BUILDER_WATCHDOG] = 1,
+                [aiMsg.UpdateLoop.FACTORY_UPDATE_IDLE] = 1,
+                [aiMsg.UpdateLoop.FACTORY_UPDATE] = 1,
+                [aiMsg.UpdateLoop.FACTORY_WATCHDOG] = 1,
+                [aiMsg.UpdateLoop.SCRIPT_UPDATE] = 1,
+                [aiMsg.UpdateLoop.UNIT_ACTIONS] = 1,
+            })
+            :cmdDict(aiMsg.Topic.AI_CONSTRUCTION_PARAMS, {
+                [aiMsg.Construct.RECRUIT] = 1,
+                [aiMsg.Construct.BUILD_TASK] = 1,
+                [aiMsg.Construct.FACTORY] = 1,
+                [aiMsg.Construct.STORAGE] = 1,
+                [aiMsg.Construct.METAL] = 0,
+                [aiMsg.Construct.ENERGY] = 1,
+                [aiMsg.Construct.ECONOMY] = 1,
+                [aiMsg.Construct.DEFENCE] = 1,
+            })
+            :cmdArray(aiMsg.Topic.SET_MEX_CAP, {-1.0, 0})
+            :cmdDict(aiMsg.Topic.AI_MILITARY_PARAMS, {
+                [aiMsg.Military.SCOUTS_COUNT] = 2,
+                [aiMsg.Military.ATTACK_POWER] = 30,
+                [aiMsg.Military.RAID_POWER] = 9.0,
             })
             :toString()
         Spring.SendSkirmishAIMessage(teamID1, msg)
@@ -893,6 +934,12 @@ function widget:AiSetState(state)
                 [aiMsg.Construct.ENERGY] = 1,
                 [aiMsg.Construct.ECONOMY] = 1,
                 [aiMsg.Construct.DEFENCE] = 1,
+            })
+            :cmdArray(aiMsg.Topic.SET_MEX_CAP, {2.0, 0})
+            :cmdDict(aiMsg.Topic.AI_MILITARY_PARAMS, {
+                [aiMsg.Military.SCOUTS_COUNT] = 2,
+                [aiMsg.Military.ATTACK_POWER] = 30,
+                [aiMsg.Military.RAID_POWER] = 9.0,
             })
             :toString()
         Spring.SendSkirmishAIMessage(teamID1, msg)
@@ -952,7 +999,7 @@ end
 
 function widget:GameStart()
 --     widget:ToggleScriptedRectruit()
-    widget:AiSetState('disabled')
+    widget:AiSetState('passive')
 
     local msg = aiMsg.MsgBuilder.new()
         :cmdDict(aiMsg.Topic.AI_CONSTRUCTION_PARAMS, {

@@ -708,9 +708,15 @@ void CFactoryManager::ReadConfig()
 void CFactoryManager::Init()
 {
 	CSetupManager::StartFunc subinit = [this](const AIFloat3& pos) {
-		SetUpdateIdleEnabled(true);
-		SetUpdateEnabled(true);
-		SetWatchdogEnabled(true);
+		if (!isUpdateIdleStarted) {
+			SetUpdateIdleEnabled(true);
+		}
+		if (!isUpdateStarted) {
+			SetUpdateEnabled(true);
+		}
+		if (!isWatchdogStarted) {
+			SetWatchdogEnabled(true);
+		}
 	};
 
 	circuit->GetSetupManager()->ExecOnFindStart(subinit);
@@ -1152,16 +1158,22 @@ CCircuitDef* CFactoryManager::GetLargestDef(const CCircuitDef* facDef) const
 
 void CFactoryManager::SetUpdateIdleEnabled(bool isEnabled)
 {
+	isUpdateIdleStarted = true;
+
 	isEnabled ? EnableUpdateIdle(4, 0) : DisableUpdateIdle();
 }
 
 void CFactoryManager::SetUpdateEnabled(bool isEnabled)
 {
+	isUpdateStarted = true;
+
 	isEnabled ? EnableUpdate(4, 2) : DisableUpdate();
 }
 
 void CFactoryManager::SetWatchdogEnabled(bool isEnabled)
 {
+	isWatchdogStarted = true;
+
 	isEnabled ? EnableWatchdog(FRAMES_PER_SEC * 60, 11) : DisableWatchdog();
 }
 

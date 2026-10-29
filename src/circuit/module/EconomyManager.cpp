@@ -892,9 +892,19 @@ IBuilderTask::BuildType CEconomyManager::GetBuildType(CCircuitDef::Id defId) con
 
 void CEconomyManager::SetMexCap(float percent, bool isAlly)
 {
+	isAllyMexMax = isAlly;
+	if (percent < 0.f) {
+		mexMax = GetMexPercent();
+		return;
+	}
 	const size_t spSize = circuit->GetMetalManager()->GetSpots().size();
 	mexMax = (percent < 1.f) ? decltype(mexMax)(percent * spSize) : std::numeric_limits<decltype(mexMax)>::max();
-	isAllyMexMax = isAlly;
+}
+
+float CEconomyManager::GetMexPercent()
+{
+	const size_t spSize = circuit->GetMetalManager()->GetSpots().size();
+	return (spSize == 0) ? 1.f : GetMexCount() / (float)spSize;
 }
 
 const CEconomyManager::SSideInfo& CEconomyManager::GetSideInfo() const
@@ -964,7 +974,7 @@ bool CEconomyManager::IsAllyOpenMexSpot(int spotId) const
 
 bool CEconomyManager::IsOpenMexSpot(int spotId) const
 {
-	return mexSpots[spotId].isOpen && ((isAllyMexMax ? circuit->GetMetalManager()->GetMexCount() : mexCount) < mexMax);
+	return mexSpots[spotId].isOpen && (GetMexCount() < mexMax);
 }
 
 void CEconomyManager::SetOpenMexSpot(int spotId, bool value)
@@ -2078,6 +2088,11 @@ bool CEconomyManager::CheckAssistRequired(const AIFloat3& position, CCircuitUnit
 float CEconomyManager::GetStorage(Resource* res)
 {
 	return economy->GetStorage(res) - HIDDEN_STORAGE;
+}
+
+int CEconomyManager::GetMexCount() const
+{
+	return isAllyMexMax ? circuit->GetMetalManager()->GetMexCount() : mexCount;
 }
 
 void CEconomyManager::UpdateResourceIncome()

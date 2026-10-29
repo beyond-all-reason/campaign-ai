@@ -526,11 +526,21 @@ void CMilitaryManager::Init()
 
 		DiceBigGun();
 
-		SetUpdateIdleEnabled(true);
-		SetUpdateEnabled(true);
-		SetWatchdogEnabled(true);
-		SetDefenceTasksEnabled(true);
-		SetTriggersStepEnabled(true);
+		if (!isUpdateIdleStarted) {
+			SetUpdateIdleEnabled(true);
+		}
+		if (!isUpdateStarted) {
+			SetUpdateEnabled(true);
+		}
+		if (!isWatchdogStarted) {
+			SetWatchdogEnabled(true);
+		}
+		if (!isDefenceTasksStarted) {
+			SetDefenceTasksEnabled(true);
+		}
+		if (!isTriggersStepStarted) {
+			SetTriggersStepEnabled(true);
+		}
 	};
 
 	circuit->GetSetupManager()->ExecOnFindStart(subinit);
@@ -1645,21 +1655,29 @@ float CMilitaryManager::GetRangeUnitCountCompensatorScale()
 
 void CMilitaryManager::SetUpdateIdleEnabled(bool isEnabled)
 {
+	isUpdateIdleStarted = true;
+
 	isEnabled ? EnableUpdateIdle(4, 0) : DisableUpdateIdle();
 }
 
 void CMilitaryManager::SetUpdateEnabled(bool isEnabled)
 {
+	isUpdateStarted = true;
+
 	isEnabled ? EnableUpdate(1, 1) : DisableUpdate();
 }
 
 void CMilitaryManager::SetWatchdogEnabled(bool isEnabled)
 {
+	isWatchdogStarted = true;
+
 	isEnabled ? EnableWatchdog(FRAMES_PER_SEC * 60, 12) : DisableWatchdog();
 }
 
 void CMilitaryManager::SetDefenceTasksEnabled(bool isEnabled)
 {
+	isDefenceTasksStarted = true;
+
 	if (isEnabled) {
 		constexpr int INTERVAL = 4;
 		const int shift = circuit->GetSkirmishAIId() % INTERVAL;
@@ -1671,6 +1689,8 @@ void CMilitaryManager::SetDefenceTasksEnabled(bool isEnabled)
 
 void CMilitaryManager::SetTriggersStepEnabled(bool isEnabled)
 {
+	isTriggersStepStarted = true;
+
 	if (isEnabled) {
 		EnableJob(updateTriggersStepJob, [this]() { UpdateTriggersStep(); }, 1, 0);
 	} else {

@@ -91,6 +91,9 @@ protected:
 	std::shared_ptr<IMainJob> updateIdleJob;
 	std::shared_ptr<IMainJob> updateJob;
 	std::shared_ptr<IMainJob> watchdogJob;
+	bool isUpdateIdleStarted = false;
+	bool isUpdateStarted = false;
+	bool isWatchdogStarted = false;
 
 	std::vector<IUnitTask*> updateTasks;  // owner
 	unsigned int updateIterator;
