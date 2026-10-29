@@ -21,6 +21,7 @@ enum ELuaMsg {
 	DISABLE_UNITDEFS                 =   3,  // array of unitDefIDs
 	ENABLE_UNITS_CONTROL             =   4,  // array of unitIDs
 	DISABLE_UNITS_CONTROL            =   5,  // array of unitIDs
+	SET_AI_STATE                     =   6,  // EAIStateParam
 
 	SET_UNITDEF_RETREAT_HP           =  11,
 	SET_FACTORY_ACTIVE               =  12,

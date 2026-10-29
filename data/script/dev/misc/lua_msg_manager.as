@@ -10,6 +10,13 @@
 namespace LuaMsg {
 
 // Must match the Lua definitions
+enum EAIStateParam {
+	PASSIVE    = 1,
+	DEFENSIVE  = 2,
+	NORMAL     = 3,
+	AGGRESSIVE = 4,
+}
+
 enum EUpdateLoopParam {
 	MILITARY_UPDATE_IDLE   =  1,
 	MILITARY_UPDATE        =  2,
@@ -51,6 +58,7 @@ class Manager {
 			{formatInt(ELuaMsg::DISABLE_UNITDEFS), LuaMsgFunc(this.DisableUnitDefs)},
 			{formatInt(ELuaMsg::ENABLE_UNITS_CONTROL), LuaMsgFunc(this.EnableUnitsControl)},
 			{formatInt(ELuaMsg::DISABLE_UNITS_CONTROL), LuaMsgFunc(this.DisableUnitsControl)},
+			{formatInt(ELuaMsg::SET_AI_STATE), LuaMsgFunc(this.SetAiState)},
 
 			{formatInt(ELuaMsg::SET_UNITDEF_RETREAT_HP), LuaMsgFunc(this.SetUnitDefRetreat)},
 			{formatInt(ELuaMsg::SET_FACTORY_ACTIVE), LuaMsgFunc(this.SetFactoryActive)},
@@ -103,7 +111,7 @@ class Manager {
 	 * LuaMsg handlers
 	 */
 	void SetAiActive(const array<string>& in params) {
-		// TODO
+		ai.SetEngineEventsActive(params[0] != "0");
 	}
 
 	void EnableUnitDefs(const array<string>& in unitDefIds) {
@@ -132,6 +140,135 @@ class Manager {
 	}
 	void DisableUnitsControl(const array<string>& in unitIds) {
 		UnitsControl(unitIds, false);
+	}
+
+	void SetAiState(const array<string>& in params) {
+		switch (parseInt(params[0])) {
+		case EAIStateParam::PASSIVE: {
+			aiMilitaryMgr.SetUpdateIdleEnabled(false);
+			aiMilitaryMgr.SetUpdateEnabled(false);
+			aiMilitaryMgr.SetWatchdogEnabled(false);
+			aiMilitaryMgr.SetDefenceTasksEnabled(false);
+			aiMilitaryMgr.SetTriggersStepEnabled(false);
+
+			aiBuilderMgr.SetUpdateIdleEnabled(false);
+			aiBuilderMgr.SetUpdateEnabled(false);
+			aiBuilderMgr.SetWatchdogEnabled(false);
+
+			aiFactoryMgr.SetUpdateIdleEnabled(false);
+			aiFactoryMgr.SetUpdateEnabled(false);
+			aiFactoryMgr.SetWatchdogEnabled(false);
+
+			ai.isScriptUpdateEnabled = false;
+			ai.isUnitActionsEnabled = false;
+
+			Factory::isRecruitScripted = true;
+			Builder::isConstructionScripted = true;
+			aiEconomyMgr.isScriptFactory = true;
+			aiEconomyMgr.isScriptStorage = true;
+			aiEconomyMgr.isScriptMetal = true;
+			aiEconomyMgr.isScriptEnergy = true;
+			aiEconomyMgr.isScriptEconomy = true;
+			aiMilitaryMgr.isScriptDefence = true;
+		} break;
+		case EAIStateParam::DEFENSIVE: {
+			aiMilitaryMgr.SetUpdateIdleEnabled(true);
+			aiMilitaryMgr.SetUpdateEnabled(true);
+			aiMilitaryMgr.SetWatchdogEnabled(true);
+			aiMilitaryMgr.SetDefenceTasksEnabled(true);
+			aiMilitaryMgr.SetTriggersStepEnabled(true);
+
+			aiBuilderMgr.SetUpdateIdleEnabled(true);
+			aiBuilderMgr.SetUpdateEnabled(true);
+			aiBuilderMgr.SetWatchdogEnabled(true);
+
+			aiFactoryMgr.SetUpdateIdleEnabled(true);
+			aiFactoryMgr.SetUpdateEnabled(true);
+			aiFactoryMgr.SetWatchdogEnabled(true);
+
+			ai.isScriptUpdateEnabled = true;
+			ai.isUnitActionsEnabled = true;
+
+			Factory::isRecruitScripted = false;
+			Builder::isConstructionScripted = false;
+			aiEconomyMgr.isScriptFactory = true;
+			aiEconomyMgr.isScriptStorage = false;
+			aiEconomyMgr.isScriptMetal = true;
+			aiEconomyMgr.isScriptEnergy = false;
+			aiEconomyMgr.isScriptEconomy = true;
+			aiMilitaryMgr.isScriptDefence = false;
+
+			aiEconomyMgr.SetMexCap(-1.f, false);
+			aiMilitaryMgr.quota.scout = 0;
+			aiMilitaryMgr.quota.attack = BIG_FLOAT;
+			aiMilitaryMgr.quota.raid.min = BIG_FLOAT;
+		} break;
+		case EAIStateParam::NORMAL: {
+			aiMilitaryMgr.SetUpdateIdleEnabled(true);
+			aiMilitaryMgr.SetUpdateEnabled(true);
+			aiMilitaryMgr.SetWatchdogEnabled(true);
+			aiMilitaryMgr.SetDefenceTasksEnabled(true);
+			aiMilitaryMgr.SetTriggersStepEnabled(true);
+
+			aiBuilderMgr.SetUpdateIdleEnabled(true);
+			aiBuilderMgr.SetUpdateEnabled(true);
+			aiBuilderMgr.SetWatchdogEnabled(true);
+
+			aiFactoryMgr.SetUpdateIdleEnabled(true);
+			aiFactoryMgr.SetUpdateEnabled(true);
+			aiFactoryMgr.SetWatchdogEnabled(true);
+
+			ai.isScriptUpdateEnabled = true;
+			ai.isUnitActionsEnabled = true;
+
+			Factory::isRecruitScripted = false;
+			Builder::isConstructionScripted = false;
+			aiEconomyMgr.isScriptFactory = false;
+			aiEconomyMgr.isScriptStorage = false;
+			aiEconomyMgr.isScriptMetal = true;
+			aiEconomyMgr.isScriptEnergy = false;
+			aiEconomyMgr.isScriptEconomy = false;
+			aiMilitaryMgr.isScriptDefence = false;
+
+			aiEconomyMgr.SetMexCap(-1.f, false);
+			aiMilitaryMgr.quota.scout = 2;
+			aiMilitaryMgr.quota.attack = 30.f;
+			aiMilitaryMgr.quota.raid.min = 9.f;
+		} break;
+		case EAIStateParam::AGGRESSIVE: {
+			aiMilitaryMgr.SetUpdateIdleEnabled(true);
+			aiMilitaryMgr.SetUpdateEnabled(true);
+			aiMilitaryMgr.SetWatchdogEnabled(true);
+			aiMilitaryMgr.SetDefenceTasksEnabled(true);
+			aiMilitaryMgr.SetTriggersStepEnabled(true);
+
+			aiBuilderMgr.SetUpdateIdleEnabled(true);
+			aiBuilderMgr.SetUpdateEnabled(true);
+			aiBuilderMgr.SetWatchdogEnabled(true);
+
+			aiFactoryMgr.SetUpdateIdleEnabled(true);
+			aiFactoryMgr.SetUpdateEnabled(true);
+			aiFactoryMgr.SetWatchdogEnabled(true);
+
+			ai.isScriptUpdateEnabled = true;
+			ai.isUnitActionsEnabled = true;
+
+			Factory::isRecruitScripted = false;
+			Builder::isConstructionScripted = false;
+			aiEconomyMgr.isScriptFactory = false;
+			aiEconomyMgr.isScriptStorage = false;
+			aiEconomyMgr.isScriptMetal = false;
+			aiEconomyMgr.isScriptEnergy = false;
+			aiEconomyMgr.isScriptEconomy = false;
+			aiMilitaryMgr.isScriptDefence = false;
+
+			aiEconomyMgr.SetMexCap(2.f, false);
+			aiMilitaryMgr.quota.scout = 2;
+			aiMilitaryMgr.quota.attack = 30.f;
+			aiMilitaryMgr.quota.raid.min = 9.f;
+		} break;
+		default: break;
+		}
 	}
 
 	void SetUnitDefRetreat(const array<string>& in params) {

@@ -19,6 +19,7 @@ local topic = { -- Message topic
 	DISABLE_UNITDEFS = 3, -- array of unitDefIDs
 	ENABLE_UNITS_CONTROL = 4, -- array of unitIDs
 	DISABLE_UNITS_CONTROL = 5, -- array of unitIDs
+	SET_AI_STATE = 6, -- passive, defensive, aggressive
 
 	SET_UNITDEF_RETREAT_HP = 11,
 	SET_FACTORY_ACTIVE = 12,
@@ -66,6 +67,13 @@ local signal = { -- Trigger signal
 	SQUAD_DESTROYED = 202,
 	REGION_ENTER = 301,
 	REGION_EXIT = 302,
+}
+
+local aiState = {
+	PASSIVE = 1,
+	DEFENSIVE = 2,
+	NORMAL = 3,
+	AGGRESSIVE = 4,
 }
 
 local updateLoop = {
@@ -229,6 +237,7 @@ MsgBuilder.__tostring = MsgBuilder.toString
 return {
 	Topic = topic,
 	Signal = signal,
+	AiState = aiState,
 	UpdateLoop = updateLoop,
 	Construct = construct,
 	Base = base,
