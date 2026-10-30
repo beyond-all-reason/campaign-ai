@@ -83,8 +83,8 @@ const int CEnergyManager::FindNearestSpot(const AIFloat3& pos) const
 	int idx = -1;
 	for (int i = 0; i < (int)spots.size(); ++i) {
 		float sqDist = pos.SqDistance2D(spots[i]);
-		if (sqDist < sqBestDist) {
-			sqDist = sqBestDist;
+		if (sqBestDist > sqDist) {
+			sqBestDist = sqDist;
 			idx = i;
 		}
 	}

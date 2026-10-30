@@ -391,6 +391,7 @@ private:
 	};
 	std::map<CGridRegion::Id, SBuildZone> buildZones;
 	std::map<IBuilderTask*, SBuildZone*> taskToZone;
+	std::map<CGridRegion::Id, CGridRegion> allowedZones;
 
 public:
 	void UpdateAreaUsers();

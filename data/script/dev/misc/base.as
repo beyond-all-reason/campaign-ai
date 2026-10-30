@@ -122,6 +122,8 @@ class Manager {
 		float sqLeastDist = BIG_FLOAT;
 		for (auto it = plans.begin(); it++;) {
 			BuildPlan@ checkPlan = it.current_value();
+			if (checkPlan.buildTasks.isEmpty())
+				continue;
 			float sqDist = pos.SqDistance2D(checkPlan.center);
 			if (sqLeastDist <= sqDist)
 				continue;
