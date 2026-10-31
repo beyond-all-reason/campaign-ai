@@ -96,6 +96,12 @@ class Manager {
 			{formatInt(ELuaMsg::TRIGGER_REGION_ID), LuaMsgFunc(this.MakeTriggerRegion)},
 			{formatInt(ELuaMsg::TRIGGER_REGION_CLEAR), LuaMsgFunc(this.TriggerRegionClear)}
 		};
+
+		cfgMexCap = aiEconomyMgr.GetMexCap();
+		cfgIsAllyMexCap = aiEconomyMgr.isAllyMexCap;
+		cfgScoutsCount = aiMilitaryMgr.quota.scout;
+		cfgAttackPower = aiMilitaryMgr.quota.attack;
+		cfgRaidPower = aiMilitaryMgr.quota.raid.min;
 	}
 
 	void HandleLuaMsg(const string& in message) {
@@ -145,22 +151,7 @@ class Manager {
 	void SetAiState(const array<string>& in params) {
 		switch (parseInt(params[0])) {
 		case EAIStateParam::PASSIVE: {
-			aiMilitaryMgr.SetUpdateIdleEnabled(false);
-			aiMilitaryMgr.SetUpdateEnabled(false);
-			aiMilitaryMgr.SetWatchdogEnabled(false);
-			aiMilitaryMgr.SetDefenceTasksEnabled(false);
-			aiMilitaryMgr.SetTriggersStepEnabled(false);
-
-			aiBuilderMgr.SetUpdateIdleEnabled(false);
-			aiBuilderMgr.SetUpdateEnabled(false);
-			aiBuilderMgr.SetWatchdogEnabled(false);
-
-			aiFactoryMgr.SetUpdateIdleEnabled(false);
-			aiFactoryMgr.SetUpdateEnabled(false);
-			aiFactoryMgr.SetWatchdogEnabled(false);
-
-			ai.isScriptUpdateEnabled = false;
-			ai.isUnitActionsEnabled = false;
+			BatchSetUpdateLoopEnabled(false);
 
 			Factory::isRecruitScripted = true;
 			Builder::isConstructionScripted = true;
@@ -170,24 +161,11 @@ class Manager {
 			aiEconomyMgr.isScriptEnergy = true;
 			aiEconomyMgr.isScriptEconomy = true;
 			aiMilitaryMgr.isScriptDefence = true;
+
+			// all modules are disabled, its params - irrelevant
 		} break;
 		case EAIStateParam::DEFENSIVE: {
-			aiMilitaryMgr.SetUpdateIdleEnabled(true);
-			aiMilitaryMgr.SetUpdateEnabled(true);
-			aiMilitaryMgr.SetWatchdogEnabled(true);
-			aiMilitaryMgr.SetDefenceTasksEnabled(true);
-			aiMilitaryMgr.SetTriggersStepEnabled(true);
-
-			aiBuilderMgr.SetUpdateIdleEnabled(true);
-			aiBuilderMgr.SetUpdateEnabled(true);
-			aiBuilderMgr.SetWatchdogEnabled(true);
-
-			aiFactoryMgr.SetUpdateIdleEnabled(true);
-			aiFactoryMgr.SetUpdateEnabled(true);
-			aiFactoryMgr.SetWatchdogEnabled(true);
-
-			ai.isScriptUpdateEnabled = true;
-			ai.isUnitActionsEnabled = true;
+			BatchSetUpdateLoopEnabled(true);
 
 			Factory::isRecruitScripted = false;
 			Builder::isConstructionScripted = false;
@@ -198,28 +176,14 @@ class Manager {
 			aiEconomyMgr.isScriptEconomy = true;
 			aiMilitaryMgr.isScriptDefence = false;
 
-			aiEconomyMgr.SetMexCap(-1.f, false);
+			// no expand
+			aiEconomyMgr.SetMexCap(0.f, cfgIsAllyMexCap);
 			aiMilitaryMgr.quota.scout = 0;
 			aiMilitaryMgr.quota.attack = BIG_FLOAT;
 			aiMilitaryMgr.quota.raid.min = BIG_FLOAT;
 		} break;
 		case EAIStateParam::NORMAL: {
-			aiMilitaryMgr.SetUpdateIdleEnabled(true);
-			aiMilitaryMgr.SetUpdateEnabled(true);
-			aiMilitaryMgr.SetWatchdogEnabled(true);
-			aiMilitaryMgr.SetDefenceTasksEnabled(true);
-			aiMilitaryMgr.SetTriggersStepEnabled(true);
-
-			aiBuilderMgr.SetUpdateIdleEnabled(true);
-			aiBuilderMgr.SetUpdateEnabled(true);
-			aiBuilderMgr.SetWatchdogEnabled(true);
-
-			aiFactoryMgr.SetUpdateIdleEnabled(true);
-			aiFactoryMgr.SetUpdateEnabled(true);
-			aiFactoryMgr.SetWatchdogEnabled(true);
-
-			ai.isScriptUpdateEnabled = true;
-			ai.isUnitActionsEnabled = true;
+			BatchSetUpdateLoopEnabled(true);
 
 			Factory::isRecruitScripted = false;
 			Builder::isConstructionScripted = false;
@@ -230,28 +194,14 @@ class Manager {
 			aiEconomyMgr.isScriptEconomy = false;
 			aiMilitaryMgr.isScriptDefence = false;
 
-			aiEconomyMgr.SetMexCap(-1.f, false);
-			aiMilitaryMgr.quota.scout = 2;
-			aiMilitaryMgr.quota.attack = 30.f;
-			aiMilitaryMgr.quota.raid.min = 9.f;
+			// no expand, but restore current percent of mexes
+			aiEconomyMgr.SetMexCap(-1.f, cfgIsAllyMexCap);
+			aiMilitaryMgr.quota.scout = cfgScoutsCount;
+			aiMilitaryMgr.quota.attack = cfgAttackPower;
+			aiMilitaryMgr.quota.raid.min = cfgRaidPower;
 		} break;
 		case EAIStateParam::AGGRESSIVE: {
-			aiMilitaryMgr.SetUpdateIdleEnabled(true);
-			aiMilitaryMgr.SetUpdateEnabled(true);
-			aiMilitaryMgr.SetWatchdogEnabled(true);
-			aiMilitaryMgr.SetDefenceTasksEnabled(true);
-			aiMilitaryMgr.SetTriggersStepEnabled(true);
-
-			aiBuilderMgr.SetUpdateIdleEnabled(true);
-			aiBuilderMgr.SetUpdateEnabled(true);
-			aiBuilderMgr.SetWatchdogEnabled(true);
-
-			aiFactoryMgr.SetUpdateIdleEnabled(true);
-			aiFactoryMgr.SetUpdateEnabled(true);
-			aiFactoryMgr.SetWatchdogEnabled(true);
-
-			ai.isScriptUpdateEnabled = true;
-			ai.isUnitActionsEnabled = true;
+			BatchSetUpdateLoopEnabled(true);
 
 			Factory::isRecruitScripted = false;
 			Builder::isConstructionScripted = false;
@@ -262,10 +212,10 @@ class Manager {
 			aiEconomyMgr.isScriptEconomy = false;
 			aiMilitaryMgr.isScriptDefence = false;
 
-			aiEconomyMgr.SetMexCap(2.f, false);
-			aiMilitaryMgr.quota.scout = 2;
-			aiMilitaryMgr.quota.attack = 30.f;
-			aiMilitaryMgr.quota.raid.min = 9.f;
+			aiEconomyMgr.SetMexCap(cfgMexCap, cfgIsAllyMexCap);
+			aiMilitaryMgr.quota.scout = cfgScoutsCount;
+			aiMilitaryMgr.quota.attack = cfgAttackPower;
+			aiMilitaryMgr.quota.raid.min = cfgRaidPower;
 		} break;
 		default: break;
 		}
@@ -531,6 +481,25 @@ class Manager {
 			ai.UnitControl(parseInt(ids[i]), isEnable);
 	}
 
+	private void BatchSetUpdateLoopEnabled(bool isEnabled) {
+		aiMilitaryMgr.SetUpdateIdleEnabled(isEnabled);
+		aiMilitaryMgr.SetUpdateEnabled(isEnabled);
+		aiMilitaryMgr.SetWatchdogEnabled(isEnabled);
+		aiMilitaryMgr.SetDefenceTasksEnabled(isEnabled);
+		aiMilitaryMgr.SetTriggersStepEnabled(isEnabled);
+
+		aiBuilderMgr.SetUpdateIdleEnabled(isEnabled);
+		aiBuilderMgr.SetUpdateEnabled(isEnabled);
+		aiBuilderMgr.SetWatchdogEnabled(isEnabled);
+
+		aiFactoryMgr.SetUpdateIdleEnabled(isEnabled);
+		aiFactoryMgr.SetUpdateEnabled(isEnabled);
+		aiFactoryMgr.SetWatchdogEnabled(isEnabled);
+
+		ai.isScriptUpdateEnabled = isEnabled;
+		ai.isUnitActionsEnabled = isEnabled;
+	}
+
 	/*
 	 * Properties
 	 */
@@ -538,6 +507,11 @@ class Manager {
 	private dictionary luaMsgHandlers;
 
 	private map<Id, int> prevUnitLimits;  // behaviour.json may have other than MAX_UNITS value
+	private float cfgMexCap;
+	private bool cfgIsAllyMexCap;
+	private uint cfgScoutsCount;
+	private float cfgAttackPower;
+	private float cfgRaidPower;
 }
 
 Manager mgr;

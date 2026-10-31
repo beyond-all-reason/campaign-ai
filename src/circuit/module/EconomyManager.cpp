@@ -893,12 +893,18 @@ IBuilderTask::BuildType CEconomyManager::GetBuildType(CCircuitDef::Id defId) con
 void CEconomyManager::SetMexCap(float percent, bool isAlly)
 {
 	isAllyMexMax = isAlly;
+	const size_t spSize = circuit->GetMetalManager()->GetSpots().size();
 	if (percent < 0.f) {
-		mexMax = GetMexPercent();
+		mexMax = GetMexPercent() * spSize;
 		return;
 	}
-	const size_t spSize = circuit->GetMetalManager()->GetSpots().size();
 	mexMax = (percent < 1.f) ? decltype(mexMax)(percent * spSize) : std::numeric_limits<decltype(mexMax)>::max();
+}
+
+float CEconomyManager::GetMexCap()
+{
+	const size_t spSize = circuit->GetMetalManager()->GetSpots().size();
+	return (spSize == 0) ? 1.f : mexMax / (float)spSize;
 }
 
 float CEconomyManager::GetMexPercent()

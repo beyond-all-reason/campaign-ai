@@ -186,9 +186,11 @@ public:
 	void AddActionUnit(CCircuitUnit* unit) { actionUnits.push_back(unit); }
 
 private:
+	void UpdateDyingEnemies();
 	void UpdateActions();
+	void UpdateDeadActions();
 	void RefreshUnits();
-	void InvalidateUnits();
+	void InvalidateEnemies();
 
 	Units teamUnits;  // owner
 	EnemyInfos enemyInfos;  // owner

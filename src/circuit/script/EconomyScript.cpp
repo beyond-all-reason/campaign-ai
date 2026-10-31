@@ -43,6 +43,8 @@ CEconomyScript::CEconomyScript(CScriptManager* scr, CEconomyManager* mgr)
 	r = engine->RegisterObjectMethod("CEconomyManager", "float GetEnergyMake(const CCircuitDef@) const", asMETHOD(CEconomyManager, GetEnergyMake), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CEconomyManager", "Type GetBuildType(Id) const", asMETHOD(CEconomyManager, GetBuildType), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CEconomyManager", "void SetMexCap(float, bool)", asMETHOD(CEconomyManager, SetMexCap), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CEconomyManager", "float GetMexCap()", asMETHOD(CEconomyManager, GetMexCap), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("CEconomyManager", "const bool isAllyMexCap", asOFFSET(CEconomyManager, isAllyMexMax)); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CEconomyManager", "float GetMexPercent()", asMETHOD(CEconomyManager, GetMexPercent), asCALL_THISCALL); ASSERT(r >= 0);
 
 	r = engine->RegisterObjectProperty("CEconomyManager", "bool isScriptFactory", asOFFSET(CEconomyManager, isScriptFactory)); ASSERT(r >= 0);

@@ -83,6 +83,7 @@ public:
 	// Script API
 	IBuilderTask::BuildType GetBuildType(CCircuitDef::Id defId) const;
 	void SetMexCap(float percent, bool isAlly);
+	float GetMexCap();
 	float GetMexPercent();
 
 	const SSideInfo& GetSideInfo() const;
