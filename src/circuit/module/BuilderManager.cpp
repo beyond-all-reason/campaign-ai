@@ -962,19 +962,19 @@ void CBuilderManager::DelBuildZone(CGridRegion::Id zoneId)
 	SBuildZone& bz = it->second;
 
 	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
-	if (bz.slotIdx < bz.slots.size()) {  // non-simultaneous FillBuildZone case
-		for (unsigned int i = bz.slotIdx; i < bz.slots.size(); ++i) {
-			terrainMgr->DelBlocker(bz.taskRecord.buildDef, bz.slots[i], bz.facing);
-		}
-	}
-
-	auto tmpTasks = bz.buildTasks;
-	for (IBuilderTask* task : tmpTasks) {
-		task->Abort();
+	// non-simultaneous FillBuildZone case:
+	for (unsigned int i = bz.slotIdx; i < bz.slots.size(); ++i) {
+		terrainMgr->DelBlocker(bz.taskRecord.buildDef, bz.slots[i], bz.facing);
 	}
 
 	terrainMgr->MarkBuildZone(bz.region, NULL_ZONE);
-	buildZones.erase(zoneId);
+	auto tmpTasks = bz.buildTasks;
+	// NOTE: Erase zoneId from buildZones to avoid next chain:
+	//       task->Abort() => Builder::AiTaskRemoved => additional operations with zoneId
+	buildZones.erase(it);
+	for (IBuilderTask* task : tmpTasks) {
+		task->Abort();
+	}
 }
 
 void CBuilderManager::FillBuildZone(CGridRegion::Id zoneId, bool isSimultaneous)
@@ -1048,7 +1048,7 @@ void CBuilderManager::DelReservedZone(CGridRegion::Id zoneId)
 	}
 	SBuildZone& bz = it->second;
 	circuit->GetTerrainManager()->UnmarkReservedZone(bz.region);
-	buildZones.erase(zoneId);
+	buildZones.erase(it);
 }
 
 void CBuilderManager::AddAllowedZone(CGridRegion::Id zoneId, geom::CPolygon* poly, int mask)
@@ -1069,7 +1069,7 @@ void CBuilderManager::DelAllowedZone(CGridRegion::Id zoneId)
 	}
 	CGridRegion& region = it->second;
 	circuit->GetTerrainManager()->MarkAllowedZone(region, STRUCT_BIT(ALL));
-	allowedZones.erase(zoneId);
+	allowedZones.erase(it);
 }
 
 IUnitTask* CBuilderManager::DefaultMakeTask(CCircuitUnit* unit)
