@@ -89,7 +89,9 @@ bool CBPylonTask::Execute(CCircuitUnit* unit)
 
 	circuit->GetThreatMap()->SetThreatType(unit);
 	const float searchRadius = circuit->GetEconomyManager()->GetPylonRange() * 0.5f;
-	FindBuildSite(unit, position, searchRadius);
+	if (!FindBuildSite(unit, position, searchRadius)) {
+		return false;  // Script said Stop
+	}
 
 	if (geom::is_valid(buildPos)) {
 		TRY_UNIT(circuit, unit,

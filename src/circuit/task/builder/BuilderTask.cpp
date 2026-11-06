@@ -289,7 +289,9 @@ bool IBuilderTask::Execute(CCircuitUnit* unit)
 	CTerrainManager::CorrectPosition(pos);
 
 	const float searchRadius = 200 * SQUARE_SIZE;
-	FindBuildSite(unit, pos, searchRadius);
+	if (!FindBuildSite(unit, pos, searchRadius)) {
+		return false;  // Script said Stop
+	}
 
 	if (geom::is_valid(buildPos)) {
 		TRY_UNIT(circuit, unit,
@@ -653,7 +655,7 @@ CAllyUnit* IBuilderTask::FindSameAlly(CCircuitUnit* builder, const std::vector<U
 	return nullptr;
 }
 
-void IBuilderTask::FindBuildSite(CCircuitUnit* builder, const AIFloat3& pos, float searchRadius)
+bool IBuilderTask::FindBuildSite(CCircuitUnit* builder, const AIFloat3& pos, float searchRadius)
 {
 	FindFacing(pos);
 
@@ -662,9 +664,12 @@ void IBuilderTask::FindBuildSite(CCircuitUnit* builder, const AIFloat3& pos, flo
 		return terrainMgr->CanReachAtSafe(builder, p, builder->GetCircuitDef()->GetBuildDistance());
 	};
 	SetBuildPos(terrainMgr->FindBuildSite(buildDef, pos, searchRadius, facing, predicate));
+
+	return geom::is_valid(buildPos) ? true
+			: static_cast<CBuilderManager*>(manager)->SigNoFreeSpace(this);
 }
 
-void IBuilderTask::FindFacing(const springai::AIFloat3& pos)
+void IBuilderTask::FindFacing(const AIFloat3& pos)
 {
 	CTerrainManager* terrainMgr = manager->GetCircuit()->GetTerrainManager();
 

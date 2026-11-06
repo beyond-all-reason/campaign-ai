@@ -478,6 +478,8 @@ class CPolygon{
 	void Scale(float);
 	void Extend(float);
 	const float area;
+	const float radius;
+	const AIFloat3 center;
 }
 class IStream{
 	IStream& opShr(bool&out);
@@ -830,6 +832,8 @@ class CEconomyManager{
 	float GetEnergyMake(const CCircuitDef@) const;
 	int GetBuildType(int) const;
 	void SetMexCap(float, bool);
+	float GetMexCap();
+	float GetMexPercent();
 	const SResourceInfo metal;
 	const SResourceInfo energy;
 	bool isMetalEmpty;
@@ -840,6 +844,7 @@ class CEconomyManager{
 	float reclConvertEff;
 	float reclEnergyEff;
 	float startMexTravel;
+	const bool isAllyMexCap;
 	bool isScriptFactory;
 	bool isScriptStorage;
 	bool isScriptMetal;
@@ -933,8 +938,9 @@ class CBuilderManager{
 	IBuilderTask@ EnqueueBuildTaskForZone(int);
 	void AddReservedZone(int, CPolygon@);
 	void DelReservedZone(int);
-	void AddAllowedZone(int, CPolygon@, int);
+	void AddAllowedZone(int, CPolygon@, uint);
 	void DelAllowedZone(int);
+	IBuilderTask@ DefaultFindEnergyTaskSite(CCircuitDef@, CCircuitUnit@, const AIFloat3&in);
 	int dangerHysteresis;
 }
 class SFightTask{
@@ -990,6 +996,7 @@ class CTerrainManager{
 	void FillAllowedGrid(uint16);
 	uint16 GetStructType(int);
 	uint16 GetStructMask(int);
+	bool CanBuildAt(CCircuitUnit@, CCircuitDef@, const AIFloat3&in);
 }
 class CEnemyManager{
 	float GetEnemyThreat(int) const;

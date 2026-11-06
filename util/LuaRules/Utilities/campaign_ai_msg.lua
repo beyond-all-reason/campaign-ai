@@ -30,11 +30,12 @@ local topic = { -- Message topic
 	AI_MILITARY_PARAMS = 17,
 
 	-- Base starts at 100
-	BASE_PLAN_ID = 101,
-	BASE_ADD_BUILDTASK = 102,
-	BASE_DEL_BUILDTASK = 103,
-	BASE_PLAN_CANCEL = 104,
-	BASE_PARAMS = 105,
+	BASE_REGION_ID = 101,
+	BASE_REGION_CANCEL = 102,
+	BASE_ADD_BUILDTASK = 103,
+	BASE_DEL_BUILDTASK = 104,
+	BASE_PLAN_CANCEL = 105,
+	BASE_PARAMS = 106,
 
 	-- Squad Request starts at 200
 	SQUAD_REQUEST_ID = 201,
@@ -114,6 +115,14 @@ local base = {
 	-- Base maintenance parameters
 	RECLAIM_CONVERT = 11, -- efficiency ratio threshold
 	RECLAIM_ENERGY = 12, -- efficiency ratio threshold
+
+	REGION_STATE = 21, -- active, inactive, maintenance
+}
+
+local baseState = {
+	ACTIVE = 1,
+	INACTIVE = 2,
+	MAINTENANCE = 3,
 }
 
 local plan = { -- Build plan params
@@ -241,6 +250,7 @@ return {
 	UpdateLoop = updateLoop,
 	Construct = construct,
 	Base = base,
+	BaseState = baseState,
 	Plan = plan,
 	Military = military,
 	Squad = squad,

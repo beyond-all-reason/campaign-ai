@@ -80,13 +80,13 @@ void CBFactoryTask::Activate()
 	IBuilderTask::Activate();
 }
 
-void CBFactoryTask::FindBuildSite(CCircuitUnit* builder, const AIFloat3& pos, float searchRadius)
+bool CBFactoryTask::FindBuildSite(CCircuitUnit* builder, const AIFloat3& pos, float searchRadius)
 {
 	CCircuitAI* circuit = manager->GetCircuit();
 	CMap* map = circuit->GetMap();
 	if ((facing != UNIT_NO_FACING) && map->IsPossibleToBuildAt(buildDef->GetDef(), pos, facing)) {
 		SetBuildPos(pos);
-		return;
+		return true;
 	}
 
 	FindFacing(pos);
@@ -136,18 +136,22 @@ void CBFactoryTask::FindBuildSite(CCircuitUnit* builder, const AIFloat3& pos, fl
 	};
 
 	if (checkFacing()) {
-		return;
+		return true;
 	}
 	facing = opposite[facing];
 	if (checkFacing()) {
-		return;
+		return true;
 	}
 	++facing %= 4;
 	if (checkFacing()) {
-		return;
+		return true;
 	}
 	facing = opposite[facing];
-	checkFacing();
+	if (checkFacing()) {
+		return true;
+	}
+
+	return static_cast<CBuilderManager*>(manager)->SigNoFreeSpace(this);
 }
 
 #define SERIALIZE(stream, func)	\

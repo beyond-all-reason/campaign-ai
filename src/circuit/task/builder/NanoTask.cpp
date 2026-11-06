@@ -66,7 +66,9 @@ bool CBNanoTask::Execute(CCircuitUnit* unit)
 
 	circuit->GetThreatMap()->SetThreatType(unit);
 	float searchRadius = buildDef->GetBuildDistance();
-	FindBuildSite(unit, pos, searchRadius);
+	if (!FindBuildSite(unit, pos, searchRadius)) {
+		return false;  // Script said Stop
+	}
 
 	if (geom::is_valid(buildPos)) {
 		TRY_UNIT(circuit, unit,

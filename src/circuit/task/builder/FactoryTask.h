@@ -33,7 +33,7 @@ public:
 	virtual void Activate() override;
 
 private:
-	virtual void FindBuildSite(CCircuitUnit* builder, const springai::AIFloat3& pos, float searchRadius) override;
+	virtual bool FindBuildSite(CCircuitUnit* builder, const springai::AIFloat3& pos, float searchRadius) override;
 
 	virtual bool Load(std::istream& is) override;
 	virtual void Save(std::ostream& os) const override;

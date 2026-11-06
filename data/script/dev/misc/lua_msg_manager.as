@@ -68,7 +68,8 @@ class Manager {
 			{formatInt(ELuaMsg::AI_CONSTRUCTION_PARAMS), LuaMsgFunc(this.SetConstructionParams)},
 			{formatInt(ELuaMsg::AI_MILITARY_PARAMS), LuaMsgFunc(this.SetMilitaryParams)},
 
-			{formatInt(ELuaMsg::BASE_PLAN_ID), LuaMsgFunc(this.SelectBuildPlanId)},
+			{formatInt(ELuaMsg::BASE_REGION_ID), LuaMsgFunc(this.SelectBaseRegionId)},
+			{formatInt(ELuaMsg::BASE_REGION_CANCEL), LuaMsgFunc(this.BaseRegionCancel)},
 			{formatInt(ELuaMsg::BASE_ADD_BUILDTASK), LuaMsgFunc(this.AddBuildTask)},
 			{formatInt(ELuaMsg::BASE_DEL_BUILDTASK), LuaMsgFunc(this.DelBuildTask)},
 			{formatInt(ELuaMsg::BASE_PLAN_CANCEL), LuaMsgFunc(this.BuildPlanCancel)},
@@ -167,7 +168,7 @@ class Manager {
 		case EAIStateParam::DEFENSIVE: {
 			BatchSetUpdateLoopEnabled(true);
 
-			Factory::isRecruitScripted = false;
+			Factory::isRecruitScripted = true;
 			Builder::isConstructionScripted = false;
 			aiEconomyMgr.isScriptFactory = true;
 			aiEconomyMgr.isScriptStorage = false;
@@ -185,7 +186,7 @@ class Manager {
 		case EAIStateParam::NORMAL: {
 			BatchSetUpdateLoopEnabled(true);
 
-			Factory::isRecruitScripted = false;
+			Factory::isRecruitScripted = true;
 			Builder::isConstructionScripted = false;
 			aiEconomyMgr.isScriptFactory = false;
 			aiEconomyMgr.isScriptStorage = false;
@@ -203,7 +204,7 @@ class Manager {
 		case EAIStateParam::AGGRESSIVE: {
 			BatchSetUpdateLoopEnabled(true);
 
-			Factory::isRecruitScripted = false;
+			Factory::isRecruitScripted = true;
 			Builder::isConstructionScripted = false;
 			aiEconomyMgr.isScriptFactory = false;
 			aiEconomyMgr.isScriptStorage = false;
@@ -355,8 +356,12 @@ class Manager {
 	}
 
 	// Base
-	void SelectBuildPlanId(const array<string>& in params) {
-		Base::mgr.SelectBuildPlan(parseInt(params[0]));
+	void SelectBaseRegionId(const array<string>& in params) {
+		Base::mgr.SelectBaseRegion(parseInt(params[0]));
+	}
+
+	void BaseRegionCancel(const array<string>& in params) {
+		Base::mgr.FreeBaseRegion(parseInt(params[0]));
 	}
 
 	void AddBuildTask(const array<string>& in params) {
@@ -457,6 +462,10 @@ class Manager {
 	/*
 	 * Signals
 	 */
+	void SigBasePlanFinished(Id regionId) {
+		Signal(ESignal::BASE_PLAN_FINISHED, regionId);
+	}
+
 	void SigSquadFinished(Id squadId) {
 		Signal(ESignal::SQUAD_FINISHED, squadId);
 	}

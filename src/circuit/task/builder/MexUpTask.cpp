@@ -117,7 +117,9 @@ bool CBMexUpTask::Execute(CCircuitUnit* unit)
 
 	// FIXME: short on purpose, won't work with EnqueueReclaim() in Finish()
 	const float searchRadius = /*buildDef->GetDef()->GetResourceExtractorRange(metalRes) + */SQUARE_SIZE * 4;
-	FindBuildSite(unit, position, searchRadius);
+	if (!FindBuildSite(unit, position, searchRadius)) {
+		return false;  // Script said Stop
+	}
 
 	if (geom::is_valid(buildPos)) {
 		TRY_UNIT(circuit, unit,
@@ -165,7 +167,7 @@ void CBMexUpTask::OnUnitIdle(CCircuitUnit* unit)
 	IBuilderTask::OnUnitIdle(unit);
 }
 
-void CBMexUpTask::FindBuildSite(CCircuitUnit* builder, const AIFloat3& pos, float searchRadius)
+bool CBMexUpTask::FindBuildSite(CCircuitUnit* builder, const AIFloat3& pos, float searchRadius)
 {
 	CCircuitAI* circuit = manager->GetCircuit();
 	AIFloat3 adjPos = pos;
@@ -196,6 +198,9 @@ void CBMexUpTask::FindBuildSite(CCircuitUnit* builder, const AIFloat3& pos, floa
 		};
 		SetBuildPos(terrainMgr->FindBuildSite(buildDef, pos, searchRadius, facing, predicate));
 	}
+
+	return geom::is_valid(buildPos) ? true
+			: static_cast<CBuilderManager*>(manager)->SigNoFreeSpace(this);
 }
 
 #define SERIALIZE(stream, func)	\

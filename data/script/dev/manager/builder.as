@@ -82,6 +82,16 @@ void AiSave(OStream& ostream)
 			<< Id(energizer2 !is null ? energizer2.id : -1);
 }
 
+IBuilderTask@ AiFindEnergyTaskSite(CCircuitDef@ buildDef, CCircuitUnit@ unit, const AIFloat3& in pos)
+{
+	return Base::mgr.FindEnergyTaskSite(buildDef, unit, pos);
+}
+
+bool AiNoFreeSpace(IBuilderTask@ task)
+{
+	return Base::mgr.MarkRegionFull(task);
+}
+
 /*
  * Utilities
  */

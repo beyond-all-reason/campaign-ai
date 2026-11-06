@@ -1424,44 +1424,7 @@ IBuilderTask* CEconomyManager::UpdateEnergyTasks(const AIFloat3& position, CCirc
 		return UpdateGeoTasks(position, unit);
 	}
 
-	// Find place to build
-	// TODO: Add place finder
-	// 1) at very this position
-	// 2) near mex
-	// 3) at resource base (separate metal / energy)
-	// 4) at production base
-	CSetupManager* setupMgr = circuit->GetSetupManager();
-	AIFloat3 buildPos = -RgtVector;
-	if (bestDef->IsAttrBase()) {
-		buildPos = (bestDef->GetCostM() < 1000.0f) ? setupMgr->GetEnergyBase() : setupMgr->GetEnergyBase2();
-		CCircuitDef* bdef = (unit == nullptr) ? bestDef : unit->GetCircuitDef();
-		buildPos = circuit->GetTerrainManager()->GetBuildPosition(bdef, buildPos);
-	} else {
-		if (terrainMgr->IsZoneAlly(position)
-			|| ((circuit->GetFactoryManager()->GetFactoryCount() > 0) && (position.SqDistance2D(setupMgr->GetSmallEnergyPos()) < SQUARE(600.f))
-				&& ((unit == nullptr) || !unit->GetCircuitDef()->IsRoleComm())))  // TODO: instead of isComm check isFast
-		{
-			buildPos = setupMgr->GetSmallEnergyPos();
-		} else {
-			buildPos = position + (position - terrainMgr->GetTerrainCenter()).Normalize2D() * (bestDef->GetRadius() + SQUARE_SIZE * 6);  // geom::get_radial_pos(position, bestDef->GetRadius() + SQUARE_SIZE * 6);
-		}
-		CTerrainManager::CorrectPosition(buildPos);
-	}
-
-	if (geom::is_valid(buildPos) && terrainMgr->CanBeBuiltAtSafe(bestDef, buildPos) &&
-		((unit == nullptr) || terrainMgr->CanReachAtSafe(unit, buildPos, unit->GetCircuitDef()->GetBuildDistance())))
-	{
-		IBuilderTask::Priority priority = isEnergyStalling
-				? (IsEnergyEmpty() ? IBuilderTask::Priority::NOW : IBuilderTask::Priority::HIGH)
-				: IBuilderTask::Priority::NORMAL;
-		IBuilderTask* task = builderMgr->Enqueue(TaskB::Common(IBuilderTask::BuildType::ENERGY,
-												 priority, bestDef, buildPos, 0.f, true));
-		if ((unit == nullptr) || unit->GetCircuitDef()->CanBuild(bestDef)) {
-			return task;
-		}
-	}
-
-	return nullptr;
+	return builderMgr->FindEnergyTaskSite(bestDef, unit, position);
 }
 
 IBuilderTask* CEconomyManager::UpdateGeoTasks(const AIFloat3& position, CCircuitUnit* unit)
