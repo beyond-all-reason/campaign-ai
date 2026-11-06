@@ -1425,28 +1425,7 @@ IBuilderTask* CEconomyManager::UpdateEnergyTasks(const AIFloat3& position, CCirc
 	}
 
 	// Find place to build
-	// TODO: Add place finder
-	// 1) at very this position
-	// 2) near mex
-	// 3) at resource base (separate metal / energy)
-	// 4) at production base
-	CSetupManager* setupMgr = circuit->GetSetupManager();
-	AIFloat3 buildPos = -RgtVector;
-	if (bestDef->IsAttrBase()) {
-		buildPos = (bestDef->GetCostM() < 1000.0f) ? setupMgr->GetEnergyBase() : setupMgr->GetEnergyBase2();
-		CCircuitDef* bdef = (unit == nullptr) ? bestDef : unit->GetCircuitDef();
-		buildPos = circuit->GetTerrainManager()->GetBuildPosition(bdef, buildPos);
-	} else {
-		if (terrainMgr->IsZoneAlly(position)
-			|| ((circuit->GetFactoryManager()->GetFactoryCount() > 0) && (position.SqDistance2D(setupMgr->GetSmallEnergyPos()) < SQUARE(600.f))
-				&& ((unit == nullptr) || !unit->GetCircuitDef()->IsRoleComm())))  // TODO: instead of isComm check isFast
-		{
-			buildPos = setupMgr->GetSmallEnergyPos();
-		} else {
-			buildPos = position + (position - terrainMgr->GetTerrainCenter()).Normalize2D() * (bestDef->GetRadius() + SQUARE_SIZE * 6);  // geom::get_radial_pos(position, bestDef->GetRadius() + SQUARE_SIZE * 6);
-		}
-		CTerrainManager::CorrectPosition(buildPos);
-	}
+	AIFloat3 buildPos = builderMgr->FindBuildSite(bestDef, unit, position);
 
 	if (geom::is_valid(buildPos) && terrainMgr->CanBeBuiltAtSafe(bestDef, buildPos) &&
 		((unit == nullptr) || terrainMgr->CanReachAtSafe(unit, buildPos, unit->GetCircuitDef()->GetBuildDistance())))

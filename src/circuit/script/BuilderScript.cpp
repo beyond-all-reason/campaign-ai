@@ -82,6 +82,7 @@ CBuilderScript::CBuilderScript(CScriptManager* scr, CBuilderManager* mgr)
 	r = engine->RegisterObjectMethod("CBuilderManager", "void DelReservedZone(Id)", asMETHOD(CBuilderManager, DelReservedZone), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CBuilderManager", "void AddAllowedZone(Id, CPolygon@+, int)", asMETHOD(CBuilderManager, AddAllowedZone), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CBuilderManager", "void DelAllowedZone(Id)", asMETHOD(CBuilderManager, DelAllowedZone), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CBuilderManager", "AIFloat3 DefaultFindBuildSite(CCircuitDef@, CCircuitUnit@, const AIFloat3& in)", asMETHOD(CBuilderManager, DefaultFindBuildSite), asCALL_THISCALL); ASSERT(r >= 0);
 }
 
 CBuilderScript::~CBuilderScript()
@@ -94,6 +95,7 @@ bool CBuilderScript::Init()
 	int r = mod->SetDefaultNamespace("Builder"); ASSERT(r >= 0);
 	InitModule(mod);
 	builderInfo.taskAssigned = script->GetFunc(mod, "void AiTaskAssigned(CCircuitUnit@)");
+	builderInfo.findBuildSite = script->GetFunc(mod, "AIFloat3 FindBuildSite(CCircuitDef@, CCircuitUnit@, const AIFloat3& in)");
 	return true;
 }
 
@@ -106,6 +108,20 @@ void CBuilderScript::TaskAssigned(CCircuitUnit* unit)
 	ctx->SetArgObject(0, unit);
 	script->Exec(ctx);
 	script->ReturnContext(ctx);
+}
+
+AIFloat3 CBuilderScript::FindBuildSite(CCircuitDef* buildDef, CCircuitUnit* unit, const AIFloat3& position)
+{
+	if (builderInfo.findBuildSite == nullptr) {
+		return static_cast<CBuilderManager*>(manager)->DefaultFindBuildSite(buildDef, unit, position);
+	}
+	asIScriptContext* ctx = script->PrepareContext(builderInfo.findBuildSite);
+	ctx->SetArgObject(0, buildDef);
+	ctx->SetArgObject(1, unit);
+	ctx->SetArgAddress(2, &const_cast<AIFloat3&>(position));
+	AIFloat3* result = script->Exec(ctx) ? (AIFloat3*)ctx->GetReturnAddress() : nullptr;
+	script->ReturnContext(ctx);
+	return (result != nullptr) ? *result : -RgtVector;
 }
 
 } // namespace circuit

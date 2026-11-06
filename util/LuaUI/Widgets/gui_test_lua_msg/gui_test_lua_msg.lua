@@ -732,7 +732,7 @@ end
 
 function widget:SendNewBase()
     local msg = aiMsg.MsgBuilder.new()
-        :cmdValue(aiMsg.Topic.BASE_PLAN_ID, baseID1)
+        :cmdValue(aiMsg.Topic.BASE_REGION_ID, baseID1)
         :cmdDict(aiMsg.Topic.BASE_ADD_BUILDTASK, {
             [aiMsg.Plan.UNITDEF] = nameToDefID["armmex"],
         })

@@ -336,6 +336,8 @@ public:
 	void DelReservedZone(CGridRegion::Id zoneId);
 	void AddAllowedZone(CGridRegion::Id zoneId, geom::CPolygon* poly, int mask);
 	void DelAllowedZone(CGridRegion::Id zoneId);
+	// Script hooks
+	springai::AIFloat3 FindBuildSite(CCircuitDef* buildDef, CCircuitUnit* unit, const springai::AIFloat3& position);
 
 private:
 	virtual IUnitTask* DefaultMakeTask(CCircuitUnit* unit) override;
@@ -343,6 +345,8 @@ private:
 	IBuilderTask* MakeCommTask(CCircuitUnit* unit, const CQueryCostMap* query, float sqMaxBaseRange);
 	IBuilderTask* MakeBuilderTask(CCircuitUnit* unit, const CQueryCostMap* query);
 	IBuilderTask* CreateBuilderTask(const springai::AIFloat3& position, CCircuitUnit* unit);
+
+	springai::AIFloat3 DefaultFindBuildSite(CCircuitDef* buildDef, CCircuitUnit* unit, const springai::AIFloat3& position);
 
 	void AddBuildList(CCircuitUnit* unit, int hiddenDefs);
 	void RemoveBuildList(CCircuitUnit* unit, int hiddenDefs);

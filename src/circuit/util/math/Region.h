@@ -72,6 +72,7 @@ private:
 	IndexVec tris;
 	FloatVec areas;
 	float area;
+	float radius;
 	springai::AIFloat3 center;
 };
 

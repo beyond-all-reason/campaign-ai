@@ -590,6 +590,8 @@ void CInitScript::RegisterCore()
 	r = engine->RegisterObjectBehaviour("CPolygon", asBEHAVE_FACTORY, "CPolygon@ f(const array<AIFloat3>@+)", asFUNCTION(FactoryCPolygon), asCALL_CDECL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CPolygon", "array<AIFloat3>@ GetVerts() const", asFUNCTION(CPolygon_GetVerts), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CPolygon", "const float area", asOFFSET(geom::CPolygon, area)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("CPolygon", "const float radius", asOFFSET(geom::CPolygon, radius)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("CPolygon", "const AIFloat3 center", asOFFSET(geom::CPolygon, center)); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CPolygon", "bool ContainsPoint(const AIFloat3& in) const", asMETHOD(geom::CPolygon, ContainsPoint), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CPolygon", "AIFloat3 Random() const", asMETHOD(geom::CPolygon, Random), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CPolygon", "void Scale(float)", asMETHOD(geom::CPolygon, Scale), asCALL_THISCALL); ASSERT(r >= 0);

@@ -1093,6 +1093,11 @@ void CBuilderManager::DelAllowedZone(CGridRegion::Id zoneId)
 	allowedZones.erase(it);
 }
 
+AIFloat3 CBuilderManager::FindBuildSite(CCircuitDef* buildDef, CCircuitUnit* unit, const AIFloat3& position)
+{
+	return static_cast<CBuilderScript*>(script)->FindBuildSite(buildDef, unit, position);
+}
+
 IUnitTask* CBuilderManager::DefaultMakeTask(CCircuitUnit* unit)
 {
 	const int frame = circuit->GetLastFrame();
@@ -1323,7 +1328,7 @@ IBuilderTask* CBuilderManager::MakeCommTask(CCircuitUnit* unit, const CQueryCost
 	float metric = std::numeric_limits<float>::max();
 
 	// Help early economy by weights
-	const float toBaseDist = pos.distance2D(circuit->GetSetupManager()->GetBasePos());
+	const float toBaseDist = pos.distance2D(basePos);
 	const float toCenterDist = pos.distance2D(terrainMgr->GetTerrainCenter());  // circuit->GetEnemyManager()->GetEnemyPos()
 	const float baseDivEnemy = toBaseDist / toCenterDist;
 	const float enemyDivBase = 1.f / baseDivEnemy;
@@ -1611,6 +1616,35 @@ IBuilderTask* CBuilderManager::CreateBuilderTask(const AIFloat3& position, CCirc
 		return EnqueueB(TaskB::Guard(IBuilderTask::Priority::LOW, setupMgr->GetCommander(), true, FRAMES_PER_SEC * 20));
 	}
 	return EnqueueB(TaskB::Patrol(IBuilderTask::Priority::LOW, position, FRAMES_PER_SEC * 20));
+}
+
+AIFloat3 CBuilderManager::DefaultFindBuildSite(CCircuitDef* buildDef, CCircuitUnit* unit, const AIFloat3& position)
+{
+	// FIXME: Current Energy's routine
+	// TODO: Add place finder
+	// 1) at very this position
+	// 2) near mex
+	// 3) at resource base (separate metal / energy)
+	// 4) at production base
+	CSetupManager* setupMgr = circuit->GetSetupManager();
+	AIFloat3 buildPos = -RgtVector;
+	if (buildDef->IsAttrBase()) {
+		buildPos = (buildDef->GetCostM() < 1000.0f) ? setupMgr->GetEnergyBase() : setupMgr->GetEnergyBase2();
+		CCircuitDef* bdef = (unit == nullptr) ? buildDef : unit->GetCircuitDef();
+		buildPos = circuit->GetTerrainManager()->GetBuildPosition(bdef, buildPos);
+	} else {
+		CTerrainManager* terrainMgr = circuit->GetTerrainManager();
+		if (terrainMgr->IsZoneAlly(position)
+			|| ((circuit->GetFactoryManager()->GetFactoryCount() > 0) && (position.SqDistance2D(setupMgr->GetSmallEnergyPos()) < SQUARE(600.f))
+				&& ((unit == nullptr) || !unit->GetCircuitDef()->IsRoleComm())))  // TODO: instead of isComm check isFast
+		{
+			buildPos = setupMgr->GetSmallEnergyPos();
+		} else {
+			buildPos = position + (position - terrainMgr->GetTerrainCenter()).Normalize2D() * (buildDef->GetRadius() + SQUARE_SIZE * 6);  // geom::get_radial_pos(position, bestDef->GetRadius() + SQUARE_SIZE * 6);
+		}
+		CTerrainManager::CorrectPosition(buildPos);
+	}
+	return buildPos;
 }
 
 void CBuilderManager::AddBuildList(CCircuitUnit* unit, int hiddenDefs)

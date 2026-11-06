@@ -23,10 +23,12 @@ public:
 
 public:
 	void TaskAssigned(CCircuitUnit* unit);
+	springai::AIFloat3 FindBuildSite(CCircuitDef* buildDef,  CCircuitUnit* unit, const springai::AIFloat3& position);
 
 private:
 	struct SScriptInfo {
 		asIScriptFunction* taskAssigned = nullptr;
+		asIScriptFunction* findBuildSite = nullptr;
 	} builderInfo;
 };
 

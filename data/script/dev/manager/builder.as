@@ -82,6 +82,11 @@ void AiSave(OStream& ostream)
 			<< Id(energizer2 !is null ? energizer2.id : -1);
 }
 
+AIFloat3 FindBuildSite(CCircuitDef@, CCircuitUnit@, const AIFloat3& in)
+{
+	return AiTerrainCenter();
+}
+
 /*
  * Utilities
  */

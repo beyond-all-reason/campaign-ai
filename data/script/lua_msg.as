@@ -32,11 +32,12 @@ enum ELuaMsg {
 	AI_MILITARY_PARAMS               =  17,
 
 	// Base starts at 100
-	BASE_PLAN_ID                     = 101,
-	BASE_ADD_BUILDTASK               = 102,
-	BASE_DEL_BUILDTASK               = 103,
-	BASE_PLAN_CANCEL                 = 104,
-	BASE_PARAMS                      = 105,
+	BASE_REGION_ID                   = 101,
+	BASE_REGION_CANCEL               = 102,
+	BASE_ADD_BUILDTASK               = 103,
+	BASE_DEL_BUILDTASK               = 104,
+	BASE_PLAN_CANCEL                 = 105,
+	BASE_PARAMS                      = 106,
 
 	// Squad Request starts at 200
 	SQUAD_REQUEST_ID                 = 201,
@@ -64,6 +65,7 @@ enum ELuaMsg {
 }
 
 enum ESignal {
+	BASE_PLAN_FINISHED               = 101,
 	SQUAD_FINISHED                   = 201,
 	SQUAD_DESTROYED                  = 202,
 	REGION_ENTER                     = 301,
