@@ -11,6 +11,7 @@
 #include "module/Module.h"
 
 #include <vector>
+#include <functional>
 
 namespace circuit {
 
@@ -66,8 +67,19 @@ public:
 	float GetMetalPull() const { return metalPull; }
 
 protected:
+	void EnableJob(std::shared_ptr<IMainJob>& job, std::function<void ()> method,
+					int interval, int offset);
+	void DisableJob(std::shared_ptr<IMainJob>& job);
+	void EnableUpdateIdle(int interval, int offset);
+	void DisableUpdateIdle();
+	void EnableUpdate(int interval, int offset);
+	void DisableUpdate();
+	void EnableWatchdog(int interval, int offset);
+	void DisableWatchdog();
+
 	void UpdateIdle();
 	void Update();
+	virtual void Watchdog() = 0;
 
 	virtual void Load(std::istream& is) override;
 	virtual void Save(std::ostream& os) const override;
@@ -75,6 +87,13 @@ protected:
 	CNilTask* nilTask;
 	CIdleTask* idleTask;
 	CPlayerTask* playerTask;
+
+	std::shared_ptr<IMainJob> updateIdleJob;
+	std::shared_ptr<IMainJob> updateJob;
+	std::shared_ptr<IMainJob> watchdogJob;
+	bool isUpdateIdleStarted = false;
+	bool isUpdateStarted = false;
+	bool isWatchdogStarted = false;
 
 	std::vector<IUnitTask*> updateTasks;  // owner
 	unsigned int updateIterator;

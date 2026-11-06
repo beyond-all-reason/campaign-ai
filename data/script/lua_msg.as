@@ -21,12 +21,15 @@ enum ELuaMsg {
 	DISABLE_UNITDEFS                 =   3,  // array of unitDefIDs
 	ENABLE_UNITS_CONTROL             =   4,  // array of unitIDs
 	DISABLE_UNITS_CONTROL            =   5,  // array of unitIDs
+	SET_AI_STATE                     =   6,  // EAIStateParam
 
 	SET_UNITDEF_RETREAT_HP           =  11,
-
-	SET_FACTORY_ACTIVE               =  13,
-	SET_MEX_CAP                      =  14,
+	SET_FACTORY_ACTIVE               =  12,
+	SET_MEX_CAP                      =  13,
+	SET_ENGINE_EVENTS_ACTIVE         =  14,
+	AI_UPDATE_LOOP_PARAMS            =  15,
 	AI_CONSTRUCTION_PARAMS           =  16,
+	AI_MILITARY_PARAMS               =  17,
 
 	// Base starts at 100
 	BASE_PLAN_ID                     = 101,

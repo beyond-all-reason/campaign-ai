@@ -461,15 +461,15 @@ void CBuilderManager::ReadConfig()
 void CBuilderManager::Init()
 {
 	CSetupManager::StartFunc subinit = [this](const AIFloat3& pos) {
-		CScheduler* scheduler = circuit->GetScheduler().get();
-		const int interval = 8;
-		const int offset = circuit->GetSkirmishAIId() % interval;
-		scheduler->RunJobEvery(CScheduler::GameJob(&CBuilderManager::UpdateIdle, this), interval, offset + 0);
-		scheduler->RunJobEvery(CScheduler::GameJob(&CBuilderManager::Update, this), 1/*interval*/, offset + 1);
-
-		scheduler->RunJobEvery(CScheduler::GameJob(&CBuilderManager::Watchdog, this),
-								FRAMES_PER_SEC * 60,
-								circuit->GetSkirmishAIId() * WATCHDOG_COUNT + 10);
+		if (!isUpdateIdleStarted) {
+			SetUpdateIdleEnabled(true);
+		}
+		if (!isUpdateStarted) {
+			SetUpdateEnabled(true);
+		}
+		if (!isWatchdogStarted) {
+			SetWatchdogEnabled(true);
+		}
 	};
 
 	circuit->GetSetupManager()->ExecOnFindStart(subinit);
@@ -936,6 +936,27 @@ bool CBuilderManager::CanUpGeo(CCircuitDef* cdef) const
 {
 	auto it = workerDefs.find(cdef);
 	return (it != workerDefs.end()) && it->second.canUpGeo;
+}
+
+void CBuilderManager::SetUpdateIdleEnabled(bool isEnabled)
+{
+	isUpdateIdleStarted = true;
+
+	isEnabled ? EnableUpdateIdle(8, 0) : DisableUpdateIdle();
+}
+
+void CBuilderManager::SetUpdateEnabled(bool isEnabled)
+{
+	isUpdateStarted = true;
+
+	isEnabled ? EnableUpdate(1, 1) : DisableUpdate();
+}
+
+void CBuilderManager::SetWatchdogEnabled(bool isEnabled)
+{
+	isWatchdogStarted = true;
+
+	isEnabled ? EnableWatchdog(FRAMES_PER_SEC * 60, 10) : DisableWatchdog();
 }
 
 void CBuilderManager::AddBuildZone(CGridRegion::Id zoneId, geom::CPolygon* poly,

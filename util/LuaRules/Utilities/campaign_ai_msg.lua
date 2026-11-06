@@ -19,12 +19,15 @@ local topic = { -- Message topic
 	DISABLE_UNITDEFS = 3, -- array of unitDefIDs
 	ENABLE_UNITS_CONTROL = 4, -- array of unitIDs
 	DISABLE_UNITS_CONTROL = 5, -- array of unitIDs
+	SET_AI_STATE = 6, -- passive, defensive, aggressive
 
 	SET_UNITDEF_RETREAT_HP = 11,
-
-	SET_FACTORY_ACTIVE = 13,
-	SET_MEX_CAP = 14,
+	SET_FACTORY_ACTIVE = 12,
+	SET_MEX_CAP = 13,
+	SET_ENGINE_EVENTS_ACTIVE = 14,
+	AI_UPDATE_LOOP_PARAMS = 15,
 	AI_CONSTRUCTION_PARAMS = 16, -- construct params
+	AI_MILITARY_PARAMS = 17,
 
 	-- Base starts at 100
 	BASE_PLAN_ID = 101,
@@ -66,6 +69,29 @@ local signal = { -- Trigger signal
 	REGION_EXIT = 302,
 }
 
+local aiState = {
+	PASSIVE = 1,
+	DEFENSIVE = 2,
+	NORMAL = 3,
+	AGGRESSIVE = 4,
+}
+
+local updateLoop = {
+	MILITARY_UPDATE_IDLE = 1,
+	MILITARY_UPDATE = 2,
+	MILITARY_WATCHDOG = 3,
+	MILITARY_DEFENCE_TASKS = 4,
+	MILITARY_TRIGGERS_STEP = 5,
+	BUILDER_UPDATE_IDLE = 6,
+	BUILDER_UPDATE = 7,
+	BUILDER_WATCHDOG = 8,
+	FACTORY_UPDATE_IDLE = 9,
+	FACTORY_UPDATE = 10,
+	FACTORY_WATCHDOG = 11,
+	SCRIPT_UPDATE = 12,
+	UNIT_ACTIONS = 13,
+}
+
 local construct = { -- Default AI logic options
 	RECRUIT = 1,
 	BUILD_TASK = 2,
@@ -94,6 +120,12 @@ local plan = { -- Build plan params
 	UNITDEF = 1,
 	POSITION = 2,
 	REBUILD = 3,
+}
+
+local military = {
+	SCOUTS_COUNT = 1,
+	ATTACK_POWER = 2,
+	RAID_POWER = 3,
 }
 
 local squad = { -- Squad params
@@ -205,9 +237,12 @@ MsgBuilder.__tostring = MsgBuilder.toString
 return {
 	Topic = topic,
 	Signal = signal,
+	AiState = aiState,
+	UpdateLoop = updateLoop,
 	Construct = construct,
 	Base = base,
 	Plan = plan,
+	Military = military,
 	Squad = squad,
 	Task = task,
 	Path = pathing,

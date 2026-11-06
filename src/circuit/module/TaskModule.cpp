@@ -6,6 +6,7 @@
  */
 
 #include "module/TaskModule.h"
+#include "scheduler/Scheduler.h"
 #include "script/TaskModuleScript.h"
 #include "task/NilTask.h"
 #include "task/IdleTask.h"
@@ -128,6 +129,57 @@ void ITaskModule::Resurrected(CCircuitUnit* unit)
 	if (task != nullptr) {
 		AssignTask(unit, task);
 	}
+}
+
+void ITaskModule::EnableJob(std::shared_ptr<IMainJob>& job, std::function<void ()> method,
+		int interval, int offset)
+{
+	if (job == nullptr) {
+		job = CScheduler::GameJob(method);
+		circuit->GetScheduler()->RunJobEvery(job, interval, offset);
+	}
+}
+
+void ITaskModule::DisableJob(std::shared_ptr<IMainJob>& job)
+{
+	if (job != nullptr) {
+		circuit->GetScheduler()->RemoveJob(job);
+		job = nullptr;
+	}
+}
+
+void ITaskModule::EnableUpdateIdle(int interval, int offset)
+{
+	// TODO: adjust frameOffset according to current frame and interval
+	const int shift = circuit->GetSkirmishAIId() % interval;
+	EnableJob(updateIdleJob, [this]() { UpdateIdle(); }, interval, shift + offset);
+}
+
+void ITaskModule::DisableUpdateIdle()
+{
+	DisableJob(updateIdleJob);
+}
+
+void ITaskModule::EnableUpdate(int interval, int offset)
+{
+	const int shift = circuit->GetSkirmishAIId() % interval;
+	EnableJob(updateJob, [this]() { Update(); }, interval, shift + offset);
+}
+
+void ITaskModule::DisableUpdate()
+{
+	DisableJob(updateJob);
+}
+
+void ITaskModule::EnableWatchdog(int interval, int offset)
+{
+	const int shift = circuit->GetSkirmishAIId() * WATCHDOG_COUNT;
+	EnableJob(watchdogJob, [this]() { Watchdog(); }, interval, shift + offset);
+}
+
+void ITaskModule::DisableWatchdog()
+{
+	DisableJob(watchdogJob);
 }
 
 void ITaskModule::UpdateIdle()

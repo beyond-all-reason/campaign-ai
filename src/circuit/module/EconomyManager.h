@@ -83,6 +83,8 @@ public:
 	// Script API
 	IBuilderTask::BuildType GetBuildType(CCircuitDef::Id defId) const;
 	void SetMexCap(float percent, bool isAlly);
+	float GetMexCap();
+	float GetMexPercent();
 
 	const SSideInfo& GetSideInfo() const;
 	const std::vector<SSideInfo>& GetSideInfos() const { return sideInfos; }
@@ -156,6 +158,7 @@ private:
 	bool CheckAirpadRequired(const springai::AIFloat3& position, CCircuitUnit* unit, IBuilderTask*& outTask);
 	bool CheckAssistRequired(const springai::AIFloat3& position, CCircuitUnit* unit, IBuilderTask*& outTask);
 	float GetStorage(springai::Resource* res);
+	int GetMexCount() const;
 	void UpdateResourceIncome();
 	void UpdateEconomy();
 

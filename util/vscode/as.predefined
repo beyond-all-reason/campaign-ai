@@ -510,6 +510,7 @@ class TypeMask{
 	uint mask;
 }
 class CCircuitAI{
+	void SetEngineEventsActive(bool);
 	CCircuitDef@ GetCircuitDef(const string&in);
 	CCircuitDef@ GetCircuitDef(int);
 	int GetDefCount() const;
@@ -536,6 +537,8 @@ class CCircuitAI{
 	const int skirmishAIId;
 	const int teamId;
 	const int allyTeamId;
+	bool isScriptUpdateEnabled;
+	bool isUnitActionsEnabled;
 }
 class CCircuitDef{
 	void SetMainRole(int);
@@ -869,6 +872,9 @@ class CFactoryManager{
 	CCircuitDef@ GetRoleDef(const CCircuitDef@, int) const;
 	int GetFactoryCount() const;
 	void SetIsActiveFactory(int, bool);
+	void SetUpdateIdleEnabled(bool);
+	void SetUpdateEnabled(bool);
+	void SetWatchdogEnabled(bool);
 	IUnitTask@ GetTaskById(int) const;
 	void AssignTask(CCircuitUnit@, IUnitTask@);
 	void SetTierWeights(const CCircuitDef@, int, int, float[]@);
@@ -916,6 +922,9 @@ class CBuilderManager{
 	IUnitTask@ Enqueue(const SServBTask&in);
 	IUnitTask@ EnqueueRetreat();
 	uint GetWorkerCount() const;
+	void SetUpdateIdleEnabled(bool);
+	void SetUpdateEnabled(bool);
+	void SetWatchdogEnabled(bool);
 	IUnitTask@ GetTaskById(int) const;
 	void AssignTask(CCircuitUnit@, IUnitTask@);
 	void AddBuildZone(int, CPolygon@, SBuildTask&in, int);
@@ -941,6 +950,11 @@ class CMilitaryManager{
 	IUnitTask@ EnqueueRetreat();
 	void DefaultMakeDefence(int, const AIFloat3&in);
 	uint GetGuardTaskNum() const;
+	void SetUpdateIdleEnabled(bool);
+	void SetUpdateEnabled(bool);
+	void SetWatchdogEnabled(bool);
+	void SetDefenceTasksEnabled(bool);
+	void SetTriggersStepEnabled(bool);
 	IUnitTask@ GetTaskById(int) const;
 	void AssignTask(CCircuitUnit@, IUnitTask@);
 	void AddTriggerZone(int, CPolygon@);

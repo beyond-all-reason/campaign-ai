@@ -97,6 +97,8 @@ public:
 	int HandleEvent(int topic, const void* data);
 	void NotifyGameEnd();
 	void NotifyResign();
+	void NotifyInactive();
+	void NotifyActive();
 	void Resign(int newTeamId);
 	void MobileSlave(int newTeamId);
 private:
@@ -104,8 +106,7 @@ private:
 	int HandleGameEvent(int topic, const void* data);
 	int HandleEndEvent(int topic, const void* data);
 	int HandleResignEvent(int topic, const void* data);
-	int HandleGameIntent(int topic, const void* data);
-	int HandleEndIntent(int topic, const void* data);
+	int HandleInactiveEvent(int topic, const void* data);
 	EventHandlerPtr eventHandler;
 
 	int ownerTeamId;
@@ -185,7 +186,11 @@ public:
 	void AddActionUnit(CCircuitUnit* unit) { actionUnits.push_back(unit); }
 
 private:
+	void UpdateDyingEnemies();
 	void UpdateActions();
+	void UpdateDeadActions();
+	void RefreshUnits();
+	void InvalidateEnemies();
 
 	Units teamUnits;  // owner
 	EnemyInfos enemyInfos;  // owner
@@ -373,6 +378,10 @@ private:
 		int bad;
 		int good;
 	} category;  // TODO: Move into GameAttribute? Or use locally
+
+	// Script API
+	bool isScriptUpdateEnabled = true;
+	bool isUnitActionsEnabled = true;
 
 public:
 	void PrepareAreaUpdate();

@@ -708,15 +708,15 @@ void CFactoryManager::ReadConfig()
 void CFactoryManager::Init()
 {
 	CSetupManager::StartFunc subinit = [this](const AIFloat3& pos) {
-		CScheduler* scheduler = circuit->GetScheduler().get();
-		const int interval = 4;
-		const int offset = circuit->GetSkirmishAIId() % interval;
-		scheduler->RunJobEvery(CScheduler::GameJob(&CFactoryManager::UpdateIdle, this), interval, offset + 0);
-		scheduler->RunJobEvery(CScheduler::GameJob(&CFactoryManager::Update, this), interval, offset + 2);
-
-		scheduler->RunJobEvery(CScheduler::GameJob(&CFactoryManager::Watchdog, this),
-								FRAMES_PER_SEC * 60,
-								circuit->GetSkirmishAIId() * WATCHDOG_COUNT + 11);
+		if (!isUpdateIdleStarted) {
+			SetUpdateIdleEnabled(true);
+		}
+		if (!isUpdateStarted) {
+			SetUpdateEnabled(true);
+		}
+		if (!isWatchdogStarted) {
+			SetWatchdogEnabled(true);
+		}
 	};
 
 	circuit->GetSetupManager()->ExecOnFindStart(subinit);
@@ -1154,6 +1154,27 @@ CCircuitDef* CFactoryManager::GetLargestDef(const CCircuitDef* facDef) const
 		}
 	}
 	return largestDef;
+}
+
+void CFactoryManager::SetUpdateIdleEnabled(bool isEnabled)
+{
+	isUpdateIdleStarted = true;
+
+	isEnabled ? EnableUpdateIdle(4, 0) : DisableUpdateIdle();
+}
+
+void CFactoryManager::SetUpdateEnabled(bool isEnabled)
+{
+	isUpdateStarted = true;
+
+	isEnabled ? EnableUpdate(4, 2) : DisableUpdate();
+}
+
+void CFactoryManager::SetWatchdogEnabled(bool isEnabled)
+{
+	isWatchdogStarted = true;
+
+	isEnabled ? EnableWatchdog(FRAMES_PER_SEC * 60, 11) : DisableWatchdog();
 }
 
 const CFactoryManager::SFactoryDef* CFactoryManager::GetFactoryDef(CCircuitDef* facDef) const

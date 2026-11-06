@@ -158,6 +158,17 @@ void CCircuitAI::NotifyResign()
 	eventHandler = &CCircuitAI::HandleResignEvent;
 }
 
+void CCircuitAI::NotifyInactive()
+{
+	eventHandler = &CCircuitAI::HandleInactiveEvent;
+}
+
+void CCircuitAI::NotifyActive()
+{
+	InvalidateEnemies();
+	eventHandler = &CCircuitAI::HandleGameEvent;
+}
+
 void CCircuitAI::Resign(int newTeamId)
 {
 	std::vector<Unit*> migrants;
@@ -511,9 +522,92 @@ int CCircuitAI::HandleResignEvent(int topic, const void* data)
 	return 0;
 }
 
-int CCircuitAI::HandleEndIntent(int topic, const void* data)
+int CCircuitAI::HandleInactiveEvent(int topic, const void* data)
 {
-	// Ignore all intent requests
+	switch (topic) {
+		case EVENT_RELEASE: {
+			TRACY_TOPIC("EVENT_RELEASE::INACTIVE", Release);
+
+			struct SReleaseEvent* evt = (struct SReleaseEvent*)data;
+			return this->Release(evt->reason);
+		} break;
+		case EVENT_UPDATE: {
+			TRACY_TOPIC("EVENT_UPDATE::INACTIVE", Update);
+
+			struct SUpdateEvent* evt = (struct SUpdateEvent*)data;
+
+			destroyed.clear();
+			lastFrame = evt->frame;
+
+			UpdateDyingEnemies();
+
+			allyTeam->Update(this);
+
+			UpdateDeadActions();
+			// TODO: Check is IUnitTasks accumulating for deletion
+		} break;
+		case EVENT_MESSAGE: {
+			TRACY_TOPIC("EVENT_MESSAGE::INACTIVE", Message);
+
+			struct SMessageEvent* evt = (struct SMessageEvent*)data;
+			return this->Message(evt->player, evt->message);
+		} break;
+		case EVENT_UNIT_CREATED: {
+			struct SUnitCreatedEvent* evt = (struct SUnitCreatedEvent*)data;
+			TRACY_TOPIC_UNIT("EVENT_UNIT_CREATED::INACTIVE", UnitCreated, evt->unit);
+
+			CCircuitUnit* builder = GetTeamUnit(evt->builder);
+			CCircuitUnit* unit = GetOrRegTeamUnit(evt->unit);
+			return (unit != nullptr) ? this->UnitCreated(unit, builder) : ERROR_UNIT_CREATED;
+		} break;
+		case EVENT_UNIT_FINISHED: {
+			struct SUnitFinishedEvent* evt = (struct SUnitFinishedEvent*)data;
+			TRACY_TOPIC_UNIT("EVENT_UNIT_FINISHED::INACTIVE", UnitFinished, evt->unit);
+
+			if (destroyed.find(evt->unit) == destroyed.end()) {  // prevents UnitCreated=>UnitDestroyed=>UnitFinished
+				// Lua might call SetUnitHealth within eventHandler.UnitCreated(this, builder);
+				// and trigger UnitFinished before eoh->UnitCreated(*this, builder);
+				// @see rts/Sim/Units/Unit.cpp CUnit::PostInit
+				CCircuitUnit* unit = GetOrRegTeamUnit(evt->unit);
+				return (unit != nullptr) ? this->UnitFinished(unit) : ERROR_UNIT_FINISHED;
+			}
+		} break;
+		case EVENT_UNIT_DESTROYED: {
+			int ret = ERROR_UNKNOWN;
+			struct SUnitDestroyedEvent* evt = (struct SUnitDestroyedEvent*)data;
+			TRACY_TOPIC_UNIT("EVENT_UNIT_DESTROYED::INACTIVE", UnitDestroyed, evt->unit);
+
+			CCircuitUnit* unit = GetTeamUnit(evt->unit);
+			if (unit != nullptr) {
+				ret = this->UnitDestroyed(unit, nullptr);
+				UnregisterTeamUnit(unit);
+			} else {
+				ret = ERROR_UNIT_DESTROYED;
+			}
+			return ret;
+		} break;
+		case EVENT_ENEMY_DESTROYED: {
+			int ret = ERROR_UNKNOWN;
+			TRACY_TOPIC("EVENT_ENEMY_DESTROYED::INACTIVE", EnemyDestroyed);
+
+			struct SEnemyDestroyedEvent* evt = (struct SEnemyDestroyedEvent*)data;
+			CEnemyInfo* enemy = GetEnemyInfo(evt->enemy);
+			if (enemy != nullptr) {
+				allyTeam->DyingEnemy(enemy->GetData(), lastFrame);
+				ret = 0;
+			} else {
+				ret = ERROR_ENEMY_DESTROYED;
+			}
+			return ret;
+		} break;
+		case EVENT_LUA_MESSAGE: {
+			TRACY_TOPIC("EVENT_LUA_MESSAGE::INACTIVE", LuaMessage);
+
+			struct SLuaMessageEvent* evt = (struct SLuaMessageEvent*)data;
+			return this->LuaMessage(evt->inData);
+		} break;
+		default: break;
+	}
 	return 0;
 }
 
@@ -661,9 +755,6 @@ int CCircuitAI::Init(int skirmishAIId, const SSkirmishAICallback* sAICallback)
 		Release(RELEASE_SCRIPT);
 		return ERROR_INIT;
 	}
-#ifdef DEBUG_LOG
-//	script->DumpASPredefined();
-#endif
 
 	// Delay threat ranges initialization from allyTeam->Init()
 	// so cdef.SetRange() in AiMain() could make an effect.
@@ -675,6 +766,9 @@ int CCircuitAI::Init(int skirmishAIId, const SSkirmishAICallback* sAICallback)
 			return ERROR_INIT;
 		}
 	}
+#ifdef DUMP_AS_PREDEFINED
+	script->DumpASPredefined();
+#endif
 
 	if (isCheating) {
 		cheats->SetEnabled(true);
@@ -832,24 +926,22 @@ int CCircuitAI::Update(int frame)
 		garbage.erase(unit);  // NOTE: UnregisterTeamUnit may erase unit
 	}
 
-	for (const CEnemyUnit* data : allyTeam->GetDyingEnemies()) {
-		CEnemyInfo* enemy = GetEnemyInfo(data->GetId());
-		if (enemy != nullptr) {  // EnemyDestroyed right after UpdateEnemyDatas but before this Update
-			EnemyDestroyed(enemy);
-			UnregisterEnemyInfo(enemy);
-		}
-	}
+	UpdateDyingEnemies();
 
 	allyTeam->Update(this);
 
 	scheduler->ProcessJobs(frame);
-	if (frame % TEAM_SLOWUPDATE_RATE == skirmishAIId) {
+	if (isScriptUpdateEnabled && (frame % TEAM_SLOWUPDATE_RATE == skirmishAIId)) {
 		// NOTE: Probably should be last in ProcessJobs queue, after all income updates if it was in the same frame.
 		//       Hence it is not:
 		// scheduler->RunJobEvery(CScheduler::GameJob(&CInitScript::Update, script), TEAM_SLOWUPDATE_RATE, skirmishAIId);
 		script->Update();
 	}
-	UpdateActions();
+	if (isUnitActionsEnabled) {
+		UpdateActions();
+	} else {
+		UpdateDeadActions();
+	}
 
 #ifdef DEBUG_VIS
 	if (frame % FRAMES_PER_SEC == 0) {
@@ -1368,40 +1460,7 @@ int CCircuitAI::Load(std::istream& is)
 	utils::binary_read(is, lastFrame);
 	utils::binary_read(is, sideId);
 
-	auto units = callback->GetTeamUnits();
-	for (Unit* u : units) {
-		ICoreUnit::Id unitId = u->GetUnitId();
-		if (GetTeamUnit(unitId) != nullptr) {
-			delete u;
-			continue;
-		}
-		CCircuitUnit* unit = RegisterTeamUnit(unitId, u);
-		UnitCreated(unit, nullptr);  // NOTE: NIL task assigned only on UnitCreated
-		if (!u->IsBeingBuilt()) {
-			UnitFinished(unit);
-		}
-	}
-	for (auto& kv : teamUnits) {
-		CCircuitUnit* unit = kv.second;
-		if (unit->GetUnit()->GetRulesParamFloat("disableAiControl", 0) > 0.f) {
-			UnitControl(unit, false);
-		}
-	}
-
-	auto& enemies = callback->GetEnemyUnits();
-	for (Unit* e : enemies) {
-		if (GetEnemyInfo(e->GetUnitId()) != nullptr) {
-			delete e;
-			continue;
-		}
-		CEnemyInfo* enemy = RegisterEnemyInfo(e);
-		if (enemy != nullptr) {
-			EnemyEnterRadar(enemy);
-			if (enemy->GetCircuitDef() != nullptr) {
-				EnemyEnterLOS(enemy);
-			}
-		}
-	}
+	RefreshUnits();
 #ifdef DEBUG_SAVELOAD
 	LOG("%s | versionLoad=%i | lastFrame=%i | sideId=%i | defs=%i | units=%i | enemies=%i", __PRETTY_FUNCTION__,
 			versionLoad, lastFrame, sideId, GetCircuitDefs().size(), teamUnits.size(), enemyInfos.size());
@@ -1680,6 +1739,17 @@ bool CCircuitAI::UnitControl(CCircuitUnit* unit, bool isEnable)
 	return true;
 }
 
+void CCircuitAI::UpdateDyingEnemies()
+{
+	for (const CEnemyUnit* data : allyTeam->GetDyingEnemies()) {
+		CEnemyInfo* enemy = GetEnemyInfo(data->GetId());
+		if (enemy != nullptr) {  // EnemyDestroyed right after UpdateEnemyDatas but before this Update
+			EnemyDestroyed(enemy);
+			UnregisterEnemyInfo(enemy);
+		}
+	}
+}
+
 void CCircuitAI::UpdateActions()
 {
 	if (actionIterator >= actionUnits.size()) {
@@ -1701,6 +1771,70 @@ void CCircuitAI::UpdateActions()
 				--n;
 			}
 			++actionIterator;
+		}
+	}
+}
+
+void CCircuitAI::UpdateDeadActions()
+{
+	if (actionIterator >= actionUnits.size()) {
+		actionIterator = 0;
+	}
+
+	// stagger the Update's
+	unsigned int n = (actionUnits.size() / ACTION_UPDATE_RATE) + 1;
+
+	while ((actionIterator < actionUnits.size()) && (n != 0)) {
+		CCircuitUnit* unit = actionUnits[actionIterator];
+		if (unit->IsDead()) {
+			actionUnits[actionIterator] = actionUnits.back();
+			actionUnits.pop_back();
+			DeleteTeamUnit(unit);
+		} else {
+			++actionIterator;
+		}
+		--n;
+	}
+}
+
+void CCircuitAI::RefreshUnits()
+{
+	auto units = callback->GetTeamUnits();
+	for (Unit* u : units) {
+		ICoreUnit::Id unitId = u->GetUnitId();
+		if (GetTeamUnit(unitId) != nullptr) {
+			delete u;
+			continue;
+		}
+		CCircuitUnit* unit = RegisterTeamUnit(unitId, u);
+		UnitCreated(unit, nullptr);  // NOTE: NIL task assigned only on UnitCreated
+		UnitFinished(unit);  // u->IsBeingBuilt() check inside
+	}
+
+	for (auto& kv : teamUnits) {
+		CCircuitUnit* unit = kv.second;
+		if (unit->GetUnit()->GetRulesParamFloat("disableAiControl", 0) > 0.f) {
+			UnitControl(unit, false);
+		}
+	}
+
+	InvalidateEnemies();
+}
+
+void CCircuitAI::InvalidateEnemies()
+{
+	auto& enemies = callback->GetEnemyUnits();
+	for (Unit* e : enemies) {
+		if (GetEnemyInfo(e->GetUnitId()) != nullptr) {
+			delete e;
+			continue;
+		}
+		CEnemyInfo* enemy = RegisterEnemyInfo(e);
+		if (enemy != nullptr) {
+			EnemyEnterRadar(enemy);
+			if (enemy->GetCircuitDef() != nullptr) {
+				EnemyEnterLOS(enemy);
+			}
 		}
 	}
 }

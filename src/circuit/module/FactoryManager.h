@@ -203,6 +203,9 @@ public:
 	float GetLenOffset() const { return lenOffset; }
 
 	// Script API
+	void SetUpdateIdleEnabled(bool isEnabled);
+	void SetUpdateEnabled(bool isEnabled);
+	void SetWatchdogEnabled(bool isEnabled);
 	const SFactoryDef* GetFactoryDef(CCircuitDef* facDef) const;
 	const std::vector<float>* GetTierWeights(CCircuitDef* facDef, int surfType, int tier) const;
 	void SetIsActiveFactory(ICoreUnit::Id unitId, bool value);
@@ -216,7 +219,7 @@ private:
 	IUnitTask* CreateFactoryTask(CCircuitUnit* unit);
 	IUnitTask* CreateAssistTask(CCircuitUnit* unit);
 
-	void Watchdog();
+	virtual void Watchdog() override;
 
 	Handlers2 createdHandler;
 	Handlers1 finishedHandler;

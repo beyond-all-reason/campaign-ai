@@ -30,7 +30,7 @@
 // FIXME: MinGW didn't like asbind20
 //#include "asbind20/asbind.hpp"
 //#include "asbind20/operators.hpp"  // _this, const_this, param<T>, ->return<T>()
-#ifdef DEBUG_LOG
+#ifdef DUMP_AS_PREDEFINED
 #include "util/generate_as_predefined.h"
 #endif
 
@@ -185,6 +185,11 @@ static void ConstructCopySInitInfo(CInitScript::SInitInfo* mem, const CInitScrip
 static void DestructSInitInfo(CInitScript::SInitInfo *mem)
 {
 	mem->~SInitInfo();
+}
+
+static void CCircuitAI_SetEngineEventsActive(CCircuitAI* circuit, bool isActive)
+{
+	isActive ? circuit->NotifyActive() : circuit->NotifyInactive();
 }
 
 static CCircuitDef* CCircuitAI_GetCircuitDef(CCircuitAI* circuit, const std::string& name)
@@ -667,6 +672,7 @@ void CInitScript::RegisterCore()
 	r = engine->RegisterObjectProperty("CCircuitAI", "const int skirmishAIId", asOFFSET(CCircuitAI, skirmishAIId)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CCircuitAI", "const int teamId", asOFFSET(CCircuitAI, teamId)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CCircuitAI", "const int allyTeamId", asOFFSET(CCircuitAI, allyTeamId)); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CCircuitAI", "void SetEngineEventsActive(bool)", asFUNCTION(CCircuitAI_SetEngineEventsActive), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CCircuitAI", "CCircuitDef@ GetCircuitDef(const string& in)", asFUNCTION(CCircuitAI_GetCircuitDef), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CCircuitAI", "CCircuitDef@ GetCircuitDef(Id)", asMETHODPR(CCircuitAI, GetCircuitDef, (CCircuitDef::Id), CCircuitDef*), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CCircuitAI", "int GetDefCount() const", asMETHOD(CCircuitAI, GetDefCount), asCALL_THISCALL); ASSERT(r >= 0);
@@ -683,6 +689,8 @@ void CInitScript::RegisterCore()
 	r = engine->RegisterObjectMethod("CCircuitAI", "bool UnitControl(CCircuitUnit@, bool)", asMETHODPR(CCircuitAI, UnitControl, (CCircuitUnit*, bool), bool), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CCircuitAI", "bool UnitControl(Id, bool)", asMETHODPR(CCircuitAI, UnitControl, (ICoreUnit::Id, bool), bool), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CCircuitAI", "CCircuitUnit@ GetUnitInRange(const AIFloat3& in, float, Id, Type, int)", asFUNCTION(CCircuitAI_GetUnitInRange), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("CCircuitAI", "bool isScriptUpdateEnabled", asOFFSET(CCircuitAI, isScriptUpdateEnabled)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("CCircuitAI", "bool isUnitActionsEnabled", asOFFSET(CCircuitAI, isUnitActionsEnabled)); ASSERT(r >= 0);
 	// Lua<-->AI communications [in Spring 0.83+]
 	r = engine->RegisterObjectMethod("CCircuitAI", "string CallRules(const string& in)", asFUNCTION(CCircuitAI_CallRules), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CCircuitAI", "string CallUI(const string& in)", asFUNCTION(CCircuitAI_CallUI), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
@@ -1108,12 +1116,12 @@ void CInitScript::Run(asIScriptFunction* exec, CScriptDictionary* arg)
 	}));
 }
 
-#ifdef DEBUG_LOG
+#ifdef DUMP_AS_PREDEFINED
 void CInitScript::DumpASPredefined()
 {
 	asIScriptEngine* engine = script->GetEngine();
 	GenerateScriptPredefined(engine, "as.predefined");
 }
-#endif  // DEBUG_LOG
+#endif  // DUMP_AS_PREDEFINED
 
 } // namespace circuit
