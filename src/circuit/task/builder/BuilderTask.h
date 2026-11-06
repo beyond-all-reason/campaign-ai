@@ -132,7 +132,7 @@ protected:
 	void HideAssignee(CCircuitUnit* unit);
 	void ShowAssignee(CCircuitUnit* unit);
 	virtual CAllyUnit* FindSameAlly(CCircuitUnit* builder, const std::vector<springai::Unit*>& friendlies);
-	virtual void FindBuildSite(CCircuitUnit* builder, const springai::AIFloat3& pos, float searchRadius);
+	virtual bool FindBuildSite(CCircuitUnit* builder, const springai::AIFloat3& pos, float searchRadius);
 	void FindFacing(const springai::AIFloat3& pos);
 
 	void ExecuteChain(SBuildChain* chain);

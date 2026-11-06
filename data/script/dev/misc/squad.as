@@ -251,7 +251,7 @@ class Manager {
 			Request req(squadId);
 			requests.insertLast(@req);
 			@squad = Squad(req);
-			squads.insert(squad.id, @squad);
+			squads.insert(squad.id, squad);
 		}
 		@selSquad = squad;
 	}
@@ -387,7 +387,7 @@ class Manager {
 	}
 
 	// Invoked by LuaMsg::Manager::SquadRequestCancel
-	bool DestroyRequest(Id squadId) {
+	bool DestroyRequestId(Id squadId) {
 		bool success;
 		Squad@ squad = squads.find(squadId, success);
 		if (!success)

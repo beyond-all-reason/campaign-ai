@@ -13,6 +13,7 @@
 namespace circuit {
 
 class CBuilderManager;
+class IBuilderTask;
 
 class CBuilderScript final: public ITaskModuleScript {
 public:
@@ -23,10 +24,16 @@ public:
 
 public:
 	void TaskAssigned(CCircuitUnit* unit);
+	IBuilderTask* FindEnergyTaskSite(CCircuitDef* buildDef, CCircuitUnit* unit, const springai::AIFloat3& position);
+	IBuilderTask* FindStorageTaskSite(CCircuitDef* buildDef, const springai::AIFloat3& position);
+	bool SigNoFreeSpace(IBuilderTask* task);
 
 private:
 	struct SScriptInfo {
 		asIScriptFunction* taskAssigned = nullptr;
+		asIScriptFunction* findEnergyTaskSite = nullptr;
+		asIScriptFunction* findStorageTaskSite = nullptr;
+		asIScriptFunction* sigNoFreeSpace = nullptr;
 	} builderInfo;
 };
 

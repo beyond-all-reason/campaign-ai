@@ -22,10 +22,20 @@ CPolygon::CPolygon(F3Vec&& points)
 	}
 	Triangulate::Process(verts, tris);
 	CalcArea();
+
 	for (const AIFloat3& p : verts) {
 		center += p;
 	}
 	center /= verts.size();
+
+	float maxSqDist = 0.0f;
+	for (const AIFloat3& p : verts) {
+		float distSq = center.SqDistance2D(p);
+		if (maxSqDist < distSq) {
+			maxSqDist = distSq;
+		}
+	}
+	radius = std::sqrt(maxSqDist);
 }
 
 CPolygon::CPolygon(const SBox& b)
@@ -39,6 +49,7 @@ CPolygon::CPolygon(const SBox& b)
 	verts.emplace_back(box.right, 0.f, box.top);
 	tris = {0, 1, 2, 2, 3, 0};
 	areas = {area / 2, area / 2};
+	radius = center.distance2D(AIFloat3(box.left, 0.f, box.top));
 }
 
 bool CPolygon::ContainsPoint(const AIFloat3& point) const

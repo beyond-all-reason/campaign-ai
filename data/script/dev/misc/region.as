@@ -134,7 +134,7 @@ class Manager {
 		allowedZones.insert(regionId);
 		const array<AIFloat3>@ verts = ParseVerts(region_points[1]);
 
-		int mask = 0;
+		Mask mask = 0;
 		if (params.length() > 1) {
 			// params[1] contains "UNITDEF_ID=<id1>,<id2>,<id3>" or "STRUCT_MASK=<mask>"
 			const array<string>@ paramType_values = params[1].split(LuaMsg::SEP_KEY_VALUE);

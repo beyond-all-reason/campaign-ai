@@ -184,6 +184,7 @@ public:
 	// Script API
 	SBlockingMap::StructType GetStructType(CCircuitDef::Id unitDefId);
 	SBlockingMap::StructMask GetStructMask(CCircuitDef::Id unitDefId);
+	bool CanBuildAt(CCircuitUnit* unit, CCircuitDef* buildDef, const springai::AIFloat3& pos);
 
 	int GetConvertStoP() const { return terrainData->convertStoP; }
 	int GetSectorXSize() const { return terrainData->sectorXSize; }

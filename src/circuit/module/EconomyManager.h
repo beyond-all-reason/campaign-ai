@@ -112,7 +112,7 @@ public:
 	bool IsEnergyStalling() const { return isEnergyStalling; }
 	bool IsEnergyEmpty() const { return isEnergyEmpty; }
 	bool IsEnergyFull() const { return isEnergyFull; }
-//	bool IsEnergyRequired() const { return isEnergyRequired; }
+	bool IsEnergyRequired() const { return isEnergyRequired; }
 	void ClearEnergyRequired() { isEnergyRequired = false; }
 	bool IsExcessed() const { return metalProduced > metalUsed; }
 	int GetBuildDelay() const { return buildDelay; }
