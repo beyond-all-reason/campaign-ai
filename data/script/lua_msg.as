@@ -12,6 +12,8 @@ string SEP_SUBPARAM(",");
 
 string VERSION("1");
 
+string SIG_PREFIX("ai_");
+
 // Has to be same as Lua's defines
 enum ELuaMsg {
 	SET_AI_ACTIVE                    =   1,  // boolean
@@ -22,15 +24,16 @@ enum ELuaMsg {
 
 	SET_UNITDEF_RETREAT_HP           =  11,
 
-	REGION_AVOID                     =  12,
-
 	SET_FACTORY_ACTIVE               =  13,
-
-	SET_SCRIPTED_RECRUIT             =  16,  // boolean
+	SET_MEX_CAP                      =  14,
+	AI_CONSTRUCTION_PARAMS           =  16,
 
 	// Base starts at 100
-	BASE_CREATE                      = 101,
-	BASE_REBUILD                     = 102,
+	BASE_PLAN_ID                     = 101,
+	BASE_ADD_BUILDTASK               = 102,
+	BASE_DEL_BUILDTASK               = 103,
+	BASE_PLAN_CANCEL                 = 104,
+	BASE_PARAMS                      = 105,
 
 	// Squad Request starts at 200
 	SQUAD_REQUEST_ID                 = 201,
@@ -45,15 +48,31 @@ enum ELuaMsg {
 	SQUAD_PATH_PARAMS                = 215,
 	SQUAD_ESCORT                     = 216,
 
+	// Region starts at 300
 	BUILD_REGION_ID                  = 301,
 	BUILD_REGION_CLEAR               = 302,
+	RESERVED_REGION_ID               = 303,
+	RESERVED_REGION_CLEAR            = 304,
+	ALLOWED_REGION_ID                = 305,
+	ALLOWED_REGION_CLEAR             = 306,
+	ALLOWED_GRID_FILL                = 307,
 	TRIGGER_REGION_ID                = 321,
 	TRIGGER_REGION_CLEAR             = 322,
 }
 
 enum ESignal {
-	TRIGGER_REGION_ENTER             = 301,
-	TRIGGER_REGION_EXIT              = 302,
+	SQUAD_FINISHED                   = 201,
+	SQUAD_DESTROYED                  = 202,
+	REGION_ENTER                     = 301,
+	REGION_EXIT                      = 302,
+}
+
+void Signal(ESignal sig, Id paramId) {
+	ai.CallRules(SIG_PREFIX + sig + SEP_COMMAND + paramId);
+}
+
+void Signal(ESignal sig, Id paramId, Id detailId) {
+	ai.CallRules(SIG_PREFIX + sig + SEP_COMMAND + paramId + SEP_PARAM + detailId);
 }
 
 }  // namespace LuaMsg

@@ -831,11 +831,9 @@ void CBuilderManager::DequeueTask(IUnitTask* task, bool done)
 
 void CBuilderManager::FallbackTask(CCircuitUnit* unit)
 {
-	DequeueTask(unit->GetTask());
+	AbortTask(unit->GetTask());
 
-	const int frame = circuit->GetLastFrame();
-	const AIFloat3& pos = unit->GetPos(frame);
-	IUnitTask* task = Enqueue(TaskB::Patrol(IBuilderTask::Priority::LOW, pos, FRAMES_PER_SEC * 5));
+	IUnitTask* task = Enqueue(TaskB::Patrol(IBuilderTask::Priority::LOW, -RgtVector, FRAMES_PER_SEC * 5));
 	task->AssignTo(unit);
 	task->Start(unit);
 	static_cast<CBuilderScript*>(script)->TaskAssigned(unit);
@@ -940,22 +938,19 @@ bool CBuilderManager::CanUpGeo(CCircuitDef* cdef) const
 	return (it != workerDefs.end()) && it->second.canUpGeo;
 }
 
-void CBuilderManager::AddBuildZone(CGridRegion::Id zoneId, geom::CPolygon* poly, CCircuitDef* buildDef)
+void CBuilderManager::AddBuildZone(CGridRegion::Id zoneId, geom::CPolygon* poly,
+		const TaskB::SBuildTask& taskRecord, int buildFacing)
 {
-	auto [it, success] = buildZones.emplace(zoneId, SBuildZone{CGridRegion(zoneId, poly, GRID_BUILD_STEP), buildDef});
+	auto [it, success] = buildZones.emplace(zoneId, SBuildZone{
+		CGridRegion(zoneId, poly, BUILD_SQUARE_SIZE),
+		taskRecord,
+		buildFacing,
+	});
 	if (!success) {
 		return;
 	}
 	SBuildZone& bz = it->second;
-	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
-	terrainMgr->MarkBuildZone(bz.region, zoneId);
-	terrainMgr->FillBuildZone(bz.region, buildDef, [this, &bz](const AIFloat3& pos) {
-		IBuilderTask* task = Enqueue(TaskB::Common(IBuilderTask::BuildType::ENERGY,
-				IBuilderTask::Priority::HIGH, bz.buildDef, pos, 0.f, true, -1));
-		task->SetBuildPos(pos);
-		bz.buildTasks.insert(task);
-		taskToZone[task] = &bz;
-	});
+	circuit->GetTerrainManager()->MarkBuildZone(bz.region, zoneId);
 }
 
 void CBuilderManager::DelBuildZone(CGridRegion::Id zoneId)
@@ -965,17 +960,79 @@ void CBuilderManager::DelBuildZone(CGridRegion::Id zoneId)
 		return;
 	}
 	SBuildZone& bz = it->second;
-	for (IBuilderTask* task : bz.buildTasks) {
-		task->Abort();
-		taskToZone.erase(task);
+
+	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
+	// non-simultaneous FillBuildZone case:
+	for (unsigned int i = bz.slotIdx; i < bz.slots.size(); ++i) {
+		terrainMgr->DelBlocker(bz.taskRecord.buildDef, bz.slots[i], bz.facing);
 	}
-	circuit->GetTerrainManager()->MarkBuildZone(bz.region, NULL_ZONE);
-	buildZones.erase(zoneId);
+
+	terrainMgr->MarkBuildZone(bz.region, NULL_ZONE);
+	auto tmpTasks = bz.buildTasks;
+	// NOTE: Erase zoneId from buildZones to avoid next chain:
+	//       task->Abort() => Builder::AiTaskRemoved => additional operations with zoneId
+	buildZones.erase(it);
+	for (IBuilderTask* task : tmpTasks) {
+		task->Abort();
+	}
+}
+
+void CBuilderManager::FillBuildZone(CGridRegion::Id zoneId, bool isSimultaneous)
+{
+	auto it = buildZones.find(zoneId);
+	if (it == buildZones.end()) {
+		return;
+	}
+	SBuildZone& bz = it->second;
+	bz.ResetSlots();
+	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
+	CTerrainManager::ZoneFunc fillFunc;
+	if (isSimultaneous) {
+		fillFunc = [this, &bz](const AIFloat3& pos) {
+			bz.taskRecord.position = pos;
+			IBuilderTask* task = Enqueue(bz.taskRecord);
+			task->SetFacing(bz.facing);
+			task->SetBuildPos(pos);
+			bz.buildTasks.insert(task);
+			taskToZone[task] = &bz;
+		};
+	} else {
+		fillFunc = [terrainMgr, &bz](const AIFloat3& pos) {
+			AIFloat3 buildPos = CTerrainManager::Pos2BuildPos(bz.taskRecord.buildDef, pos, bz.facing);
+			bz.slots.push_back(buildPos);
+			terrainMgr->AddBlocker(bz.taskRecord.buildDef, buildPos, bz.facing);
+		};
+	}
+	terrainMgr->FillBuildZone(bz.region, bz.taskRecord.buildDef, bz.facing, fillFunc);
+}
+
+IBuilderTask* CBuilderManager::EnqueueBuildTaskForZone(CGridRegion::Id zoneId)
+{
+	auto it = buildZones.find(zoneId);
+	if (it == buildZones.end()) {
+		return nullptr;
+	}
+
+	SBuildZone& bz = it->second;
+	if (bz.slotIdx >= bz.slots.size()) {
+		return nullptr;
+	}
+
+	bz.taskRecord.position = bz.slots[bz.slotIdx++];
+	circuit->GetTerrainManager()->DelBlocker(bz.taskRecord.buildDef, bz.taskRecord.position, bz.facing);
+
+	IBuilderTask* task = Enqueue(bz.taskRecord);
+	task->SetFacing(bz.facing);
+	task->SetBuildPos(bz.taskRecord.position);
+	bz.buildTasks.insert(task);
+	taskToZone[task] = &bz;
+
+	return task;
 }
 
 void CBuilderManager::AddReservedZone(CGridRegion::Id zoneId, geom::CPolygon* poly)
 {
-	auto [it, success] = buildZones.emplace(zoneId, SBuildZone{CGridRegion(zoneId, poly, GRID_BUILD_STEP), nullptr});
+	auto [it, success] = buildZones.emplace(zoneId, SBuildZone{CGridRegion(zoneId, poly, BUILD_SQUARE_SIZE)});
 	if (!success) {
 		return;
 	}
@@ -991,7 +1048,28 @@ void CBuilderManager::DelReservedZone(CGridRegion::Id zoneId)
 	}
 	SBuildZone& bz = it->second;
 	circuit->GetTerrainManager()->UnmarkReservedZone(bz.region);
-	buildZones.erase(zoneId);
+	buildZones.erase(it);
+}
+
+void CBuilderManager::AddAllowedZone(CGridRegion::Id zoneId, geom::CPolygon* poly, int mask)
+{
+	auto [it, success] = allowedZones.emplace(zoneId, CGridRegion(zoneId, poly, BUILD_SQUARE_SIZE));
+	if (!success) {
+		return;
+	}
+	CGridRegion& region = it->second;
+	circuit->GetTerrainManager()->MarkAllowedZone(region, static_cast<SBlockingMap::SM>(mask));
+}
+
+void CBuilderManager::DelAllowedZone(CGridRegion::Id zoneId)
+{
+	auto it = allowedZones.find(zoneId);
+	if (it == allowedZones.end()) {
+		return;
+	}
+	CGridRegion& region = it->second;
+	circuit->GetTerrainManager()->MarkAllowedZone(region, STRUCT_BIT(ALL));
+	allowedZones.erase(it);
 }
 
 IUnitTask* CBuilderManager::DefaultMakeTask(CCircuitUnit* unit)

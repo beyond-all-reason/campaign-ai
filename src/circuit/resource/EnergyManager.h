@@ -30,6 +30,8 @@ public:
 
 	bool IsSpotValid(int index, const springai::AIFloat3& pos) const;
 
+	const int FindNearestSpot(const springai::AIFloat3& pos) const;
+
 private:
 	CCircuitAI* circuit;
 	CEnergyData* energyData;

@@ -411,11 +411,11 @@ void IGrid::ToggleTAVis(int frame)
 //		}
 //		std::ostringstream cmd;
 //		cmd << "ai_blk_data:";
-//		char tmp[debugData->tileSize.x * debugData->tileSize.y] = {0};
+//		unsigned short tmp[debugData->tileSize.x * debugData->tileSize.y] = {0};
 //		for (const CGridAnalyzer::SFrontier& f : debugData->rawFrontier) {
 //			tmp[debugData->tileSize.x * f.pos.y + f.pos.x] = 255;
 //		}
-//		cmd.write(&tmp[0], debugData->tileSize.x * debugData->tileSize.y);
+//		cmd.write(&tmp[0], debugData->tileSize.x * debugData->tileSize.y * sizeof(tmp[0]));
 //		std::string s = cmd.str();
 //		debugLua->CallRules(s.c_str(), s.size());
 

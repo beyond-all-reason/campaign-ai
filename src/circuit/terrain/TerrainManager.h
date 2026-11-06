@@ -27,8 +27,6 @@ namespace terrain {
 	struct SAreaData;
 }
 
-#define GRID_TRIGGER_STEP	GRID_BUILD_STEP
-
 namespace circuit {
 
 class CCircuitAI;
@@ -36,6 +34,8 @@ class IBlockMask;
 class IPathQuery;
 class CPathInfo;
 class CCircuitUnit;
+
+static constexpr int GRID_TRIGGER_STEP = 64;
 
 class CTerrainManager final {  // <=> RAI's cBuilderPlacement
 public:
@@ -153,6 +153,7 @@ private:
 
 	std::vector<CGridRegion::Id> triggerZone;
 	short triggerColumns;
+	short triggerRows;
 
 	struct FactoryPathQuery {
 		std::shared_ptr<IPathQuery> query;
@@ -172,12 +173,17 @@ private:
 
 public:
 	using ZoneFunc = std::function<void (const springai::AIFloat3& p)>;
-	void FillBuildZone(const CGridRegion& region, const CCircuitDef* buildDef, ZoneFunc visitor);
+	void FillBuildZone(const CGridRegion& region, const CCircuitDef* buildDef, int facing, ZoneFunc visitor);
 	void MarkBuildZone(const CGridRegion& region, CGridRegion::Id zoneId);
 	void MarkReservedZone(const CGridRegion& region);
 	void UnmarkReservedZone(const CGridRegion& region);
+	void MarkAllowedZone(const CGridRegion& region, SBlockingMap::SM mask);
+	void FillAllowedGrid(SBlockingMap::SM mask);
 	void MarkTriggerZone(const CGridRegion& region, CGridRegion::Id zoneId);
-	CGridRegion::Id GetTriggerZoneId(const springai::AIFloat3& pos) const;
+	CGridRegion::Id GetTriggerZoneId(const springai::AIFloat3& pos, CGridRegion::Id lastZoneId) const;
+	// Script API
+	SBlockingMap::StructType GetStructType(CCircuitDef::Id unitDefId);
+	SBlockingMap::StructMask GetStructMask(CCircuitDef::Id unitDefId);
 
 	int GetConvertStoP() const { return terrainData->convertStoP; }
 	int GetSectorXSize() const { return terrainData->sectorXSize; }
@@ -277,10 +283,13 @@ private:
 	uint32_t sdlWindowId;
 	float* dbgMap;
 	bool isWidgetDrawing = false;
+	bool isTriggerDrawing = false;
 	void UpdateVis();
+	void UpdateTriggerVis();
 public:
 	void ToggleVis();
 	void ToggleWidgetDraw();
+	void ToggleTriggerVis();
 
 	void LogTerrainAt(CCircuitDef* cdef, const springai::AIFloat3& position);
 #endif

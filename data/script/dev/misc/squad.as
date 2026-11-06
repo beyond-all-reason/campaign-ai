@@ -1,17 +1,18 @@
 #include "../../task.as"
 #include "../../lua_msg.as"
+#include "lua_msg_manager.as"
 
 
 namespace Squad {
 
-// Has to be same as Lua's defines
+// Must match the Lua definitions
 enum ESquadParam {
-	POSITION           = 1,
-	SQUAD_GATHER_RANGE = 2,
-	SQUAD_ATTACK_RANGE = 3,
-	SQUAD_REBUILD      = 4,
-	SQUAD_RETREAT      = 5,
-	SQUAD_PRIO_TARGET  = 6,
+	POSITION     = 1,
+	GATHER_RANGE = 2,
+	ATTACK_RANGE = 3,
+	REBUILD      = 4,
+	RETREAT      = 5,
+	PRIO_TARGET  = 6,
 }
 
 enum ESquadTask {
@@ -32,10 +33,8 @@ enum ESquadPath {
 	USE_END_POS   = 4,
 }
 
+// Local enums
 enum ESquadState {CREATED, FINISHED}
-
-string SIG_SQUAD_FINISHED ("ai_squad_finished:" );
-string SIG_SQUAD_DESTROYED("ai_squad_destroyed:");
 
 const int TASK_NO_TAG = 0;
 const int TASK_SQUAD_TAG = 42;
@@ -224,19 +223,19 @@ class Manager {
 				req.pos.x = parseFloat(posStr[0]);
 				req.pos.z = parseFloat(posStr[1]);
 			} break;
-			case ESquadParam::SQUAD_GATHER_RANGE: {
+			case ESquadParam::GATHER_RANGE: {
 				req.gatherRange = parseFloat(kv[1]);
 			} break;
-			case ESquadParam::SQUAD_ATTACK_RANGE: {
+			case ESquadParam::ATTACK_RANGE: {
 				req.attackRange = parseFloat(kv[1]);
 			} break;
-			case ESquadParam::SQUAD_REBUILD: {
+			case ESquadParam::REBUILD: {
 				req.isRepeat = kv[1] != "0";
 			} break;
-			case ESquadParam::SQUAD_RETREAT: {
+			case ESquadParam::RETREAT: {
 				req.retreat = parseFloat(kv[1]);
 			} break;
-			case ESquadParam::SQUAD_PRIO_TARGET: {
+			case ESquadParam::PRIO_TARGET: {
 				req.vipTargetId = parseInt(kv[1]);
 			} break;
 			default: break;
@@ -346,7 +345,7 @@ class Manager {
 			fighterTask.isRegroupAllowed = true;
 			fighterTask.vipTargetId = squad.req.vipTargetId;
 			squad.state = ESquadState::FINISHED;
-			ai.CallRules(SIG_SQUAD_FINISHED + squad.req.squadId);
+			LuaMsg::mgr.SigSquadFinished(squad.req.squadId);
 		}
 	}
 
@@ -371,7 +370,7 @@ class Manager {
 		req.ClearForRepeat();
 		requests.removeAt(idx);
 
-		ai.CallRules(SIG_SQUAD_DESTROYED + req.squadId);
+		LuaMsg::mgr.SigSquadDestroyed(req.squadId);
 	}
 
 	private void RemoveSquad(Squad@ squad) {
@@ -527,13 +526,13 @@ class Manager {
 				pos.z = parseFloat(posStr[1]);
 				squad.SetPosition(pos);
 			} break;
-			case ESquadParam::SQUAD_ATTACK_RANGE: {
+			case ESquadParam::ATTACK_RANGE: {
 				squad.SetAttackRange(parseFloat(kv[1]));
 			} break;
-			case ESquadParam::SQUAD_RETREAT: {
+			case ESquadParam::RETREAT: {
 				squad.SetRetreat(parseFloat(kv[1]));
 			} break;
-			case ESquadParam::SQUAD_PRIO_TARGET: {
+			case ESquadParam::PRIO_TARGET: {
 				squad.SetPriorityTarget(parseInt(kv[1]));
 			} break;
 			default: break;
@@ -600,6 +599,19 @@ class Manager {
 		return true;
 	}
 
+	// Invoked by Military::AiTaskZoneChanged
+	void SquadZoneChanged(CCircuitUnit@ unit, int srcZoneId, int dstZoneId) {
+		bool success;
+		Squad@ squad = taskToSquad.find(unit.task.id, success);
+		if (!success)
+			return;
+
+		if (srcZoneId != 0)
+			LuaMsg::mgr.SigRegionExit(srcZoneId, squad.id);
+		if (dstZoneId != 0)
+			LuaMsg::mgr.SigRegionEnter(dstZoneId, squad.id);
+	}
+
 	void ClearBuildTaskToReq(Id taskId) {
 		buildTaskToReq.erase(taskId);
 	}
@@ -617,7 +629,7 @@ class Manager {
 	private map<Id, Request@> buildTaskToReq;  // CRecruitTask.id => Request
 	private map<Id, Squad@> taskToSquad;  // ISquadTask.id => Squad
 
-	private Squad@ selSquad;  // Selected state
+	private Squad@ selSquad = null;  // Selected state
 }
 
 Manager mgr;

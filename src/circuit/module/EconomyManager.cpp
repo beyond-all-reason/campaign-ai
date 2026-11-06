@@ -274,6 +274,7 @@ void CEconomyManager::InitHandlers()
 					pylonRange = range;
 					// Is it cdef.IncPurpose(); ?
 				}
+				SetBuildTypeToDef(cdef.GetId(), IBuilderTask::BuildType::PYLON);
 			}
 
 			// mex
@@ -292,6 +293,7 @@ void CEconomyManager::InitHandlers()
 				destroyedHandler[cdef.GetId()] = mexDestroyedHandler;
 				metalDefs.AddDef(&cdef);
 				cdef.SetIsMex(true);
+				SetBuildTypeToDef(cdef.GetId(), IBuilderTask::BuildType::MEX);
 				IncPurpose(cdef.GetId());  // avoid reclaiming of multi-purpose old converter/energy
 				continue;  // NOTE: won't deal with spot requirement if considered as anything else.
 			}
@@ -309,10 +311,12 @@ void CEconomyManager::InitHandlers()
 					finishedHandler[cdef.GetId()] = geoFinishedHandler;
 					destroyedHandler[cdef.GetId()] = geoDestroyedHandler;
 					geoDefs.AddDef(&cdef);
+					SetBuildTypeToDef(cdef.GetId(), IBuilderTask::BuildType::GEO);
 				} else {
 					finishedHandler[cdef.GetId()] = energyFinishedHandler;
 					destroyedHandler[cdef.GetId()] = energyDestroyedHandler;
 					energyDefs.AddDef(&cdef);
+					SetBuildTypeToDef(cdef.GetId(), IBuilderTask::BuildType::ENERGY);
 				}
 				isCategoryAssigned = true;
 				IncPurpose(cdef.GetId());  // avoid reclaiming of multi-purpose old converter/energy
@@ -327,6 +331,7 @@ void CEconomyManager::InitHandlers()
 					destroyedHandler[cdef.GetId()] = convertDestroyedHandler;
 					convertDefs.AddDef(&cdef);
 					isCategoryAssigned = true;
+					SetBuildTypeToDef(cdef.GetId(), IBuilderTask::BuildType::CONVERT);
 				}
 				IncPurpose(cdef.GetId());  // avoid reclaiming of multi-purpose old converter/energy
 			}
@@ -339,6 +344,7 @@ void CEconomyManager::InitHandlers()
 					destroyedHandler[cdef.GetId()] = storeDestroyedHandler;
 					storeMDefs.AddDef(&cdef);
 					isCategoryAssigned = true;
+					SetBuildTypeToDef(cdef.GetId(), IBuilderTask::BuildType::STORE);
 				}
 				IncPurpose(cdef.GetId());  // avoid reclaiming of multi-purpose old converter/energy
 			}
@@ -348,6 +354,7 @@ void CEconomyManager::InitHandlers()
 					destroyedHandler[cdef.GetId()] = storeDestroyedHandler;
 					storeEDefs.AddDef(&cdef);
 					isCategoryAssigned = true;
+					SetBuildTypeToDef(cdef.GetId(), IBuilderTask::BuildType::STORE);
 				}
 				IncPurpose(cdef.GetId());  // avoid reclaiming of multi-purpose old converter/energy
 			}
@@ -359,6 +366,7 @@ void CEconomyManager::InitHandlers()
 					destroyedHandler[cdef.GetId()] = airpadDestroyedHandler;
 					airpadDefs.AddDef(&cdef);
 					isCategoryAssigned = true;
+					SetBuildTypeToDef(cdef.GetId(), IBuilderTask::BuildType::STORE);
 				}
 				IncPurpose(cdef.GetId());  // avoid reclaiming of multi-purpose old converter/energy
 			}
@@ -602,9 +610,9 @@ void CEconomyManager::Init()
 
 	const Json::Value& econ = circuit->GetSetupManager()->GetConfig()["economy"];
 	const Json::Value& mexCap = econ["mex_max"];
-	const float mm = mexCap.get((unsigned)0, 2.f).asFloat();
-	mexMax = (mm < 1.f) ? decltype(mexMax)(mm * spSize) : std::numeric_limits<decltype(mexMax)>::max();
-	isAllyMexMax = mexCap.get((unsigned)1, true).asBool();
+	constexpr float MEX_CAP_PERCENT = 2.f;  // 200%
+	constexpr bool IS_MEX_CAP_PER_ALLYTEAM = true;
+	SetMexCap(mexCap.get((unsigned)0, MEX_CAP_PERCENT).asFloat(), mexCap.get((unsigned)1, IS_MEX_CAP_PER_ALLYTEAM).asBool());
 
 	const Json::Value& pull = econ["ms_pull"];
 	mspInfos.resize(pull.size());
@@ -876,6 +884,19 @@ void CEconomyManager::RemoveEconomyDefs(const std::set<CCircuitDef*>& buildDefs)
 //	}
 }
 
+IBuilderTask::BuildType CEconomyManager::GetBuildType(CCircuitDef::Id defId) const
+{
+	auto it = defToBuildType.find(defId);
+	return (it != defToBuildType.end()) ? it->second : IBuilderTask::BuildType::STORE;
+}
+
+void CEconomyManager::SetMexCap(float percent, bool isAlly)
+{
+	const size_t spSize = circuit->GetMetalManager()->GetSpots().size();
+	mexMax = (percent < 1.f) ? decltype(mexMax)(percent * spSize) : std::numeric_limits<decltype(mexMax)>::max();
+	isAllyMexMax = isAlly;
+}
+
 const CEconomyManager::SSideInfo& CEconomyManager::GetSideInfo() const
 {
 	return sideInfos[circuit->GetSideId()];
@@ -1023,6 +1044,9 @@ bool CEconomyManager::IsEnoughEnergyIncome(CCircuitDef const* buildDef, CCircuit
 
 IBuilderTask* CEconomyManager::MakeEconomyTasks(const AIFloat3& position, CCircuitUnit* unit)
 {
+	if (isScriptEconomy) {
+		return nullptr;
+	}
 	ZoneScoped;
 
 	CBuilderManager* builderMgr = circuit->GetBuilderManager();
@@ -1048,6 +1072,9 @@ IBuilderTask* CEconomyManager::MakeEconomyTasks(const AIFloat3& position, CCircu
 
 IBuilderTask* CEconomyManager::UpdateMetalTasks(const AIFloat3& position, CCircuitUnit* unit)
 {
+	if (isScriptMetal) {
+		return nullptr;
+	}
 	assert(unit != nullptr);
 	ZoneScoped;
 
@@ -1193,6 +1220,9 @@ IBuilderTask* CEconomyManager::UpdateMetalTasks(const AIFloat3& position, CCircu
 
 IBuilderTask* CEconomyManager::UpdateReclaimTasks(const AIFloat3& position, CCircuitUnit* unit, bool isNear)
 {
+	if (isScriptMetal) {
+		return nullptr;
+	}
 	ZoneScoped;
 
 	CBuilderManager* builderMgr = circuit->GetBuilderManager();
@@ -1282,6 +1312,9 @@ IBuilderTask* CEconomyManager::UpdateReclaimTasks(const AIFloat3& position, CCir
 
 IBuilderTask* CEconomyManager::UpdateEnergyTasks(const AIFloat3& position, CCircuitUnit* unit)
 {
+	if (isScriptEnergy) {
+		return nullptr;
+	}
 	ZoneScoped;
 
 	CBuilderManager* builderMgr = circuit->GetBuilderManager();
@@ -1417,6 +1450,9 @@ IBuilderTask* CEconomyManager::UpdateEnergyTasks(const AIFloat3& position, CCirc
 
 IBuilderTask* CEconomyManager::UpdateGeoTasks(const AIFloat3& position, CCircuitUnit* unit)
 {
+	if (isScriptEnergy) {
+		return nullptr;
+	}
 	ZoneScoped;
 
 	CBuilderManager* builderMgr = circuit->GetBuilderManager();
@@ -1465,6 +1501,9 @@ IBuilderTask* CEconomyManager::UpdateGeoTasks(const AIFloat3& position, CCircuit
 
 IBuilderTask* CEconomyManager::UpdateFactoryTasks(const AIFloat3& position, CCircuitUnit* unit)
 {
+	if (isScriptFactory) {
+		return nullptr;
+	}
 	ZoneScoped;
 
 	CBuilderManager* builderMgr = circuit->GetBuilderManager();
@@ -1637,6 +1676,9 @@ IBuilderTask* CEconomyManager::UpdateFactoryTasks()
 
 IBuilderTask* CEconomyManager::UpdateStorageTasks()
 {
+	if (isScriptStorage) {
+		return nullptr;
+	}
 	ZoneScoped;
 
 	CBuilderManager* builderMgr = circuit->GetBuilderManager();
@@ -1757,6 +1799,10 @@ IBuilderTask* CEconomyManager::CheckMobileAssistRequired(const AIFloat3& positio
 
 void CEconomyManager::StartFactoryJob()
 {
+	if (isScriptFactory) {
+		return;
+	}
+
 	CFactoryManager* factoryMgr = circuit->GetFactoryManager();
 	if ((factoryMgr->GetFactoryCount() == 0) && circuit->GetBuilderManager()->GetTasks(IBuilderTask::BuildType::FACTORY).empty()) {
 		CCircuitUnit* comm = circuit->GetSetupManager()->GetCommander();

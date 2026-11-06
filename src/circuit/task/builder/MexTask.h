@@ -15,7 +15,7 @@ namespace circuit {
 class CBMexTask final: public IBuilderTask {
 public:
 	CBMexTask(ITaskModule* mgr, Priority priority,
-			  CCircuitDef* buildDef, int spotId, const springai::AIFloat3& position,
+			  CCircuitDef* buildDef, int sptId, const springai::AIFloat3& position,
 			  SResource cost, int timeout);
 	CBMexTask(ITaskModule* mgr);  // Load
 	virtual ~CBMexTask();

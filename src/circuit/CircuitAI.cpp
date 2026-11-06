@@ -867,11 +867,12 @@ int CCircuitAI::Message(int playerId, const char* message)
 	const char cmdBreak[]   = "~break";
 	const char cmdReload[]  = "~reload";
 
-	const char cmdPos[]     = "~стройсь\0";
-	const char cmdSelfD[]   = "~Згинь, нечистая сила!\0";
+	const char cmdStPos[]   = "~stpos";
+	const char cmdSelfD[]   = "~selfd";
 
 	const char cmdBlock[]   = "~block";
 	const char cmdWBlock[]  = "~wbdraw";  // widget block draw
+	const char cmdWTrig[]   = "~wtrig";
 
 	const char cmdArea[]    = "~area";
 	const char cmdPath[]    = "~path";
@@ -912,8 +913,6 @@ int CCircuitAI::Message(int playerId, const char* message)
 		}
 	};
 
-	size_t msgLength = strlen(message);
-
 	if (strncmp(message, cmdBreak, strlen(cmdBreak)) == 0) {
 		__asm__("int3");
 	}
@@ -922,10 +921,10 @@ int CCircuitAI::Message(int playerId, const char* message)
 		scriptManager->Reload();
 	}
 
-	else if ((msgLength == strlen(cmdPos)) && (strcmp(message, cmdPos) == 0)) {
+	else if (strncmp(message, cmdStPos, strlen(cmdStPos)) == 0) {
 		setupManager->PickStartPos(CSetupManager::StartPosType::RANDOM);
 	}
-	else if ((msgLength == strlen(cmdSelfD)) && (strcmp(message, cmdSelfD) == 0)) {
+	else if (strncmp(message, cmdSelfD, strlen(cmdSelfD)) == 0) {
 		selfD();
 	}
 
@@ -937,6 +936,11 @@ int CCircuitAI::Message(int playerId, const char* message)
 			terrainManager->ToggleWidgetDraw();
 		}
 	}
+	else if (strncmp(message, cmdWTrig, strlen(cmdWTrig)) == 0) {
+		if (teamId == atoi((const char*)&message[strlen(cmdWTrig) + 1])) {
+			terrainManager->ToggleTriggerVis();
+		}
+	}
 
 	else if (strncmp(message, cmdArea, strlen(cmdArea)) == 0) {
 		gameAttribute->GetTerrainData().ToggleVis(lastFrame);
@@ -945,7 +949,9 @@ int CCircuitAI::Message(int playerId, const char* message)
 		pathfinder->TogglePathVis(this);
 	}
 	else if (strncmp(message, cmdMvCost, strlen(cmdMvCost)) == 0) {
-		pathfinder->ToggleMoveArrayVis(this);
+		if (teamId == atoi((const char*)&message[strlen(cmdMvCost) + 1])) {
+			pathfinder->ToggleMoveArrayVis(this);
+		}
 	}
 	else if (strncmp(message, cmdKnn, strlen(cmdKnn)) == 0) {
 		const AIFloat3 dbgPos = map->GetMousePos();

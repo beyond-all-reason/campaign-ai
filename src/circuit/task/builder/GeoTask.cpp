@@ -24,13 +24,17 @@ namespace circuit {
 using namespace springai;
 
 CBGeoTask::CBGeoTask(ITaskModule* mgr, Priority priority,
-					 CCircuitDef* buildDef, int spotId, const AIFloat3& position,
+					 CCircuitDef* buildDef, int sptId, const AIFloat3& position,
 					 SResource cost, int timeout)
 		: IBuilderTask(mgr, priority, buildDef, position, Type::BUILDER, BuildType::GEO, cost, 0.f, timeout)
-		, spotId(spotId)
+		, spotId(sptId)
 {
 	SetBuildPos(position);
-	manager->GetCircuit()->GetEconomyManager()->SetOpenGeoSpot(spotId, false);
+	CCircuitAI* circuit = manager->GetCircuit();
+	if (spotId < 0) {  // created by script
+		spotId = circuit->GetEnergyManager()->FindNearestSpot(position);
+	}
+	circuit->GetEconomyManager()->SetOpenGeoSpot(spotId, false);
 }
 
 CBGeoTask::CBGeoTask(ITaskModule* mgr)

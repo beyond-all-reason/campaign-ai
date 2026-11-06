@@ -21,9 +21,9 @@
                 </div>
             </handle>
             <div class="content give intent-collapsible" data-class-collapsed="isCollapsed">
-               <div class="grid commands">
-                    <button onclick="widget:SendCommand('cheat')">cheat</button>
-<!--                    <button onclick="widget:SendCommand('globallos')">global los</button>
+                <div class="grid commands">
+<!--                    <button onclick="widget:SendCommand('cheat')">cheat</button>
+                    <button onclick="widget:SendCommand('globallos')">global los</button>
                     <button onclick="widget:SendCommand('godmode')">godmode</button>
                     <button onclick="widget:SendCommand('nocost')">nocost</button>
                     <button onclick="widget:SendCommand('atm')">atm</button>
@@ -33,10 +33,29 @@
                     <button onclick="widget:PauseAI()">toggle AI</button>
                     <button class="danger" onclick="widget:SendCommand('spectator')">spectator</button>-->
                     <button onclick="widget:SendCommand('pause')">pause</button>
-                    <button onclick="widget:SendCommand('setspeed 1')">></button>
-                    <button onclick="widget:SendCommand('setspeed 10')">>></button>
-                    <button onclick="widget:SendCommand('setspeed 20')">>>></button>
+                    <button onclick="widget:SendCommand('setspeed 1')">x1</button>
+                    <button onclick="widget:SendCommand('setspeed 2')">x2</button>
+                    <button onclick="widget:SendCommand('setspeed 4')">x4</button>
+                    <button onclick="widget:SendCommand('setspeed 10')">x10</button>
+                    <button onclick="widget:SendCommand('setspeed 20')">x20</button>
                 </div>
+            </div>
+            <tabset class="content give intent-collapsible" data-class-collapsed="isCollapsed">
+                <tab>Misc</tab>
+                <panel>
+                <div class="grid commands">
+                    <button onclick="widget:SendUnitDefRetreat1Intent()">retreat0.5</button>
+                    <button onclick="widget:SendUnitDefRetreat2Intent()">retreat1.0</button>
+                    <button onclick="widget:SendDeactivateFactoryIntent()">Deactivate Factory</button>
+                    <button onclick="widget:SendActivateFactoryIntent()">Activate Factory</button>
+                    <button onclick="widget:SendEnableUnitsMsg()">Enable Units</button>
+                    <button onclick="widget:SendDisableUnitsMsg()">Disable Units</button>
+                    <button onclick="widget:ToggleScriptedRectruit()">Scripted recruit</button>
+                </div>
+                </panel>
+
+                <tab>Squad</tab>
+                <panel>
                 <div class="grid commands">
                     <button onclick="widget:SendNewSquad1()">New Squad1</button>
                     <button onclick="widget:SendNewSquad2()">New Squad2</button>
@@ -74,20 +93,14 @@
                     <button onclick="widget:SendPriorityTarget()">target</button>
                 </div>
                 <div class="grid commands">
-                    <button onclick="widget:SendUnitDefRetreat1Intent()">retreat0.5</button>
-                    <button onclick="widget:SendUnitDefRetreat2Intent()">retreat1.0</button>
-                    <button onclick="widget:SendDeactivateFactoryIntent()">Deactivate Factory</button>
-                    <button onclick="widget:SendActivateFactoryIntent()">Activate Factory</button>
-                    <button onclick="widget:SendEnableUnitsMsg()">Enable Units</button>
-                    <button onclick="widget:SendDisableUnitsMsg()">Disable Units</button>
-                    <button onclick="widget:ToggleScriptedRectruit()">Scripted recruit</button>
-                </div>
-                <div class="grid commands">
                     <button onclick="widget:SendEscortTask()">escort</button>
                     <button onclick="widget:SendEscortRangeBig()">2000 range</button>
                     <button onclick="widget:SendEscortRangeSmall()">100 range</button>
                 </div>
-                <div class="grid commands">
+                </panel>
+
+                <tab>Region</tab>
+                <panel><div class="grid commands">
                     <button onclick="widget:SendRegion1()">region 1</button>
                     <button onclick="widget:SendRegion2()">region 2</button>
                     <button onclick="widget:StartRegion()">start build</button>
@@ -95,11 +108,44 @@
                     <button onclick="widget:ClearRegions()">clear builds</button>
                 </div>
                 <div class="grid commands">
+                    <button onclick="widget:StartReservedRegion()">start reserved</button>
+                    <button onclick="widget:EndReservedRegion()">end reserved</button>
+                    <button onclick="widget:ClearReserved()">clear reserved</button>
+                </div>
+                <div class="grid commands">
                     <button onclick="widget:StartTriggerRegion()">start trigger</button>
                     <button onclick="widget:EndTriggerRegion()">end trigger</button>
                     <button onclick="widget:ClearTriggers()">clear triggers</button>
+                </div></panel>
+
+                <tab>Base</tab>
+                <panel>
+                <div class="grid commands">
+                    <button onclick="widget:SendBasePos()">base pos</button>
+                    <button onclick="widget:SendMetalPos()">metal pos</button>
+                    <button onclick="widget:SendCheapEnergyPos()">cheap energy pos</button>
+                    <button onclick="widget:SendModerateEnergyPos()">moderate energy pos</button>
+                    <button onclick="widget:SendExpensiveEnergyPos()">expensive energy pos</button>
                 </div>
-            </div>
+                <div class="grid commands">
+                    <button onclick="widget:SendReclaimConvertEff()">reclaim convert efficiency</button>
+                    <button onclick="widget:SendReclaimEnergyEff()">ereclaim energy efficiency</button>
+                </div>
+                <div class="grid commands">
+                    <button onclick="widget:SendNewBase()">base loadout</button>
+                    <button onclick="widget:StartAllowedRegion()">start allowed</button>
+                    <button onclick="widget:EndAllowedRegion()">end allowed</button>
+                    <button onclick="widget:ClearAllowed()">clear allowed</button>
+                    <button onclick="widget:AllowNone()">forbid all</button>
+                    <button onclick="widget:AllowAll()">allow all</button>
+                </div>
+                <div class="grid commands">
+                    <button onclick="widget:SendMexCap(0.2, false)">mex 0.3</button>
+                    <button onclick="widget:SendMexCap(0.5, true)">mex 0.5</button>
+                    <button onclick="widget:SendMexCap(2.0, false)">mex 2.0</button>
+                </div>
+                </panel>
+            </tabset>
             <div class="collapse-button" data-event-click="toggleCollapse()" title="Minimize" data-class-collapsed="isCollapsed"></div>
         </div>
     </body>

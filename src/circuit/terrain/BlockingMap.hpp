@@ -23,7 +23,8 @@ inline bool SBlockingMap::IsStructed(int x, int z, StructMask structMask) const
 
 inline bool SBlockingMap::IsBlocked(int x, int z, SM notIgnoreMask) const
 {
-	const SBlockCell& cell = grid[z * columns + x];
+	const int idx = z * columns + x;
+	const SBlockCell& cell = grid[idx];
 	return (cell.blockerMask & notIgnoreMask) || static_cast<SM>(cell.structMask);
 }
 
@@ -150,6 +151,16 @@ inline void SBlockingMap::SetBuildZone(short x, short z, CGridRegion::Id zoneId)
 	gridZone[z * columns + x] = zoneId;
 }
 
+inline bool SBlockingMap::IsAllowed(short x, short z, SM structMask) const
+{
+	return gridAllow[z * columns + x] & structMask;
+}
+
+inline void SBlockingMap::SetAllowed(short x, short z, SM structMask)
+{
+	gridAllow[z * columns + x] = structMask;
+}
+
 inline bool SBlockingMap::IsInBounds(const int2& r1, const int2& r2) const
 {
 	return (r1.x >= 0) && (r1.y >= 0) && (r2.x < columns) && (r2.y < rows);
@@ -182,4 +193,11 @@ inline SBlockingMap::StructMask SBlockingMap::GetStructMask(StructType structTyp
 	return static_cast<StructMask>(1 << static_cast<ST>(structType));
 }
 
+#ifdef DEBUG_VIS
+inline SBlockingMap::SM SBlockingMap::GetCellMask(int x, int z) const
+{
+	const SBlockCell& cell = grid[z * columns + x];
+	return cell.blockerMask | static_cast<SM>(cell.structMask);
+}
+#endif
 } // namespace circuit

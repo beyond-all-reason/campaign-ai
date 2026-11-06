@@ -400,7 +400,13 @@ class CProfiler{
 class CSetupManager{
 	void SetWaterHarmful(bool);
 	dictionary@ GetModOptions();
+	void SetBasePos(const AIFloat3&in);
 	const CCircuitDef@ commChoice;
+	AIFloat3 basePos;
+	AIFloat3 baseMetalPos;
+	AIFloat3 baseEnergy1Pos;
+	AIFloat3 baseEnergy2Pos;
+	AIFloat3 baseEnergy3Pos;
 }
 class AIFloat3{
 	AIFloat3();
@@ -464,6 +470,7 @@ class AIFloat3{
 	float z;
 }
 class CPolygon{
+	CPolygon(const array<AIFloat3>@);
 	int GetRefCount() const;
 	AIFloat3[]@ GetVerts() const;
 	bool ContainsPoint(const AIFloat3&in) const;
@@ -683,8 +690,12 @@ class IFighterTask{
 	bool isMergeAllowed;
 	bool isRegroupAllowed;
 	int vipTargetId;
-	float range;
+	float attackRange;
 	float retreat;
+	float goalRange;
+	float ignoreThreat;
+	float avoidThreat;
+	bool isEndPosOnly;
 }
 class ISquadTask{
 	int GetRefCount() const;
@@ -709,8 +720,12 @@ class ISquadTask{
 	bool isMergeAllowed;
 	bool isRegroupAllowed;
 	int vipTargetId;
-	float range;
+	float attackRange;
 	float retreat;
+	float goalRange;
+	float ignoreThreat;
+	float avoidThreat;
+	bool isEndPosOnly;
 }
 class CDefendTask{
 	int GetRefCount() const;
@@ -735,8 +750,12 @@ class CDefendTask{
 	bool isMergeAllowed;
 	bool isRegroupAllowed;
 	int vipTargetId;
-	float range;
+	float attackRange;
 	float retreat;
+	float goalRange;
+	float ignoreThreat;
+	float avoidThreat;
+	bool isEndPosOnly;
 }
 class CSuperTask{
 	int GetRefCount() const;
@@ -759,8 +778,12 @@ class CSuperTask{
 	bool isMergeAllowed;
 	bool isRegroupAllowed;
 	int vipTargetId;
-	float range;
+	float attackRange;
 	float retreat;
+	float goalRange;
+	float ignoreThreat;
+	float avoidThreat;
+	bool isEndPosOnly;
 }
 class CMaskHandler{
 	TypeMask GetTypeMask(const string&in);
@@ -802,6 +825,8 @@ class SResourceInfo{
 class CEconomyManager{
 	float GetMetalMake(const CCircuitDef@) const;
 	float GetEnergyMake(const CCircuitDef@) const;
+	int GetBuildType(int) const;
+	void SetMexCap(float, bool);
 	const SResourceInfo metal;
 	const SResourceInfo energy;
 	bool isMetalEmpty;
@@ -812,6 +837,11 @@ class CEconomyManager{
 	float reclConvertEff;
 	float reclEnergyEff;
 	float startMexTravel;
+	bool isScriptFactory;
+	bool isScriptStorage;
+	bool isScriptMetal;
+	bool isScriptEnergy;
+	bool isScriptEconomy;
 }
 class SRecruitTask{
 	uint8 type;
@@ -888,10 +918,14 @@ class CBuilderManager{
 	uint GetWorkerCount() const;
 	IUnitTask@ GetTaskById(int) const;
 	void AssignTask(CCircuitUnit@, IUnitTask@);
-	void AddBuildZone(int, CPolygon@, CCircuitDef@);
+	void AddBuildZone(int, CPolygon@, SBuildTask&in, int);
 	void DelBuildZone(int);
+	void FillBuildZone(int, bool);
+	IBuilderTask@ EnqueueBuildTaskForZone(int);
 	void AddReservedZone(int, CPolygon@);
 	void DelReservedZone(int);
+	void AddAllowedZone(int, CPolygon@, int);
+	void DelAllowedZone(int);
 	int dangerHysteresis;
 }
 class SFightTask{
@@ -899,7 +933,7 @@ class SFightTask{
 	uint8 check;
 	uint8 promote;
 	float power;
-	CCircuitUnit@ vip;
+	int vipId;
 }
 class CMilitaryManager{
 	IUnitTask@ DefaultMakeTask(CCircuitUnit@);
@@ -913,6 +947,7 @@ class CMilitaryManager{
 	void DelTriggerZone(int);
 	SResponseInfo@ GetResponseInfo(int) const;
 	const float armyCost;
+	bool isScriptDefence;
 	SQuotaMilitary quota;
 }
 class SQuotaMilitary{
@@ -938,6 +973,9 @@ class CTerrainManager{
 	bool IsWaterAVoid() const;
 	float GetLandPercent() const;
 	float SetAllyZoneRange(float);
+	void FillAllowedGrid(uint16);
+	uint16 GetStructType(int);
+	uint16 GetStructMask(int);
 }
 class CEnemyManager{
 	float GetEnemyThreat(int) const;

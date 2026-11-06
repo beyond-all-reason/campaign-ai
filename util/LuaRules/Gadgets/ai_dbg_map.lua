@@ -301,6 +301,7 @@ local aiData = {
 	base = 1.0,
 	isDraw = false,
 	isPrint = false,
+	isBlk = false,
 	mapChanged = 0,  -- frame of last change
 
 	marks = {},
@@ -326,12 +327,14 @@ local function HandleAiDbgEvent(cmd, teamID, dataStr)
 		local mapStr = dataStr:sub(#cmdGridData + 1)
 		aiData.map = VFS.UnpackF32(mapStr, 1, aiData.width * aiData.height)
 		aiData.mapChanged = SpringShared.GetGameFrame()
+		aiData.isBlk = false
 		--SpringShared.Echo("aiData.mapChanged", SpringShared.GetGameFrame())
 	elseif dataStr:sub(1, #cmdBlkData) == cmdBlkData then
 		-- "ai_blk_data:<byte1><byte2><byte3>..."
 		local mapStr = dataStr:sub(#cmdBlkData + 1)
-		aiData.map = VFS.UnpackU8(mapStr, 1, aiData.width * aiData.height)
+		aiData.map = VFS.UnpackU16(mapStr, 1, aiData.width * aiData.height)
 		aiData.mapChanged = SpringShared.GetGameFrame()
+		aiData.isBlk = true
 		--SpringShared.Echo("aiData.mapChanged", SpringShared.GetGameFrame())
 	elseif dataStr:sub(1, #cmdGridSize) == cmdGridSize then
 		-- "ai_grid_size:<square_size> <threat_base>"
@@ -368,6 +371,32 @@ local function HandleAiDbgEvent(cmd, teamID, dataStr)
 	end
 end
 
+-- Breaks a 16-bit RGB565 unsigned short into an 8-bit RGB table
+local function getRGB565(mask)
+    -- Extract raw bit sizes
+    -- Red: 5 bits (bits 11-15) -> mask / 2^11
+    local r = math.floor(mask / 2048) % 32
+    -- Green: 6 bits (bits 5-10) -> mask / 2^5
+    local g = math.floor(mask / 32) % 64
+    -- Blue: 5 bits (bits 0-4)
+    local b = mask % 32
+
+    -- Scale to 8-bit range (0 to 255)
+    return {
+        math.floor((r * 255) / 31),  -- R
+        math.floor((g * 255) / 63),  -- G
+        math.floor((b * 255) / 31),  -- B
+        0.6,  -- A
+    }
+end
+
+local function getGridColor(value)
+	if value > 0 then
+		return {value, 0.0, 0.0, 0.6} -- alpha defined here!
+	end
+	return {0.0, 0.0, -value, 0.6} -- alpha defined here!
+end
+
 local spGetGroundHeight  = SpringShared.GetGroundHeight
 
 local lastupdateframe = 0
@@ -376,9 +405,10 @@ local function drawThrGL4Way()
 	local width = aiData.width
 	local height = aiData.height
 	local size = aiData.size
-	local div = aiData.div
+	local invDiv = 1.0 / aiData.div
 	local base = aiData.base
-	local threatMap = aiData.map
+	local gridData = aiData.map
+	local getColor = aiData.isBlk and getRGB565 or getGridColor
 
 	if aiData.isDraw then
 		if aiData.mapChanged > lastupdateframe then
@@ -389,20 +419,10 @@ local function drawThrGL4Way()
 			for x = 1, width do
 				px = (x - 1) * size
 				for z = 0, height - 1 do
-					value = threatMap[z * width + x] - base
+					value = gridData[z * width + x] - base
 					draw = (value ~= 0)
-					local mycolor = {0.0, 0.0, 0.0, 0.6} -- alpha defined here!
-
-					if value > 0 then
-						pz = z * size
-						value = value / div
-						mycolor[1] = value
-					elseif value < 0 then
-						pz = z * size
-						value = -value / div
-						mycolor[3] = value
-					end
 					if draw then
+						local mycolor = getColor(value * invDiv)
 						InstanceVBOTable.pushElementInstance( -- pushElementInstance(iT,thisInstance, instanceID, updateExisting, noUpload, unitID)
 							circleInstanceVBOthr, -- the buffer to push into
 							{ -- the data per instance
@@ -437,7 +457,7 @@ local function drawThrGL4Way()
 		for x = 1, width do
 			px = (x - 1) * size + halfSize
 			for z = 0, height - 1 do
-				value = threatMap[z * width + x]
+				value = gridData[z * width + x]
 				if value ~= base then
 					pz = z * size + halfSize
 

@@ -51,18 +51,21 @@ local drawHandle = nil
 -- LuaMsg API parameters
 --------------------------------------------------------------------------------
 
-local teamID = 1
+local teamID0 = 0
+local teamID1 = 1
+local baseID1 = 1
 local squadID1 = 1
 local squadID2 = 2
 local squadID3 = 3
-local zoneID1 = 1
-local zoneID2 = 2
-local zoneID = 10
+local buildZoneID1 = 1
+local buildZoneID2 = 2
+local buildZoneID = 10
 local triggerZoneID = 0
 local power = 5.2
 local retreatThreshold = 2.2
 local isRecruitScripted = false
 local newRegion = false
+local lastPos = {0, 0, 0}
 
 local aiMsg = VFS.Include("luarules/utilities/campaign_ai_msg.lua")
 
@@ -148,12 +151,13 @@ function widget:MousePress(x, y, button)
 
     if wx and wy and wz then
         Spring.Echo("x: "..wx.." y: "..wy.." z: "..wz)
+        lastPos = pos
         if dm_handle.selectedWave then
             local msg = aiMsg.MsgBuilder.new()
                 :cmdValue(aiMsg.Topic.SQUAD_ID, dm_handle.selectedWave)
-                :cmdDictArray(aiMsg.Topic.SQUAD_PARAMS, aiMsg.Param.POSITION, {wx, wz})
+                :cmdDictArray(aiMsg.Topic.SQUAD_PARAMS, aiMsg.Squad.POSITION, {wx, wz})
                 :toString()
-            Spring.SendSkirmishAIMessage(teamID, msg)
+            Spring.SendSkirmishAIMessage(teamID1, msg)
         elseif newRegion then
             newRegion[#newRegion + 1] = wx
             newRegion[#newRegion + 1] = wz
@@ -269,15 +273,15 @@ function CreateSquad(squadID, pos, range, composition)
     local msg = aiMsg.MsgBuilder.new()
         :cmdValue(aiMsg.Topic.SQUAD_REQUEST_ID, squadID)
         :cmdDict(aiMsg.Topic.SQUAD_REQUEST_PARAMS, {
-            [aiMsg.Param.SQUAD_GATHER_RANGE] = range,
-            [aiMsg.Param.SQUAD_ATTACK_RANGE] = 512,
-            [aiMsg.Param.SQUAD_REBUILD] = false and 1 or 0,
-            [aiMsg.Param.SQUAD_RETREAT] = -1,  -- -1 or 0 or (0.0..1.0]
+            [aiMsg.Squad.GATHER_RANGE] = range,
+            [aiMsg.Squad.ATTACK_RANGE] = 512,
+            [aiMsg.Squad.REBUILD] = true and 1 or 0,
+            [aiMsg.Squad.RETREAT] = -1,  -- -1 or 0 or (0.0:1.0]
         })
-        :paramArray(aiMsg.Param.POSITION, pos)
+        :paramArray(aiMsg.Squad.POSITION, pos)
         :cmdDict(aiMsg.Topic.SQUAD_REQUEST_COMPOSE, composition)
         :toString()
-    Spring.SendSkirmishAIMessage(teamID, msg)
+    Spring.SendSkirmishAIMessage(teamID1, msg)
 end
 
 function widget:SendNewSquad1()
@@ -314,37 +318,37 @@ function widget:SendCancelReq1()
     local msg = aiMsg.MsgBuilder.new()
         :cmdValue(aiMsg.Topic.SQUAD_REQUEST_CANCEL, squadID1)
         :toString()
-    Spring.SendSkirmishAIMessage(teamID, msg)
+    Spring.SendSkirmishAIMessage(teamID1, msg)
 end
 function widget:SendCancelReq2()
     local msg = aiMsg.MsgBuilder.new()
         :cmdValue(aiMsg.Topic.SQUAD_REQUEST_CANCEL, squadID2)
         :toString()
-    Spring.SendSkirmishAIMessage(teamID, msg)
+    Spring.SendSkirmishAIMessage(teamID1, msg)
 end
 function widget:SendCancelReq3()
     local msg = aiMsg.MsgBuilder.new()
         :cmdValue(aiMsg.Topic.SQUAD_REQUEST_CANCEL, squadID3)
         :toString()
-    Spring.SendSkirmishAIMessage(teamID, msg)
+    Spring.SendSkirmishAIMessage(teamID1, msg)
 end
 function widget:SendCancelSquad1()
     local msg = aiMsg.MsgBuilder.new()
         :cmdValue(aiMsg.Topic.SQUAD_DISBAND, squadID1)
         :toString()
-    Spring.SendSkirmishAIMessage(teamID, msg)
+    Spring.SendSkirmishAIMessage(teamID1, msg)
 end
 function widget:SendCancelSquad2()
     local msg = aiMsg.MsgBuilder.new()
         :cmdValue(aiMsg.Topic.SQUAD_DISBAND, squadID2)
         :toString()
-    Spring.SendSkirmishAIMessage(teamID, msg)
+    Spring.SendSkirmishAIMessage(teamID1, msg)
 end
 function widget:SendCancelSquad3()
     local msg = aiMsg.MsgBuilder.new()
         :cmdValue(aiMsg.Topic.SQUAD_DISBAND, squadID3)
         :toString()
-    Spring.SendSkirmishAIMessage(teamID, msg)
+    Spring.SendSkirmishAIMessage(teamID1, msg)
 end
 function widget:SendCompose1Squad2()
     local msg = aiMsg.MsgBuilder.new()
@@ -353,7 +357,7 @@ function widget:SendCompose1Squad2()
             [nameToDefID["corak"]] = 10,
         })
         :toString()
-    Spring.SendSkirmishAIMessage(teamID, msg)
+    Spring.SendSkirmishAIMessage(teamID1, msg)
 end
 function widget:SendCompose2Squad2()
     local msg = aiMsg.MsgBuilder.new()
@@ -362,7 +366,7 @@ function widget:SendCompose2Squad2()
             [nameToDefID["corgator"]] = 10,
         })
         :toString()
-    Spring.SendSkirmishAIMessage(teamID, msg)
+    Spring.SendSkirmishAIMessage(teamID1, msg)
 end
 function widget:SendCompose3Squad2()
     local msg = aiMsg.MsgBuilder.new()
@@ -372,7 +376,7 @@ function widget:SendCompose3Squad2()
             [nameToDefID["corthud"]]  = 10,
         })
         :toString()
-    Spring.SendSkirmishAIMessage(teamID, msg)
+    Spring.SendSkirmishAIMessage(teamID1, msg)
 end
 
 function SetSquadTask(squad, task)
@@ -380,7 +384,7 @@ function SetSquadTask(squad, task)
         :cmdValue(aiMsg.Topic.SQUAD_ID, squad)
         :cmdValue(aiMsg.Topic.SQUAD_TASK, task)
         :toString()
-    Spring.SendSkirmishAIMessage(teamID, msg)
+    Spring.SendSkirmishAIMessage(teamID1, msg)
 end
 
 function widget:SendTaskDefend()
@@ -435,7 +439,7 @@ function widget:SetPathParamThreat()
 --                 [aiMsg.Path.USE_END_POS] = false and 1 or 0,
             })
             :toString()
-        Spring.SendSkirmishAIMessage(teamID, msg)
+        Spring.SendSkirmishAIMessage(teamID1, msg)
     end
 end
 function widget:ClearPathParamThreat()
@@ -449,7 +453,7 @@ function widget:ClearPathParamThreat()
 --                 [aiMsg.Path.USE_END_POS] = false and 1 or 0,
             })
             :toString()
-        Spring.SendSkirmishAIMessage(teamID, msg)
+        Spring.SendSkirmishAIMessage(teamID1, msg)
     end
 end
 
@@ -470,7 +474,7 @@ function widget:CancelDozenSquads()
         squadID = squadID + 1
         msgBuilder:cmdValue(aiMsg.Topic.SQUAD_REQUEST_CANCEL, squadID)
     end
-    Spring.SendSkirmishAIMessage(teamID, msgBuilder:toString())
+    Spring.SendSkirmishAIMessage(teamID1, msgBuilder:toString())
 end
 
 function widget:SendPriorityTarget()
@@ -479,13 +483,13 @@ function widget:SendPriorityTarget()
         local msg = aiMsg.MsgBuilder.new()
             :cmdValue(aiMsg.Topic.SQUAD_ID, dm_handle.selectedWave)
             :cmdDict(aiMsg.Topic.SQUAD_REQUEST_PARAMS, {
-                [aiMsg.Param.SQUAD_PRIO_TARGET] = units[1],
+                [aiMsg.Squad.PRIO_TARGET] = units[1],
             })
             :cmdDict(aiMsg.Topic.SQUAD_PARAMS, {
-                [aiMsg.Param.SQUAD_PRIO_TARGET] = units[1],
+                [aiMsg.Squad.PRIO_TARGET] = units[1],
             })
             :toString()
-        Spring.SendSkirmishAIMessage(teamID, msg)
+        Spring.SendSkirmishAIMessage(teamID1, msg)
     end
 end
 
@@ -496,7 +500,7 @@ function widget:SendUnitDefRetreat1Intent()
             [nameToDefID["corthud"]]  = 0.5,
         })
         :toString()
-    Spring.SendSkirmishAIMessage(teamID, msg)
+    Spring.SendSkirmishAIMessage(teamID1, msg)
 end
 function widget:SendUnitDefRetreat2Intent()
     local msg = aiMsg.MsgBuilder.new()
@@ -505,7 +509,7 @@ function widget:SendUnitDefRetreat2Intent()
             [nameToDefID["corthud"]]  = 1.0,
         })
         :toString()
-    Spring.SendSkirmishAIMessage(teamID, msg)
+    Spring.SendSkirmishAIMessage(teamID1, msg)
 end
 function widget:SendDeactivateFactoryIntent()
     local units = Spring.GetSelectedUnits()
@@ -513,7 +517,7 @@ function widget:SendDeactivateFactoryIntent()
         local msg = aiMsg.MsgBuilder.new()
             :cmdDictArray(aiMsg.Topic.SET_FACTORY_ACTIVE, 0, units)
             :toString()
-        Spring.SendSkirmishAIMessage(teamID, msg)
+        Spring.SendSkirmishAIMessage(teamID1, msg)
     end
 end
 function widget:SendActivateFactoryIntent()
@@ -522,7 +526,7 @@ function widget:SendActivateFactoryIntent()
         local msg = aiMsg.MsgBuilder.new()
             :cmdDictArray(aiMsg.Topic.SET_FACTORY_ACTIVE, 1, units)
             :toString()
-        Spring.SendSkirmishAIMessage(teamID, msg)
+        Spring.SendSkirmishAIMessage(teamID1, msg)
     end
 end
 function widget:SendEnableUnitsMsg()
@@ -538,7 +542,7 @@ function widget:SendEnableUnitsMsg()
             nameToDefID["coradvsol"],
         })
         :toString()
-    Spring.SendSkirmishAIMessage(teamID, msg)
+    Spring.SendSkirmishAIMessage(teamID1, msg)
 --     tracy.ZoneEnd()
 end
 function widget:SendDisableUnitsMsg()
@@ -553,14 +557,23 @@ function widget:SendDisableUnitsMsg()
             nameToDefID["coradvsol"],
         })
         :toString()
-    Spring.SendSkirmishAIMessage(teamID, msg)
+    Spring.SendSkirmishAIMessage(teamID1, msg)
 end
 function widget:ToggleScriptedRectruit()
     isRecruitScripted = not isRecruitScripted
-    local msg = aiMsg.MsgBuilder.new()
-        :cmdValue(aiMsg.Topic.SET_SCRIPTED_RECRUIT, isRecruitScripted and 1 or 0)
+    msg = aiMsg.MsgBuilder.new()
+        :cmdDict(aiMsg.Topic.AI_CONSTRUCTION_PARAMS, {
+            [aiMsg.Construct.RECRUIT] = isRecruitScripted and 0 or 1,
+            [aiMsg.Construct.BUILD_TASK] = 1,
+            [aiMsg.Construct.FACTORY] = 1,
+            [aiMsg.Construct.STORAGE] = 1,
+            [aiMsg.Construct.METAL] = 1,
+            [aiMsg.Construct.ENERGY] = 1,
+            [aiMsg.Construct.ECONOMY] = 1,
+            [aiMsg.Construct.DEFENCE] = 1,
+        })
         :toString()
-    Spring.SendSkirmishAIMessage(teamID, msg)
+    Spring.SendSkirmishAIMessage(teamID1, msg)
 end
 
 function widget:SendEscortTask()
@@ -570,61 +583,67 @@ function widget:SendEscortTask()
             :cmdValue(aiMsg.Topic.SQUAD_ID, squadID1)
             :cmdValue(aiMsg.Topic.SQUAD_ESCORT, units[1])
             :toString()
-        Spring.SendSkirmishAIMessage(teamID, msg)
+        Spring.SendSkirmishAIMessage(teamID1, msg)
     end
 end
 function widget:SendEscortRangeBig()
     local msg = aiMsg.MsgBuilder.new()
         :cmdValue(aiMsg.Topic.SQUAD_ID, squadID1)
         :cmdDict(aiMsg.Topic.SQUAD_PARAMS, {
-            [aiMsg.Param.SQUAD_ATTACK_RANGE] = 2000,
+            [aiMsg.Squad.ATTACK_RANGE] = 2000,
         })
         :toString()
-    Spring.SendSkirmishAIMessage(teamID, msg)
+    Spring.SendSkirmishAIMessage(teamID1, msg)
 end
 function widget:SendEscortRangeSmall()
     local msg = aiMsg.MsgBuilder.new()
         :cmdValue(aiMsg.Topic.SQUAD_ID, squadID1)
         :cmdDict(aiMsg.Topic.SQUAD_PARAMS, {
-            [aiMsg.Param.SQUAD_ATTACK_RANGE] = 100,
+            [aiMsg.Squad.ATTACK_RANGE] = 100,
         })
         :toString()
-    Spring.SendSkirmishAIMessage(teamID, msg)
+    Spring.SendSkirmishAIMessage(teamID1, msg)
 end
 
 function widget:SendRegion1()
     local msg = aiMsg.MsgBuilder.new()
-        :cmdValue(aiMsg.Topic.BUILD_REGION_ID, zoneID1)
-        :paramArray(nameToDefID["cornanotc"], {1079, 2391, 1569, 2788, 1809, 2426, 1349, 2172})
+        :cmdDictArray(aiMsg.Topic.BUILD_REGION_ID, buildZoneID1, {1079, 2391, 1569, 2788, 1809, 2426, 1349, 2172})
+        :addValue(nameToDefID["cornanotc"])
+        :addValue(0)  -- facing
+        :addValue(3)  -- simultaneous number
         :toString()
-    Spring.SendSkirmishAIMessage(teamID, msg)
+    Spring.SendSkirmishAIMessage(teamID1, msg)
 end
 function widget:SendRegion2()
     local msg = aiMsg.MsgBuilder.new()
-        :cmdValue(aiMsg.Topic.BUILD_REGION_ID, zoneID2)
-        :paramArray(nameToDefID["corsolar"], {4514, 5271, 4860, 5047, 5266, 5255, 5235, 5631, 4738, 5617})
+        :cmdDictArray(aiMsg.Topic.BUILD_REGION_ID, buildZoneID2, {4514, 5271, 4860, 5047, 5266, 5255, 5235, 5631, 4738, 5617})
+        :addValue(nameToDefID["corsolar"])
+        :addValue(0)  -- facing
+        :addValue(2)  -- simultaneous number
         :toString()
-    Spring.SendSkirmishAIMessage(teamID, msg)
+    Spring.SendSkirmishAIMessage(teamID1, msg)
 end
 function widget:StartRegion()
     newRegion = {}
 end
 function widget:EndRegion()
     if newRegion and #newRegion >= 6 then
-        zoneID = zoneID + 1
+        buildZoneID = buildZoneID + 1
         local msg = aiMsg.MsgBuilder.new()
-            :cmdValue(aiMsg.Topic.BUILD_REGION_ID, zoneID)
-            :paramArray(nameToDefID["corwin"], newRegion)
+            :cmdDictArray(aiMsg.Topic.BUILD_REGION_ID, buildZoneID, newRegion)
+            :addValue(nameToDefID["corwin"])
+            :addValue(0)  -- facing
+            :addValue(0)  -- simultaneous number
             :toString()
-        Spring.SendSkirmishAIMessage(teamID, msg)
+        Spring.SendSkirmishAIMessage(teamID1, msg)
     end
     newRegion = false
 end
 function widget:ClearRegions()
     local msg = aiMsg.MsgBuilder.new()
-        :cmdValue(aiMsg.Topic.BUILD_REGION_CLEAR, 1)
+        :cmdValue(aiMsg.Topic.BUILD_REGION_CLEAR, 0)
         :toString()
-    Spring.SendSkirmishAIMessage(teamID, msg)
+    Spring.SendSkirmishAIMessage(teamID1, msg)
     newRegion = false
 end
 
@@ -637,15 +656,164 @@ function widget:EndTriggerRegion()
         local msg = aiMsg.MsgBuilder.new()
             :cmdDictArray(aiMsg.Topic.TRIGGER_REGION_ID, triggerZoneID, newRegion)
             :toString()
-        Spring.SendSkirmishAIMessage(teamID, msg)
+        Spring.SendSkirmishAIMessage(teamID1, msg)
     end
     newRegion = false
 end
 function widget:ClearTriggers()
     local msg = aiMsg.MsgBuilder.new()
-        :cmdValue(aiMsg.Topic.TRIGGER_REGION_CLEAR, 1)
+        :cmdValue(aiMsg.Topic.TRIGGER_REGION_CLEAR, 0)
         :toString()
-    Spring.SendSkirmishAIMessage(teamID, msg)
+    Spring.SendSkirmishAIMessage(teamID1, msg)
+end
+
+function widget:StartReservedRegion()
+    newRegion = {}
+end
+function widget:EndReservedRegion()
+    if newRegion and #newRegion >= 6 then
+        buildZoneID = buildZoneID + 1
+        local msg = aiMsg.MsgBuilder.new()
+            :cmdDictArray(aiMsg.Topic.RESERVED_REGION_ID, buildZoneID, newRegion)
+            :toString()
+        Spring.SendSkirmishAIMessage(teamID1, msg)
+    end
+    newRegion = false
+end
+function widget:ClearReserved()
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdValue(aiMsg.Topic.RESERVED_REGION_CLEAR, 0)
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID1, msg)
+end
+
+function widget:SendBasePos()
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdDictArray(aiMsg.Topic.BASE_PARAMS, aiMsg.Base.POSITION, lastPos)
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID0, msg)
+end
+function widget:SendMetalPos()
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdDictArray(aiMsg.Topic.BASE_PARAMS, aiMsg.Base.METAL_POS, lastPos)
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID0, msg)
+end
+function widget:SendCheapEnergyPos()
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdDictArray(aiMsg.Topic.BASE_PARAMS, aiMsg.Base.ENERGY_CHEAP_POS, lastPos)
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID0, msg)
+end
+function widget:SendModerateEnergyPos()
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdDictArray(aiMsg.Topic.BASE_PARAMS, aiMsg.Base.ENERGY_MODERATE_POS, lastPos)
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID0, msg)
+end
+function widget:SendExpensiveEnergyPos()
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdDictArray(aiMsg.Topic.BASE_PARAMS, aiMsg.Base.ENERGY_EXPENSIVE_POS, lastPos)
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID0, msg)
+end
+function widget:SendReclaimConvertEff()
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdDict(aiMsg.Topic.BASE_PARAMS, {[aiMsg.Base.RECLAIM_CONVERT] = 2.0})
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID0, msg)
+end
+function widget:SendReclaimEnergyEff()
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdDict(aiMsg.Topic.BASE_PARAMS, {[aiMsg.Base.RECLAIM_ENERGY] = 20.0})
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID0, msg)
+end
+
+function widget:SendNewBase()
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdValue(aiMsg.Topic.BASE_PLAN_ID, baseID1)
+        :cmdDict(aiMsg.Topic.BASE_ADD_BUILDTASK, {
+            [aiMsg.Plan.UNITDEF] = nameToDefID["armmex"],
+        })
+        :paramArray(aiMsg.Plan.POSITION, {333, 6913})
+        :cmdDict(aiMsg.Topic.BASE_ADD_BUILDTASK, {
+            [aiMsg.Plan.UNITDEF] = nameToDefID["armmex"],
+        })
+        :paramArray(aiMsg.Plan.POSITION, {460, 6509})
+        :cmdDict(aiMsg.Topic.BASE_ADD_BUILDTASK, {
+            [aiMsg.Plan.UNITDEF] = nameToDefID["armmex"],
+        })
+        :paramArray(aiMsg.Plan.POSITION, {862, 6866})
+        :cmdDict(aiMsg.Topic.BASE_ADD_BUILDTASK, {
+            [aiMsg.Plan.UNITDEF] = nameToDefID["armlab"],
+        })
+        :paramArray(aiMsg.Plan.POSITION, {621, 6696})
+        :cmdDict(aiMsg.Topic.BASE_ADD_BUILDTASK, {
+            [aiMsg.Plan.UNITDEF] = nameToDefID["armsolar"],
+            [aiMsg.Plan.REBUILD] = 1,
+        })
+        :paramArray(aiMsg.Plan.POSITION, {521, 6696})
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID0, msg)
+end
+function widget:StartAllowedRegion()
+    newRegion = {}
+end
+function widget:EndAllowedRegion()
+    if newRegion and #newRegion >= 6 then
+        buildZoneID = buildZoneID + 1
+        local msg = aiMsg.MsgBuilder.new()
+            :cmdDictArray(aiMsg.Topic.ALLOWED_REGION_ID, buildZoneID, newRegion)
+            :paramArray(aiMsg.Region.UNITDEF_ID, {nameToDefID["armlab"], nameToDefID["armnanotc"]})
+--             :paramValue(aiMsg.Region.STRUCT_MASK, aiMsg.StructMask.NONE)
+            :toString()
+        Spring.SendSkirmishAIMessage(teamID0, msg)
+    end
+    newRegion = false
+end
+function widget:ClearAllowed()
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdValue(aiMsg.Topic.ALLOWED_REGION_CLEAR, 0)
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID0, msg)
+end
+function widget:AllowNone()
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdValue(aiMsg.Topic.ALLOWED_GRID_FILL, aiMsg.StructMask.NONE)
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID0, msg)
+end
+function widget:AllowAll()
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdValue(aiMsg.Topic.ALLOWED_GRID_FILL, aiMsg.StructMask.ALL)
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID0, msg)
+end
+
+function widget:SendMexCap(percent, isAllyTeam)
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdArray(aiMsg.Topic.SET_MEX_CAP, {percent, isAllyTeam and 1 or 0})
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID0, msg)
+end
+
+function widget:UnitFinished(unitID, unitDefID, unitTeam)
+	if unitTeam == teamID0 and  unitDefID == nameToDefID["armlab"] then
+        local msg = aiMsg.MsgBuilder.new()
+            :cmdDict(aiMsg.Topic.AI_CONSTRUCTION_PARAMS, {
+                [aiMsg.Construct.RECRUIT] = 1,
+                [aiMsg.Construct.BUILD_TASK] = 1,
+                [aiMsg.Construct.FACTORY] = 1,
+                [aiMsg.Construct.STORAGE] = 1,
+                [aiMsg.Construct.METAL] = 1,
+                [aiMsg.Construct.ENERGY] = 1,
+                [aiMsg.Construct.ECONOMY] = 1,
+                [aiMsg.Construct.DEFENCE] = 1,
+            })
+            :toString()
+        Spring.SendSkirmishAIMessage(teamID0, msg)
+    end
 end
 
 
@@ -683,6 +851,20 @@ end
 
 function widget:GameStart()
     ToggleScriptedRectruit()
+
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdDict(aiMsg.Topic.AI_CONSTRUCTION_PARAMS, {
+            [aiMsg.Construct.RECRUIT] = 0,
+            [aiMsg.Construct.BUILD_TASK] = 1,
+            [aiMsg.Construct.FACTORY] = 0,
+            [aiMsg.Construct.STORAGE] = 0,
+            [aiMsg.Construct.METAL] = 0,
+            [aiMsg.Construct.ENERGY] = 0,
+            [aiMsg.Construct.ECONOMY] = 0,
+            [aiMsg.Construct.DEFENCE] = 0,
+        })
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID0, msg)
 end
 
 function widget:RecvLuaMsg(message, playerID)

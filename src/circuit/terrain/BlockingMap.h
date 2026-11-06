@@ -16,7 +16,6 @@
 #include <map>
 #include <string>
 
-#define GRID_BUILD_STEP		BUILD_SQUARE_SIZE
 #define GRID_RATIO_ALLY		8
 #define GRID_RATIO_LOW		8
 #define STRUCT_BIT(bits)	static_cast<SBlockingMap::SM>(SBlockingMap::StructMask::bits)
@@ -61,6 +60,8 @@ struct SBlockingMap {
 
 	inline bool IsBuildZone(short x, short z, CGridRegion::Id zoneId) const;
 	inline void SetBuildZone(short x, short z, CGridRegion::Id zoneId);
+	inline bool IsAllowed(short x, short z, SM structMask) const;
+	inline void SetAllowed(short x, short z, SM structMask);
 
 	inline bool IsInBounds(const int2& r1, const int2& r2) const;
 	inline bool IsInBounds(int x, int z) const;
@@ -81,6 +82,7 @@ struct SBlockingMap {
 	};
 	std::vector<SBlockCell> grid;  // granularity Map::GetWidth / 2,  Map::GetHeight / 2
 	std::vector<CGridRegion::Id> gridZone;  // custom zone id; 0 = none
+	std::vector<SM> gridAllow;  // construction allowance filter
 	int columns;
 	int rows;
 
@@ -100,6 +102,10 @@ struct SBlockingMap {
 	std::vector<SBlockCellAlly> gridAlly;  // granularity Map::GetWidth / 16, Map::GetHeight / 16
 	int columnsAlly;
 	int rowsAlly;
+
+#ifdef DEBUG_VIS
+	SM GetCellMask(int x, int z) const;
+#endif
 };
 
 } // namespace circuit

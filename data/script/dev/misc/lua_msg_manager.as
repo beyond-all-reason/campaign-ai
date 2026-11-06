@@ -1,11 +1,25 @@
 #include "../../define.as"
 #include "../../lua_msg.as"
+#include "../manager/builder.as"
 #include "../manager/factory.as"
+#include "base.as"
 #include "squad.as"
 #include "region.as"
 
 
 namespace LuaMsg {
+
+// Must match the Lua definitions
+enum EConstructParam {
+	RECRUIT    = 1,
+	BUILD_TASK = 2,
+	FACTORY    = 3,
+	STORAGE    = 4,
+	METAL      = 5,
+	ENERGY     = 6,
+	ECONOMY    = 7,
+	DEFENCE    = 8,
+}
 
 class Manager {
 	void InitHandlers() {
@@ -18,7 +32,14 @@ class Manager {
 
 			{formatInt(ELuaMsg::SET_UNITDEF_RETREAT_HP), LuaMsgFunc(this.SetUnitDefRetreat)},
 			{formatInt(ELuaMsg::SET_FACTORY_ACTIVE), LuaMsgFunc(this.SetFactoryActive)},
-			{formatInt(ELuaMsg::SET_SCRIPTED_RECRUIT), LuaMsgFunc(this.SetScriptedRecruit)},
+			{formatInt(ELuaMsg::SET_MEX_CAP), LuaMsgFunc(this.SetMexCap)},
+			{formatInt(ELuaMsg::AI_CONSTRUCTION_PARAMS), LuaMsgFunc(this.SetConstructionParams)},
+
+			{formatInt(ELuaMsg::BASE_PLAN_ID), LuaMsgFunc(this.SelectBuildPlanId)},
+			{formatInt(ELuaMsg::BASE_ADD_BUILDTASK), LuaMsgFunc(this.AddBuildTask)},
+			{formatInt(ELuaMsg::BASE_DEL_BUILDTASK), LuaMsgFunc(this.DelBuildTask)},
+			{formatInt(ELuaMsg::BASE_PLAN_CANCEL), LuaMsgFunc(this.BuildPlanCancel)},
+			{formatInt(ELuaMsg::BASE_PARAMS), LuaMsgFunc(this.BaseParams)},
 
 			{formatInt(ELuaMsg::SQUAD_REQUEST_ID), LuaMsgFunc(this.SelectSquadRequestId)},
 			{formatInt(ELuaMsg::SQUAD_REQUEST_COMPOSE), LuaMsgFunc(this.SquadRequestCompose)},
@@ -34,6 +55,11 @@ class Manager {
 
 			{formatInt(ELuaMsg::BUILD_REGION_ID), LuaMsgFunc(this.MakeBuildRegion)},
 			{formatInt(ELuaMsg::BUILD_REGION_CLEAR), LuaMsgFunc(this.BuildRegionClear)},
+			{formatInt(ELuaMsg::RESERVED_REGION_ID), LuaMsgFunc(this.MakeReservedRegion)},
+			{formatInt(ELuaMsg::RESERVED_REGION_CLEAR), LuaMsgFunc(this.ReservedRegionClear)},
+			{formatInt(ELuaMsg::ALLOWED_REGION_ID), LuaMsgFunc(this.MakeAllowedRegion)},
+			{formatInt(ELuaMsg::ALLOWED_REGION_CLEAR), LuaMsgFunc(this.AllowedRegionClear)},
+			{formatInt(ELuaMsg::ALLOWED_GRID_FILL), LuaMsgFunc(this.AllowedGridFill)},
 			{formatInt(ELuaMsg::TRIGGER_REGION_ID), LuaMsgFunc(this.MakeTriggerRegion)},
 			{formatInt(ELuaMsg::TRIGGER_REGION_CLEAR), LuaMsgFunc(this.TriggerRegionClear)}
 		};
@@ -103,8 +129,65 @@ class Manager {
 			aiFactoryMgr.SetIsActiveFactory(parseInt(unitIds[i]), isActive);
 	}
 
-	void SetScriptedRecruit(const array<string>& in params) {
-		Factory::isRecruitScripted = params[0] != "0";
+	void SetMexCap(const array<string>& in params) {
+		// params contains "<mex_percent>;<is_allyteam>"
+		aiEconomyMgr.SetMexCap(parseFloat(params[0]), params[1] != "0");
+	}
+
+	void SetConstructionParams(const array<string>& in params) {
+		for (uint i = 0; i < params.length(); ++i) {
+			// params contains "<EConstructParam>=<bool>" pairs
+			const array<string>@ kv = params[i].split(LuaMsg::SEP_KEY_VALUE);
+			const bool isScripted = kv[1] == "0";
+			switch (parseInt(kv[0])) {
+			case EConstructParam::RECRUIT: {
+				Factory::isRecruitScripted = isScripted;
+			} break;
+			case EConstructParam::BUILD_TASK: {
+				Builder::isConstructionScripted = isScripted;
+			} break;
+			case EConstructParam::FACTORY: {
+				aiEconomyMgr.isScriptFactory = isScripted;
+			} break;
+			case EConstructParam::STORAGE: {
+				aiEconomyMgr.isScriptStorage = isScripted;
+			} break;
+			case EConstructParam::METAL: {
+				aiEconomyMgr.isScriptMetal = isScripted;
+			} break;
+			case EConstructParam::ENERGY: {
+				aiEconomyMgr.isScriptEnergy = isScripted;
+			} break;
+			case EConstructParam::ECONOMY: {
+				aiEconomyMgr.isScriptEconomy = isScripted;
+			} break;
+			case EConstructParam::DEFENCE: {
+				aiMilitaryMgr.isScriptDefence = isScripted;
+			} break;
+			default: break;
+			}
+		}
+	}
+
+	// Base
+	void SelectBuildPlanId(const array<string>& in params) {
+		Base::mgr.SelectBuildPlan(parseInt(params[0]));
+	}
+
+	void AddBuildTask(const array<string>& in params) {
+		Base::mgr.AddToBuildPlan(params);
+	}
+
+	void DelBuildTask(const array<string>& in params) {
+		Base::mgr.RemoveFromBuildPlan(params);
+	}
+
+	void BuildPlanCancel(const array<string>& in params) {
+		Base::mgr.FreeBuildPlan(parseInt(params[0]));
+	}
+
+	void BaseParams(const array<string>& in params) {
+		Base::mgr.SetBaseParams(params);
 	}
 
 	// Squad Request
@@ -155,7 +238,27 @@ class Manager {
 	}
 
 	void BuildRegionClear(const array<string>& in params) {
-		Region::mgr.ClearBuildZones();
+		Region::mgr.ClearBuildZones(params);
+	}
+
+	void MakeReservedRegion(const array<string>& in params) {
+		Region::mgr.AddReservedZone(params);
+	}
+
+	void ReservedRegionClear(const array<string>& in params) {
+		Region::mgr.ClearReservedZones(params);
+	}
+
+	void MakeAllowedRegion(const array<string>& in params) {
+		Region::mgr.AddAllowedZone(params);
+	}
+
+	void AllowedRegionClear(const array<string>& in params) {
+		Region::mgr.ClearAllowedZones(params);
+	}
+
+	void AllowedGridFill(const array<string>& in params) {
+		Region::mgr.FillAllowedGrid(parseInt(params[0]));
 	}
 
 	void MakeTriggerRegion(const array<string>& in params) {
@@ -163,7 +266,26 @@ class Manager {
 	}
 
 	void TriggerRegionClear(const array<string>& in params) {
-		Region::mgr.ClearTriggerZones();
+		Region::mgr.ClearTriggerZones(params);
+	}
+
+	/*
+	 * Signals
+	 */
+	void SigSquadFinished(Id squadId) {
+		Signal(ESignal::SQUAD_FINISHED, squadId);
+	}
+
+	void SigSquadDestroyed(Id squadId) {
+		Signal(ESignal::SQUAD_DESTROYED, squadId);
+	}
+
+	void SigRegionEnter(Id regionId, Id squadId) {
+		Signal(ESignal::REGION_ENTER, regionId, squadId);
+	}
+
+	void SigRegionExit(Id regionId, Id squadId) {
+		Signal(ESignal::REGION_EXIT, regionId, squadId);
 	}
 
 	/*

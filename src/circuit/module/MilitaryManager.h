@@ -280,6 +280,7 @@ private:
 
 	std::shared_ptr<IMainJob> defend;
 	std::vector<std::pair<springai::AIFloat3, BuildVector>> buildDefence;  // pos: defences
+	bool isScriptDefence = false; // Script API
 
 	struct STriggerZone {  // Custom trigger zone
 		CGridRegion region;

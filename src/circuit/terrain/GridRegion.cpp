@@ -65,11 +65,13 @@ void CGridRegion::Rasterize()
 		for (size_t i = 0; i < intersections.size(); i += 2) {
 			if (i + 1 >= intersections.size()) break; // Malformed polygon safety check
 
-			short startCol = static_cast<int>(std::floor(intersections[i] / cellSize));
-			short endCol = static_cast<int>(std::floor(intersections[i + 1] / cellSize));
+			short startCol = static_cast<short>(std::ceil((intersections[i] / cellSize) - 0.5f));
+			short endCol = static_cast<short>(std::floor((intersections[i + 1] / cellSize) - 0.5f));
 
-			SColumnSpan colSpan = {startCol, endCol};
-			rowSpan.cols.push_back(colSpan);
+			if (startCol <= endCol) {
+				SColumnSpan colSpan = {startCol, endCol};
+				rowSpan.cols.push_back(colSpan);
+			}
 		}
 		if (!rowSpan.cols.empty()) {
 			rowSpan.row = row;
