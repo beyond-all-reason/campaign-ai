@@ -82,6 +82,41 @@ void AiSave(OStream& ostream)
 			<< Id(energizer2 !is null ? energizer2.id : -1);
 }
 
+IBuilderTask@ AiFindEnergyTaskSite(CCircuitDef@ buildDef, CCircuitUnit@ unit, const AIFloat3& in pos)
+{
+	return Base::mgr.FindEnergyTaskSite(buildDef, unit, pos);
+}
+
+IBuilderTask@ AiFindStorageTaskSite(CCircuitDef@ buildDef, const AIFloat3& in pos)
+{
+	return Base::mgr.FindStorageTaskSite(buildDef, pos);
+}
+
+IBuilderTask@ AiFindAirpadTaskSite(CCircuitDef@ buildDef, CCircuitUnit@ unit, const AIFloat3& in pos)
+{
+	return Base::mgr.FindAirpadTaskSite(buildDef, unit, pos);
+}
+
+IBuilderTask@ AiFindAssistTaskSite(CCircuitDef@ buildDef, CCircuitUnit@ unit, const AIFloat3& in pos)
+{
+	return Base::mgr.FindAssistTaskSite(buildDef, unit, pos);
+}
+
+bool AiFindFactoryTaskSite(IBuilderTask@ task, CCircuitUnit@ unit, const AIFloat3& in pos)
+{
+	return Base::mgr.FindFactoryTaskSite(task, unit, pos);
+}
+
+IBuilderTask@ AiFindConvertTaskSite(CCircuitDef@ buildDef, const AIFloat3& in pos)
+{
+	return Base::mgr.FindConvertTaskSite(buildDef, pos);
+}
+
+bool AiNoFreeSpace(IBuilderTask@ task)
+{
+	return Base::mgr.MarkRegionFull(task);
+}
+
 /*
  * Utilities
  */
