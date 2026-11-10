@@ -50,6 +50,7 @@ class BaseRegion {
 	// optional region config
 	CPolygon@ poly;  // border
 	uint16 allowedMask;
+	bool isFull = true;  // when not full: poly is not null
 }
 
 class BuildPlan {
@@ -341,6 +342,34 @@ class Manager {
 			default: break;
 			}
 		}
+	}
+
+	private BaseRegion@ GetNearestBaseRegion(const AIFloat3& in pos, Mask buildMask) {
+		BaseRegion@ bestRegion = null;
+		float sqLeastDist = BIG_FLOAT;
+		for (auto it = regions.begin(); it++;) {
+			BaseRegion@ region = it.current_value();
+			if (region.state != EBaseState::ACTIVE || region.isFull
+				|| region.allowedMask & buildMask != 0
+				|| !aiTerrainMgr.CanBuildAt(unit, buildDef, region.poly.center))
+			{
+				continue;
+			}
+			float sqDist = pos.SqDistance2D(region.poly.center);
+			if (sqLeastDist <= sqDist)
+				continue;
+			sqLeastDist = sqDist;
+			@bestRegion = region;
+		}
+		return bestRegion;
+	}
+
+	AIFloat3 FindBuildSite(CCircuitDef@ buildDef, CCircuitUnit@ unit, const AIFloat3& in pos) {
+		Mask buildMask = aiTerrainMgr.GetStructMask(buildDef.id);
+		BaseRegion@ region = GetNearestBaseRegion(pos, buildMask);
+		if (region is null)
+			return -RgtVector;
+		if (aiTerrainMgr.)
 	}
 
 	private map<Id, BaseRegion@> regions;  // owner

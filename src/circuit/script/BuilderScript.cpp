@@ -80,7 +80,7 @@ CBuilderScript::CBuilderScript(CScriptManager* scr, CBuilderManager* mgr)
 	r = engine->RegisterObjectMethod("CBuilderManager", "IBuilderTask@+ EnqueueBuildTaskForZone(Id)", asMETHOD(CBuilderManager, EnqueueBuildTaskForZone), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CBuilderManager", "void AddReservedZone(Id, CPolygon@+)", asMETHOD(CBuilderManager, AddReservedZone), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CBuilderManager", "void DelReservedZone(Id)", asMETHOD(CBuilderManager, DelReservedZone), asCALL_THISCALL); ASSERT(r >= 0);
-	r = engine->RegisterObjectMethod("CBuilderManager", "void AddAllowedZone(Id, CPolygon@+, int)", asMETHOD(CBuilderManager, AddAllowedZone), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CBuilderManager", "void AddAllowedZone(Id, CPolygon@+, Mask)", asMETHOD(CBuilderManager, AddAllowedZone), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CBuilderManager", "void DelAllowedZone(Id)", asMETHOD(CBuilderManager, DelAllowedZone), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CBuilderManager", "AIFloat3 DefaultFindBuildSite(CCircuitDef@, CCircuitUnit@, const AIFloat3& in)", asMETHOD(CBuilderManager, DefaultFindBuildSite), asCALL_THISCALL); ASSERT(r >= 0);
 }

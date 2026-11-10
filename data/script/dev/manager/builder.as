@@ -82,9 +82,9 @@ void AiSave(OStream& ostream)
 			<< Id(energizer2 !is null ? energizer2.id : -1);
 }
 
-AIFloat3 FindBuildSite(CCircuitDef@, CCircuitUnit@, const AIFloat3& in)
+AIFloat3 FindBuildSite(CCircuitDef@ buildDef, CCircuitUnit@ unit, const AIFloat3& in pos)
 {
-	return AiTerrainCenter();
+	return Base::mgr.FindBuildSite(buildDef, unit, pos);
 }
 
 /*

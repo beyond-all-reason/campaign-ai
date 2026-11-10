@@ -794,6 +794,7 @@ void CInitScript::RegisterMgr()
 	r = engine->RegisterObjectMethod("CTerrainManager", "void FillAllowedGrid(uint16)", asMETHOD(CTerrainManager, FillAllowedGrid), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CTerrainManager", "uint16 GetStructType(Id)", asMETHOD(CTerrainManager, GetStructType), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CTerrainManager", "uint16 GetStructMask(Id)", asMETHOD(CTerrainManager, GetStructMask), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CTerrainManager", "bool CanBuildAt(CCircuitUnit@, CCircuitDef@, const AIFloat3& in)", asMETHOD(CTerrainManager, CanBuildAt), asCALL_THISCALL); ASSERT(r >= 0);
 
 	r = engine->RegisterObjectProperty("CSetupManager", "const CCircuitDef@ commChoice", asOFFSET(CSetupManager, commChoice)); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CSetupManager", "void SetBasePos(const AIFloat3& in)", asMETHOD(CSetupManager, SetBasePos), asCALL_THISCALL); ASSERT(r >= 0);

@@ -1424,8 +1424,8 @@ IBuilderTask* CEconomyManager::UpdateEnergyTasks(const AIFloat3& position, CCirc
 		return UpdateGeoTasks(position, unit);
 	}
 
-	// Find place to build
 	AIFloat3 buildPos = builderMgr->FindBuildSite(bestDef, unit, position);
+	// FIXME TODO: Make own FindBuildSite for each Update*Tasks
 
 	if (geom::is_valid(buildPos) && terrainMgr->CanBeBuiltAtSafe(bestDef, buildPos) &&
 		((unit == nullptr) || terrainMgr->CanReachAtSafe(unit, buildPos, unit->GetCircuitDef()->GetBuildDistance())))

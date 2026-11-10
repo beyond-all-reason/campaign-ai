@@ -1717,6 +1717,12 @@ SBlockingMap::StructMask CTerrainManager::GetStructMask(CCircuitDef::Id unitDefI
 	return SBlockingMap::GetStructMask(GetStructType(unitDefId));
 }
 
+bool CTerrainManager::CanBuildAt(CCircuitUnit* unit, CCircuitDef* buildDef, const AIFloat3& pos)
+{
+	return CanBeBuiltAtSafe(buildDef, pos) &&
+		((unit == nullptr) || CanReachAtSafe(unit, pos, unit->GetCircuitDef()->GetBuildDistance())));
+}
+
 void CTerrainManager::SnapPosition(AIFloat3& position)
 {
 	// NOTE: Build-cells have size of (SQURE_SIZE * 2)=16 elmos.
