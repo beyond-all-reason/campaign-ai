@@ -47,7 +47,7 @@ isfromdemo=0;
 host=0;
 name=ChampaignAI(1);
 version=stable;
-shortname=Champ;
+shortname=CampaignAI;
 }
 [team1]
 {
