@@ -65,7 +65,7 @@ enum ELuaMsg {
 
 enum ESignal {
 	SQUAD_FINISHED                   = 201,
-	SQUAD_DESTROYED                  = 202,
+	SQUAD_DISBANDED                  = 202,
 	REGION_ENTER                     = 301,
 	REGION_EXIT                      = 302,
 }

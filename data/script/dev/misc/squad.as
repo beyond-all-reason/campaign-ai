@@ -370,7 +370,7 @@ class Manager {
 		req.ClearForRepeat();
 		requests.removeAt(idx);
 
-		LuaMsg::mgr.SigSquadDestroyed(req.squadId);
+		LuaMsg::mgr.SigSquadDisbanded(req.squadId);
 	}
 
 	private void RemoveSquad(Squad@ squad) {

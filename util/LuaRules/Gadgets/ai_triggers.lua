@@ -47,10 +47,10 @@ local triggers = {
 		Spring.SendSkirmishAIMessage(teamID, msg)
 	end,
 
-	[tostring(aiMsg.Signal.SQUAD_DESTROYED)] = function(teamID, dataStr)
-		-- "ai_squad_destroyed:<squadID>"
+	[tostring(aiMsg.Signal.SQUAD_DISBANDED)] = function(teamID, dataStr)
+		-- "ai_squad_disbanded:<squadID>"
 		local squadID = tonumber(dataStr)
-		Spring.Echo("Squad Destroyed: " .. squadID)
+		Spring.Echo("Squad Disbanded: " .. squadID)
 	end,
 }
 

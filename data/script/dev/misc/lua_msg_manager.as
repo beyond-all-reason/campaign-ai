@@ -461,8 +461,8 @@ class Manager {
 		Signal(ESignal::SQUAD_FINISHED, squadId);
 	}
 
-	void SigSquadDestroyed(Id squadId) {
-		Signal(ESignal::SQUAD_DESTROYED, squadId);
+	void SigSquadDisbanded(Id squadId) {
+		Signal(ESignal::SQUAD_DISBANDED, squadId);
 	}
 
 	void SigRegionEnter(Id regionId, Id squadId) {
