@@ -1,4 +1,5 @@
 #include "../../task.as"
+#include "../../unit.as"
 #include "../../lua_msg.as"
 #include "lua_msg_manager.as"
 
@@ -300,6 +301,11 @@ class Manager {
 			CCircuitDef@ cdef = ai.GetCircuitDef(parseInt(kv[0]));
 			if (cdef is null)
 				continue;
+			// NOTE: The builder manager takes these units, they never join a squad
+			if (cdef.IsRoleAny(Unit::Role::BUILDER.mask) || cdef.IsRespRoleAny(Unit::Role::REZZER.mask)) {
+				AiLog("Squad " + req.squadId + ": " + cdef.GetName() + " has a builder role and is left out");
+				continue;
+			}
 			Amount@ am = Amount(parseInt(kv[1]));
 			req.unitDefs.insert(cdef.id, am);
 
