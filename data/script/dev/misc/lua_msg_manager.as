@@ -124,7 +124,7 @@ class Manager {
 		for (uint i = 0; i < unitDefIds.length(); ++i) {
 			CCircuitDef@ cdef = ai.GetCircuitDef(parseInt(unitDefIds[i]));
 			if (cdef is null)
-				return;
+				continue;
 			bool success = false;
 			int limit = prevUnitLimits.find(cdef.id, success);
 			cdef.maxThisUnit = success ? limit : MAX_UNITS;
@@ -135,7 +135,7 @@ class Manager {
 		for (uint i = 0; i < unitDefIds.length(); ++i) {
 			CCircuitDef@ cdef = ai.GetCircuitDef(parseInt(unitDefIds[i]));
 			if (cdef is null)
-				return;
+				continue;
 			prevUnitLimits[cdef.id] = cdef.maxThisUnit;
 			cdef.maxThisUnit = 0;
 		}
