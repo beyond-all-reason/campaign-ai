@@ -260,11 +260,12 @@ class Manager {
 	// Check for existing units. Place build-order if not enough found.
 	private void PlaceOrder(Squad@ squad, CCircuitDef@ cdef, Amount@ am) {
 		Request@ req = squad.req;
-		req.unitNum += am.amount;
+		int missing = am.amount - am.assignedCount;
+		req.unitNum += missing;
 
 		Task::Priority priority = Task::Priority::NORMAL;
 		Task::RecruitType recruit = Task::RecruitType::FIREPOWER;
-		for (int j = 0; j < am.amount; ++j) {
+		for (int j = 0; j < missing; ++j) {
 			CCircuitUnit@ freeUnit = ai.GetUnitInRange(req.pos, req.gatherRange,
 					cdef.id, Task::Type::FIGHTER, TASK_NO_TAG);
 			if (freeUnit !is null) {
@@ -288,13 +289,6 @@ class Manager {
 
 		Request@ req = selSquad.req;
 		req.ClearForCompose();
-		bool isNewReq = selSquad.task is null;
-		// NOTE: SQUAD_REQUEST_COMPOSE is a standalone message and can arrive multiple times at any time.
-		//       If squad is in the middle of compositing - disband and start anew.
-		if (!isNewReq && selSquad.state != ESquadState::FINISHED) {
-			DisbandSquad(selSquad);
-			isNewReq = true;
-		}
 		for (uint i = 0; i < params.length(); ++i) {
 			// params contains "<unitDefId>=<amount>" pairs
 			const array<string>@ kv = params[i].split(LuaMsg::SEP_KEY_VALUE);
@@ -306,14 +300,27 @@ class Manager {
 				AiLog("Squad " + req.squadId + ": " + cdef.GetName() + " has a builder role and is left out");
 				continue;
 			}
-			Amount@ am = Amount(parseInt(kv[1]));
-			req.unitDefs.insert(cdef.id, am);
-
-			if (isNewReq)
-				PlaceOrder(selSquad, cdef, am);
+			req.unitDefs.insert(cdef.id, Amount(parseInt(kv[1])));
 		}
-		if (selSquad.task !is null)  // PlaceOrder could add existing unit and a task
+		// NOTE: SQUAD_REQUEST_COMPOSE is a standalone message and can arrive multiple times at any time.
+		//       The squad keeps its units, only the missing ones are ordered.
+		if (selSquad.task !is null) {
+			array<CCircuitUnit@>@ units = selSquad.task.GetUnits();
+			for (uint i = 0; i < units.length(); ++i) {
+				bool success;
+				Amount@ am = req.unitDefs.find(units[i].circuitDef.id, success);
+				if (success && am.assignedCount < am.amount)
+					am.assignedCount++;
+			}
+			req.unitNum = selSquad.task.GetUnitCount();
+		}
+		for (auto it = req.unitDefs.begin(); it++;)
+			PlaceOrder(selSquad, ai.GetCircuitDef(it.current_key()), it.current_value());
+		if (selSquad.task !is null) {  // PlaceOrder could add existing unit and a task
+			if (req.unitNum > selSquad.task.GetUnitCount())
+				selSquad.state = ESquadState::CREATED;  // gathers the missing units, then finishes again
 			CheckSquadFinished(selSquad, selSquad.task.GetUnitCount());
+		}
 		return true;
 	}
 
