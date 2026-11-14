@@ -48,9 +48,9 @@ local triggers = {
 	end,
 
 	[tostring(aiMsg.Signal.SQUAD_DISBANDED)] = function(teamID, dataStr)
-		-- "ai_squad_disbanded:<squadID>"
-		local squadID = tonumber(dataStr)
-		Spring.Echo("Squad Disbanded: " .. squadID)
+		-- "ai_squad_disbanded:<squadID>;<isRepeated>"
+		local squadID, isRepeated = dataStr:match("^(%d+);(%d)$")
+		Spring.Echo("Squad Disbanded: " .. squadID .. (isRepeated == "1" and " (gathers again)" or " (gone)"))
 	end,
 }
 

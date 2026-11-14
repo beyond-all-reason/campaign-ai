@@ -461,8 +461,8 @@ class Manager {
 		Signal(ESignal::SQUAD_FINISHED, squadId);
 	}
 
-	void SigSquadDisbanded(Id squadId) {
-		Signal(ESignal::SQUAD_DISBANDED, squadId);
+	void SigSquadDisbanded(Id squadId, bool isRepeated) {
+		Signal(ESignal::SQUAD_DISBANDED, squadId, isRepeated ? 1 : 0);
 	}
 
 	void SigRegionEnter(Id regionId, Id squadId) {
