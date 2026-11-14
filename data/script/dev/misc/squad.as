@@ -142,6 +142,11 @@ class Squad {
 	IUnitTask@ task = null;  // military IFighterTask
 	ESquadState state = ESquadState::CREATED;
 	Pathing pathParams;
+
+	// Received while the squad has no task; applied when one is created
+	array<string> deferredParams;  // "<ESquadParam>=<values>" pairs
+	bool isPathingDeferred = false;
+	Id deferredEscortId = -1;
 }
 
 
@@ -336,6 +341,24 @@ class Manager {
 			squad.state = ESquadState::CREATED;
 			@squad.task = squad.req.InitialTask();
 			@taskToSquad[squad.task.id] = squad;
+			ApplyDeferredParams(squad);
+		}
+	}
+
+	private void ApplyDeferredParams(Squad@ squad) {
+		// TODO: deferred tasks first, then the params that apply to them?
+		// TODO: or always in sequence so tasks sent w/ params get paired?
+		if (squad.deferredEscortId != -1) {
+			squad.SetEscort(squad.deferredEscortId);
+			squad.deferredEscortId = -1;
+		}
+		if (squad.deferredParams.length() > 0) {
+			ParseSquadParam(squad.deferredParams, squad);
+			squad.deferredParams.resize(0);
+		}
+		if (squad.isPathingDeferred) {
+			squad.ApplyPathingParams();
+			squad.isPathingDeferred = false;
 		}
 	}
 
@@ -545,6 +568,12 @@ class Manager {
 		if (selSquad is null)
 			return false;
 
+		if (selSquad.task is null) {
+			for (uint i = 0; i < params.length(); ++i)
+				selSquad.deferredParams.insertLast(params[i]);
+			return true;
+		}
+
 		ParseSquadParam(params, selSquad);
 		return true;
 	}
@@ -578,7 +607,10 @@ class Manager {
 			default: break;
 			}
 		}
-		squad.ApplyPathingParams();
+		if (squad.task is null)
+			squad.isPathingDeferred = true;
+		else
+			squad.ApplyPathingParams();
 	}
 
 	// Invoked by LuaMsg::Manager::SquadPathParams
@@ -595,7 +627,11 @@ class Manager {
 		if (selSquad is null)
 			return false;
 
-		selSquad.SetEscort(parseInt(params[0]));
+		Id vipId = parseInt(params[0]);
+		if (selSquad.task is null)
+			selSquad.deferredEscortId = vipId;
+		else
+			selSquad.SetEscort(vipId);
 		return true;
 	}
 
