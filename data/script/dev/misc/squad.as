@@ -243,17 +243,25 @@ class Manager {
 		}
 	}
 
-	// Invoked by LuaMsg::Manager::SelectSquadRequestId / SelectSquadId
+	// Invoked by LuaMsg::Manager::SelectSquadId
 	void SelectSquad(Id squadId) {
+		@pendingSquad = null;
 		bool success;
 		Squad@ squad = squads.find(squadId, success);
-		if (!success) {
+		if (success)
+			@selSquad = squad;
+		else
+			@selSquad = null;
+	}
+
+	// Invoked by LuaMsg::Manager::SelectSquadRequestId
+	void SelectSquadRequest(Id squadId) {
+		SelectSquad(squadId);
+		if (selSquad is null) {
 			Request req(squadId);
-			requests.insertLast(@req);
-			@squad = Squad(req);
-			squads.insert(squad.id, @squad);
+			@pendingSquad = Squad(req);
+			@selSquad = pendingSquad;
 		}
-		@selSquad = squad;
 	}
 
 	// Check for existing units. Place build-order if not enough found.
@@ -286,6 +294,11 @@ class Manager {
 			return false;
 
 		Request@ req = selSquad.req;
+		if (selSquad is pendingSquad) {
+			requests.insertLast(req);
+			squads.insert(selSquad.id, selSquad);
+			@pendingSquad = null;
+		}
 		req.ClearForCompose();
 		bool isNewReq = selSquad.task is null;
 		// NOTE: SQUAD_REQUEST_COMPOSE is a standalone message and can arrive multiple times at any time.
@@ -630,6 +643,7 @@ class Manager {
 	private map<Id, Squad@> taskToSquad;  // ISquadTask.id => Squad
 
 	private Squad@ selSquad = null;  // Selected state
+	private Squad@ pendingSquad = null;  // Selected by unknown request ID; registered in ComposeRequest
 }
 
 Manager mgr;
