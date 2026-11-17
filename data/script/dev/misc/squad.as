@@ -317,8 +317,7 @@ class Manager {
 		for (auto it = req.unitDefs.begin(); it++;)
 			PlaceOrder(selSquad, ai.GetCircuitDef(it.current_key()), it.current_value());
 		if (selSquad.task !is null) {  // PlaceOrder could add existing unit and a task
-			if (req.unitNum > selSquad.task.GetUnitCount())
-				selSquad.state = ESquadState::CREATED;  // gathers the missing units, then finishes again
+			selSquad.state = ESquadState::CREATED;  // finishes again once it has the units
 			CheckSquadFinished(selSquad, selSquad.task.GetUnitCount());
 		}
 		return true;
