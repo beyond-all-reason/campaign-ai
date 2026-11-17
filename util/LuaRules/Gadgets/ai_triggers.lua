@@ -47,10 +47,10 @@ local triggers = {
 		Spring.SendSkirmishAIMessage(teamID, msg)
 	end,
 
-	[tostring(aiMsg.Signal.SQUAD_DESTROYED)] = function(teamID, dataStr)
-		-- "ai_squad_destroyed:<squadID>"
-		local squadID = tonumber(dataStr)
-		Spring.Echo("Squad Destroyed: " .. squadID)
+	[tostring(aiMsg.Signal.SQUAD_DISBANDED)] = function(teamID, dataStr)
+		-- "ai_squad_disbanded:<squadID>;<isRepeated>"
+		local squadID, isRepeated = dataStr:match("^(%d+);(%d)$")
+		Spring.Echo("Squad Disbanded: " .. squadID .. (isRepeated == "1" and " (gathers again)" or " (gone)"))
 	end,
 }
 

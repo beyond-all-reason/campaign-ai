@@ -362,7 +362,7 @@ class Manager {
 		return squad.task;
 	}
 
-	private void RemoveRequest(Request@ req) {
+	private void RemoveRequest(Request@ req, bool isRepeated) {
 		int idx = requests.findByRef(req);
 		if (idx < 0)
 			return;
@@ -370,7 +370,7 @@ class Manager {
 		req.ClearForRepeat();
 		requests.removeAt(idx);
 
-		LuaMsg::mgr.SigSquadDestroyed(req.squadId);
+		LuaMsg::mgr.SigSquadDisbanded(req.squadId, isRepeated);
 	}
 
 	private void RemoveSquad(Squad@ squad) {
@@ -382,7 +382,7 @@ class Manager {
 	}
 
 	private void DestroyRequest(Squad@ squad) {
-		RemoveRequest(squad.req);
+		RemoveRequest(squad.req, false);
 		RemoveSquad(squad);
 	}
 
@@ -405,7 +405,7 @@ class Manager {
 			@squad.task = null;
 		}
 
-		RemoveRequest(req);
+		RemoveRequest(req, true);
 		for (auto it = req.unitDefs.begin(); it++;) {
 			Amount@ am = it.current_value();
 			am.assignedCount = 0;
@@ -451,7 +451,7 @@ class Manager {
 		Squad@ squad = squads[req.squadId];
 		if (squad.task is null) {
 			if (req.unitNum == 0)
-				DestroyRequest(squad);
+				DisbandSquad(squad);
 		} else
 			CheckSquadFinished(squad, squad.task.GetUnitCount());
 	}
