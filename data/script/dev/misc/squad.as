@@ -245,7 +245,6 @@ class Manager {
 
 	// Invoked by LuaMsg::Manager::SelectSquadId
 	void SelectSquad(Id squadId) {
-		@pendingSquad = null;
 		bool success;
 		Squad@ squad = squads.find(squadId, success);
 		if (success)
@@ -257,10 +256,15 @@ class Manager {
 	// Invoked by LuaMsg::Manager::SelectSquadRequestId
 	void SelectSquadRequest(Id squadId) {
 		SelectSquad(squadId);
-		if (selSquad is null) {
+		if (selSquad !is null)
+			return;
+
+		bool success;
+		@selSquad = pendingSquads.find(squadId, success);
+		if (!success) {
 			Request req(squadId);
-			@pendingSquad = Squad(req);
-			@selSquad = pendingSquad;
+			@selSquad = Squad(req);
+			pendingSquads.insert(squadId, selSquad);
 		}
 	}
 
@@ -294,10 +298,10 @@ class Manager {
 			return false;
 
 		Request@ req = selSquad.req;
-		if (selSquad is pendingSquad) {
+		if (pendingSquads.contains(selSquad.id)) {
+			pendingSquads.erase(selSquad.id);
 			requests.insertLast(req);
 			squads.insert(selSquad.id, selSquad);
-			@pendingSquad = null;
 		}
 		req.ClearForCompose();
 		bool isNewReq = selSquad.task is null;
@@ -403,8 +407,15 @@ class Manager {
 	bool DestroyRequest(Id squadId) {
 		bool success;
 		Squad@ squad = squads.find(squadId, success);
-		if (!success)
-			return false;
+		if (!success) {
+			@squad = pendingSquads.find(squadId, success);
+			if (!success)
+				return false;
+			pendingSquads.erase(squadId);
+			if (selSquad is squad)
+				@selSquad = null;
+			return true; // NB: A pending squad ends without a signal.
+		}
 
 		DestroyRequest(squad);
 		return true;
@@ -643,7 +654,7 @@ class Manager {
 	private map<Id, Squad@> taskToSquad;  // ISquadTask.id => Squad
 
 	private Squad@ selSquad = null;  // Selected state
-	private Squad@ pendingSquad = null;  // Selected by unknown request ID; registered in ComposeRequest
+	private map<Id, Squad@> pendingSquads;  // Selected by unknown request IDs; registered in ComposeRequest
 }
 
 Manager mgr;
