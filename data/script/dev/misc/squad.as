@@ -248,17 +248,29 @@ class Manager {
 		}
 	}
 
-	// Invoked by LuaMsg::Manager::SelectSquadRequestId / SelectSquadId
+	// Invoked by LuaMsg::Manager::SelectSquadId
 	void SelectSquad(Id squadId) {
 		bool success;
 		Squad@ squad = squads.find(squadId, success);
+		if (success)
+			@selSquad = squad;
+		else
+			@selSquad = null;
+	}
+
+	// Invoked by LuaMsg::Manager::SelectSquadRequestId
+	void SelectSquadRequest(Id squadId) {
+		SelectSquad(squadId);
+		if (selSquad !is null)
+			return;
+
+		bool success;
+		@selSquad = pendingSquads.find(squadId, success);
 		if (!success) {
 			Request req(squadId);
-			requests.insertLast(@req);
-			@squad = Squad(req);
-			squads.insert(squad.id, @squad);
+			@selSquad = Squad(req);
+			pendingSquads.insert(squadId, selSquad);
 		}
-		@selSquad = squad;
 	}
 
 	// Check for existing units. Place build-order if not enough found.
@@ -291,6 +303,11 @@ class Manager {
 			return false;
 
 		Request@ req = selSquad.req;
+		if (pendingSquads.contains(selSquad.id)) {
+			pendingSquads.erase(selSquad.id);
+			requests.insertLast(req);
+			squads.insert(selSquad.id, selSquad);
+		}
 		req.ClearForCompose();
 		bool isNewReq = selSquad.task is null;
 		// NOTE: SQUAD_REQUEST_COMPOSE is a standalone message and can arrive multiple times at any time.
@@ -413,8 +430,15 @@ class Manager {
 	bool DestroyRequest(Id squadId) {
 		bool success;
 		Squad@ squad = squads.find(squadId, success);
-		if (!success)
-			return false;
+		if (!success) {
+			@squad = pendingSquads.find(squadId, success);
+			if (!success)
+				return false;
+			pendingSquads.erase(squadId);
+			if (selSquad is squad)
+				@selSquad = null;
+			return true; // NB: A pending squad ends without a signal.
+		}
 
 		DestroyRequest(squad);
 		return true;
@@ -666,6 +690,7 @@ class Manager {
 	private map<Id, Squad@> taskToSquad;  // ISquadTask.id => Squad
 
 	private Squad@ selSquad = null;  // Selected state
+	private map<Id, Squad@> pendingSquads;  // Selected by unknown request IDs; registered in ComposeRequest
 }
 
 Manager mgr;

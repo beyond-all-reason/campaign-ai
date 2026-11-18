@@ -377,7 +377,7 @@ class Manager {
 
 	// Squad Request
 	void SelectSquadRequestId(const array<string>& in params) {
-		Squad::mgr.SelectSquad(parseInt(params[0]));
+		Squad::mgr.SelectSquadRequest(parseInt(params[0]));
 	}
 
 	void SquadRequestCompose(const array<string>& in params) {
