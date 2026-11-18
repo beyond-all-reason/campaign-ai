@@ -321,7 +321,7 @@ SFightTask Defend(Task::FightType promote, float power)
 	ti.power = power;
 	return ti;
 }
-SFightTask Defend(Task::FightType check, Task::FightType promote, float power)
+SFightTask DefendWithCheck(Task::FightType check, Task::FightType promote, float power)
 {
 	SFightTask ti;
 	ti.type = Task::FightType::DEFEND;

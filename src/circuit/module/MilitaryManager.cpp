@@ -1778,7 +1778,7 @@ IUnitTask* CMilitaryManager::DefaultMakeTask(CCircuitUnit* unit)
 		task = Enqueue(TaskF::Common(IFighterTask::FightType::SCOUT));
 	} else if (cdef->IsRoleSupport()) {
 		if (/*cdef->IsAttacker() && */GetTasks(IFighterTask::FightType::ATTACK).empty() && GetTasks(IFighterTask::FightType::DEFEND).empty()) {
-			task = Enqueue(TaskF::Defend(IFighterTask::FightType::ATTACK, IFighterTask::FightType::SUPPORT, minAttackers));
+			task = Enqueue(TaskF::DefendWithCheck(IFighterTask::FightType::ATTACK, IFighterTask::FightType::SUPPORT, minAttackers));
 		} else {
 			task = Enqueue(TaskF::Common(IFighterTask::FightType::SUPPORT));
 		}

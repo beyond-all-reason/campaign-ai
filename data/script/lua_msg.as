@@ -74,7 +74,7 @@ void Signal(ESignal sig, Id paramId) {
 	ai.CallRules(SIG_PREFIX + sig + SEP_COMMAND + paramId);
 }
 
-void Signal(ESignal sig, Id paramId, Id detailId) {
+void SignalWithDetail(ESignal sig, Id paramId, Id detailId) {
 	ai.CallRules(SIG_PREFIX + sig + SEP_COMMAND + paramId + SEP_PARAM + detailId);
 }
 
