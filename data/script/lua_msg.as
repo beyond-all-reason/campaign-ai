@@ -70,12 +70,11 @@ enum ESignal {
 	REGION_EXIT                      = 302,
 }
 
-void Signal(ESignal sig, Id paramId) {
-	ai.CallRules(SIG_PREFIX + sig + SEP_COMMAND + paramId);
-}
-
-void SignalWithDetail(ESignal sig, Id paramId, Id detailId) {
-	ai.CallRules(SIG_PREFIX + sig + SEP_COMMAND + paramId + SEP_PARAM + detailId);
+void Signal(ESignal sig, Id paramId, Id detailId = -1) {
+	string msg = SIG_PREFIX + sig + SEP_COMMAND + paramId;
+	if (detailId != -1)
+		msg += SEP_PARAM + detailId;
+	ai.CallRules(msg);
 }
 
 }  // namespace LuaMsg

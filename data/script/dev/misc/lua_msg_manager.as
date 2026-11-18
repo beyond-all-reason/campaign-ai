@@ -462,15 +462,15 @@ class Manager {
 	}
 
 	void SigSquadDisbanded(Id squadId, bool isRepeated) {
-		SignalWithDetail(ESignal::SQUAD_DISBANDED, squadId, isRepeated ? 1 : 0);
+		Signal(ESignal::SQUAD_DISBANDED, squadId, isRepeated ? 1 : 0);
 	}
 
 	void SigRegionEnter(Id regionId, Id squadId) {
-		SignalWithDetail(ESignal::REGION_ENTER, regionId, squadId);
+		Signal(ESignal::REGION_ENTER, regionId, squadId);
 	}
 
 	void SigRegionExit(Id regionId, Id squadId) {
-		SignalWithDetail(ESignal::REGION_EXIT, regionId, squadId);
+		Signal(ESignal::REGION_EXIT, regionId, squadId);
 	}
 
 	/*
