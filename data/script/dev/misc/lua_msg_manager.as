@@ -385,7 +385,7 @@ class Manager {
 	}
 
 	void SquadRequestCancel(const array<string>& in params) {
-		Squad::mgr.DestroyRequest(parseInt(params[0]));
+		Squad::mgr.DestroyRequestId(parseInt(params[0]));
 	}
 
 	void SquadRequestParams(const array<string>& in params) {

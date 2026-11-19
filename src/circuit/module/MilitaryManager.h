@@ -60,7 +60,7 @@ namespace TaskF {
 		ti.power = power;
 		return ti;
 	}
-	static inline SFightTask Defend(IFighterTask::FightType check, IFighterTask::FightType promote, float power)
+	static inline SFightTask DefendUntil(IFighterTask::FightType check, IFighterTask::FightType promote, float power)
 	{
 		SFightTask ti;
 		ti.type = IFighterTask::FightType::DEFEND;
