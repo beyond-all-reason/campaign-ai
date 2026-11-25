@@ -312,20 +312,11 @@ SFightTask Guard(Id vipId)
 	ti.vipId = vipId;
 	return ti;
 }
-SFightTask Defend(Task::FightType promote, float power)
+SFightTask Defend(Task::FightType promote, float power, Task::FightType check = Task::FightType::_SIZE_)
 {
 	SFightTask ti;
 	ti.type = Task::FightType::DEFEND;
-	ti.check = Task::FightType::_SIZE_;  // NONE
-	ti.promote = promote;
-	ti.power = power;
-	return ti;
-}
-SFightTask Defend(Task::FightType check, Task::FightType promote, float power)
-{
-	SFightTask ti;
-	ti.type = Task::FightType::DEFEND;
-	ti.check = check;
+	ti.check = check; // default is NONE
 	ti.promote = promote;
 	ti.power = power;
 	return ti;

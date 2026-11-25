@@ -439,7 +439,7 @@ class Manager {
 	}
 
 	// Invoked by LuaMsg::Manager::SquadRequestCancel
-	bool DestroyRequest(Id squadId) {
+	bool DestroyRequestId(Id squadId) {
 		bool success;
 		Squad@ squad = squads.find(squadId, success);
 		if (!success) {
