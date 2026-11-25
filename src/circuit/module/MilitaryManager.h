@@ -51,20 +51,11 @@ namespace TaskF {
 		ti.vipId = vipId;
 		return ti;
 	}
-	static inline SFightTask Defend(IFighterTask::FightType promote, float power)
+	static inline SFightTask Defend(IFighterTask::FightType promote, float power, IFighterTask::FightType check = IFighterTask::FightType::_SIZE_)
 	{
 		SFightTask ti;
 		ti.type = IFighterTask::FightType::DEFEND;
-		ti.check = IFighterTask::FightType::_SIZE_;  // NONE
-		ti.promote = promote;
-		ti.power = power;
-		return ti;
-	}
-	static inline SFightTask DefendUntil(IFighterTask::FightType check, IFighterTask::FightType promote, float power)
-	{
-		SFightTask ti;
-		ti.type = IFighterTask::FightType::DEFEND;
-		ti.check = check;
+		ti.check = check; // default is NONE
 		ti.promote = promote;
 		ti.power = power;
 		return ti;
