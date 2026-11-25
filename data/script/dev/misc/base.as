@@ -18,6 +18,9 @@ enum EBaseParam {
 	RECLAIM_ENERGY       = 12,
 
 	REGION_STATE         = 21,
+
+	REGION_ZONE          = 22,
+	REGION_MASK          = 23,
 }
 
 enum EPlanParam {
@@ -38,18 +41,26 @@ class BaseRegion {
 		@plan.region = this;
 	}
 
+	void ClearZone() {
+		if (poly !is null) {
+			aiBuilderMgr.DelAllowedZone(id);
+			allowedMask = 0;
+			isFull = false;
+		}
+	}
+
 	void Clear() {
 		@plan.region = null;
+		ClearZone();
 	}
 
 	Id id;
-	Id ownerId;  // teamId
 	EBaseState state;
 	// optional plan
 	BuildPlan plan;
 	// optional region config
 	CPolygon@ poly;  // border
-	uint16 allowedMask;
+	uint16 allowedMask = 0;  // allowed struct types within border
 	bool isFull = true;  // when not full: poly is not null
 	bool isNoSpaceSig = false;  // for BuildTaskCanceled processing after MarkRegionFull
 }
@@ -68,6 +79,14 @@ class BuildPlan {
 }
 
 class BuildTask {
+	BuildTask() {}
+
+	BuildTask(Id udId, const AIFloat3& in p, bool isRepeat) {
+		unitDefId = udId;
+		pos = p;
+		isRebuild = isRepeat;
+	}
+
 	bool opEquals(const BuildTask& in other) const {
 		return (this.unitDefId == other.unitDefId && this.pos == other.pos);
 	}
@@ -148,7 +167,7 @@ class Manager {
 		if (plan.isDone) {
 			plan.isDone = false;
 			if (selBaseRegion.state != EBaseState::INACTIVE)
-				unfinishedPlans.insert(@selBaseRegion);
+				unfinishedPlans.insert(selBaseRegion);
 		}
 		return true;
 	}
@@ -225,57 +244,73 @@ class Manager {
 	void BuildTaskFinished(IBuilderTask@ task) {
 		bool success;
 		BuildTask@ bt = taskToBuildTask.find(task.id, success);
-		if (!success)
-			return;
+		if (success) {
+			AdjustPlanFinished(bt.plan);
 
-		AdjustPlanFinished(bt.plan);
+			taskToBuildTask.erase(task.id);
+			if (bt.isRebuild) {
+				unitToBuildTask.insert(task.target.id, @bt);
+				bt.isDone = true;
+				@bt.task = null;
+				return;
+			}
 
-		taskToBuildTask.erase(task.id);
-		if (bt.isRebuild) {
-			unitToBuildTask.insert(task.target.id, @bt);
-			bt.isDone = true;
-			@bt.task = null;
-			return;
+			const int idx = bt.plan.buildTasks.findByRef(bt);
+			bt.plan.buildTasks.removeAt(idx);
 		}
 
-		const int idx = bt.plan.buildTasks.findByRef(bt);
-		bt.plan.buildTasks.removeAt(idx);
+		BaseRegion@ region = taskToRegion.find(task.id, success);
+		if (success) {
+			taskToRegion.erase(task.id);
+			unitToRegion.insert(task.target.id, region);
+		}
 	}
 
 	// Invoked by Builder::AiTaskRemoved done=false
 	void BuildTaskCanceled(IBuilderTask@ task) {
 		bool success;
 		BuildTask@ bt = taskToBuildTask.find(task.id, success);
-		if (!success) {
-			BaseRegion@ region = taskToRegion.find(task.id, success);
-			if (success) {
-				if (region.isNoSpaceSig)
-					region.isNoSpaceSig = false;  // no free space
-				else
-					region.isFull = false;  // task canceled by enemy or economy
-				taskToRegion.erase(task.id);
+		if (success) {
+			if (bt.isRebuild) {
+				IUnitTask@ newTask = aiBuilderMgr.Enqueue(Builder::MakeBuildRecord(bt.unitDefId, bt.pos));
+				taskToBuildTask.insert(newTask.id, @bt);
+				@bt.task = cast<IBuilderTask>(newTask);
+			} else {
+				AdjustPlanFinished(bt.plan);
+				@bt.task = null;
 			}
-			return;
+			taskToBuildTask.erase(task.id);
 		}
 
-		AdjustPlanFinished(bt.plan);
-
-		taskToBuildTask.erase(task.id);
-		@bt.task = null;
+		BaseRegion@ region = taskToRegion.find(task.id, success);
+		if (success) {
+			if (region.isNoSpaceSig)
+				region.isNoSpaceSig = false;  // no free space
+			else
+				region.isFull = false;  // task canceled by enemy or economy
+			taskToRegion.erase(task.id);
+		}
 	}
 
 	// Invoked by Main::AiUnitDestroyed
 	void OnUnitDestroyed(CCircuitUnit@ unit) {
 		bool success;
 		BuildTask@ bt = unitToBuildTask.find(unit.id, success);
-		if (!success)
-			return;
+		if (success) {
+			unitToBuildTask.erase(unit.id);
 
-		bt.isDone = false;
-		bt.plan.isDone = false;
-		++bt.plan.unfinishedCount;
-		if (selBaseRegion.state != EBaseState::INACTIVE)
-			unfinishedPlans.insert(@bt.plan.region);
+			bt.isDone = false;
+			bt.plan.isDone = false;
+			++bt.plan.unfinishedCount;
+			if (selBaseRegion.state != EBaseState::INACTIVE)
+				unfinishedPlans.insert(@bt.plan.region);
+		}
+
+		BaseRegion@ region = unitToRegion.find(unit.id, success);
+		if (success) {
+			unitToRegion.erase(unit.id);
+			region.isFull = false;
+		}
 	}
 
 	private void ClearBuildPlan(BuildPlan@ plan) {
@@ -289,6 +324,8 @@ class Manager {
 		}
 		foreach (Id taskId : remTasks)
 			taskToBuildTask.erase(taskId);
+		plan.isDone = true;
+		unfinishedPlans.erase(plan.region);
 	}
 
 	// Invoked by LuaMsg::Manager::BuildPlanCancel
@@ -318,16 +355,16 @@ class Manager {
 		case EBaseState::ACTIVE: {
 			selBaseRegion.state = state;
 			if (!selBaseRegion.plan.isDone)
-				unfinishedPlans.insert(@selBaseRegion);
+				unfinishedPlans.insert(selBaseRegion);
 		} break;
 		case EBaseState::INACTIVE: {
 			selBaseRegion.state = state;
-			unfinishedPlans.erase(@selBaseRegion);
+			unfinishedPlans.erase(selBaseRegion);
 		} break;
 		case EBaseState::MAINTENANCE: {
 			selBaseRegion.state = state;
 			if (!selBaseRegion.plan.isDone)
-				unfinishedPlans.insert(@selBaseRegion);
+				unfinishedPlans.insert(selBaseRegion);
 		} break;
 		default: break;
 		}
@@ -365,6 +402,72 @@ class Manager {
 					SetRegionState(EBaseState(parseInt(kv[1])));
 			} break;
 			default: break;
+			}
+		}
+	}
+
+	// Invoked by LuaMsg::Manager::BaseRegionZone
+	void MakeRegionZone(const array<string>& in params) {
+		if (selBaseRegion is null)
+			return;
+
+		for (uint i = 0; i < params.length(); ++i) {
+			// params contains "<EBaseParam>=<values>" pairs
+			const array<string>@ kv = params[i].split(LuaMsg::SEP_KEY_VALUE);
+			switch (parseInt(kv[0])) {
+			case EBaseParam::REGION_ZONE: {  // kv[1]="<x1>,<z1>,<x2>,<z2>,<x3>,<z3>"
+				const array<AIFloat3>@ verts = Region::mgr.ParseStrVerts(kv[1]);
+				@selBaseRegion.poly = CPolygon(verts);
+			} break;
+			case EBaseParam::REGION_MASK: {  // kv[1]="<UnitDefID1>,<UnitDefID2>,<UnitDefID3>"
+				Mask mask = 0;
+				if (kv[1].length() > 1) {
+					const array<string>@ buildMaskTypes = kv[1].split(LuaMsg::SEP_SUBPARAM);
+					for (uint j = 0; j < buildMaskTypes.length(); ++j) {
+						const int unitDefId = parseInt(buildMaskTypes[j]);
+						mask |= aiTerrainMgr.GetStructMask(unitDefId);
+					}
+				}
+				selBaseRegion.allowedMask = mask;
+			} break;
+			default: break;
+			}
+		}
+
+		aiBuilderMgr.AddAllowedZone(selBaseRegion.id, selBaseRegion.poly, selBaseRegion.allowedMask);
+	}
+
+	// Invoked by LuaMsg::Manager::BaseZoneCancel
+	void FreeBaseZone(Id regionId) {
+		bool success;
+		BaseRegion@ region = regions.find(regionId, success);
+		if (!success)
+			return;
+
+		region.ClearZone();
+	}
+
+	// Invoked by LuaMsg::Manager::BaseRegionSnapshot
+	void MakeBuildPlanSnapshot(const array<string>& in params) {
+		if (selBaseRegion is null)
+			return;
+
+		BuildPlan@ plan = selBaseRegion.plan;
+		ClearBuildPlan(plan);
+		// params contains "<x1>","<z1>","<x2>","<z2>","<x3>","<z3>"
+		const array<AIFloat3>@ verts = Region::mgr.ParseVerts(params);
+		CPolygon@ zone = CPolygon(verts);
+		const array<CCircuitUnit@>@ buildings = ai.GetUnits(false);
+		if (!buildings.isEmpty()) {
+			foreach (CCircuitUnit@ unit : buildings) {
+				if (!zone.ContainsPoint(unit.GetPos(ai.frame)))
+					continue;
+
+				BuildTask bt(unit.circuitDef.id, unit.GetPos(ai.frame), true);
+
+				@bt.plan = plan;
+				plan.buildTasks.insertLast(@bt);
+				plan.adjustCenter(bt.pos);
 			}
 		}
 	}
@@ -460,8 +563,11 @@ class Manager {
 	private map<Id, BuildTask@> unitToBuildTask;  // CCircuitUnit.id => BuildTask
 
 	private map<Id, BaseRegion@> taskToRegion;  // IBuilderTask.id => BaseRegion
+	private map<Id, BaseRegion@> unitToRegion;  // CCircuitUnit.id => BaseRegion
 
 	private BaseRegion@ selBaseRegion = null;  // Selected state
+	// FIXME: handle unitToBuildTask when BuildPlan overwritten
+	// FIXME: handle unitToRegion when Zone params overwritten
 }
 
 Manager mgr;

@@ -38,6 +38,9 @@ enum ELuaMsg {
 	BASE_DEL_BUILDTASK               = 104,
 	BASE_PLAN_CANCEL                 = 105,
 	BASE_PARAMS                      = 106,
+	BASE_REGION_ZONE                 = 107,
+	BASE_ZONE_CANCEL                 = 108,
+	BASE_REGION_SNAPSHOT             = 109,
 
 	// Squad Request starts at 200
 	SQUAD_REQUEST_ID                 = 201,

@@ -249,6 +249,21 @@ static CCircuitUnit* CCircuitAI_GetUnitInRange(CCircuitAI* circuit,
 	return nullptr;
 }
 
+static CScriptArray* CCircuitAI_GetUnits(CCircuitAI* circuit, bool isMobile)
+{
+	asIScriptEngine* engine = asGetActiveContext()->GetEngine();
+	auto cache = static_cast<CScriptManager::STypeInfoCache*>(engine->GetUserData());
+	CScriptArray* arr = CScriptArray::Create(cache->unitArray);
+	arr->Reserve(circuit->GetTeamUnits().size());
+	for (auto& kv : circuit->GetTeamUnits()) {
+		CCircuitUnit* unit = kv.second;
+		if (isMobile == unit->GetCircuitDef()->IsMobile()) {
+			arr->InsertLast(&unit);
+		}
+	}
+	return arr;
+}
+
 static std::string CCircuitAI_CallRules(CCircuitAI* circuit, const std::string& data)
 {
 	return circuit->GetLua()->CallRules(data.c_str(), data.size());
@@ -691,6 +706,7 @@ void CInitScript::RegisterCore()
 	r = engine->RegisterObjectMethod("CCircuitAI", "bool UnitControl(CCircuitUnit@, bool)", asMETHODPR(CCircuitAI, UnitControl, (CCircuitUnit*, bool), bool), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CCircuitAI", "bool UnitControl(Id, bool)", asMETHODPR(CCircuitAI, UnitControl, (ICoreUnit::Id, bool), bool), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CCircuitAI", "CCircuitUnit@ GetUnitInRange(const AIFloat3& in, float, Id, Type, int)", asFUNCTION(CCircuitAI_GetUnitInRange), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CCircuitAI", "array<CCircuitUnit@>@ GetUnits(bool isMobile) const", asFUNCTION(CCircuitAI_GetUnits), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CCircuitAI", "bool isScriptUpdateEnabled", asOFFSET(CCircuitAI, isScriptUpdateEnabled)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CCircuitAI", "bool isUnitActionsEnabled", asOFFSET(CCircuitAI, isUnitActionsEnabled)); ASSERT(r >= 0);
 	// Lua<-->AI communications [in Spring 0.83+]

@@ -74,6 +74,9 @@ class Manager {
 			{formatInt(ELuaMsg::BASE_DEL_BUILDTASK), LuaMsgFunc(this.DelBuildTask)},
 			{formatInt(ELuaMsg::BASE_PLAN_CANCEL), LuaMsgFunc(this.BuildPlanCancel)},
 			{formatInt(ELuaMsg::BASE_PARAMS), LuaMsgFunc(this.BaseParams)},
+			{formatInt(ELuaMsg::BASE_REGION_ZONE), LuaMsgFunc(this.BaseRegionZone)},
+			{formatInt(ELuaMsg::BASE_ZONE_CANCEL), LuaMsgFunc(this.BaseZoneCancel)},
+			{formatInt(ELuaMsg::BASE_REGION_SNAPSHOT), LuaMsgFunc(this.BaseRegionSnapshot)},
 
 			{formatInt(ELuaMsg::SQUAD_REQUEST_ID), LuaMsgFunc(this.SelectSquadRequestId)},
 			{formatInt(ELuaMsg::SQUAD_REQUEST_COMPOSE), LuaMsgFunc(this.SquadRequestCompose)},
@@ -378,6 +381,18 @@ class Manager {
 
 	void BaseParams(const array<string>& in params) {
 		Base::mgr.SetBaseParams(params);
+	}
+
+	void BaseRegionZone(const array<string>& in params) {
+		Base::mgr.MakeRegionZone(params);
+	}
+
+	void BaseZoneCancel(const array<string>& in params) {
+		Base::mgr.FreeBaseZone(parseInt(params[0]));
+	}
+
+	void BaseRegionSnapshot(const array<string>& in params) {
+		Base::mgr.MakeBuildPlanSnapshot(params);
 	}
 
 	// Squad Request
