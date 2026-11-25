@@ -33,6 +33,11 @@ public:
 	bool SigNoFreeSpace(IBuilderTask* task);
 
 private:
+	IBuilderTask* FindTaskSiteUnit(asIScriptFunction* func,
+			CCircuitDef* buildDef, CCircuitUnit* unit, const springai::AIFloat3& position);
+	IBuilderTask* FindTaskSite(asIScriptFunction* func,
+			CCircuitDef* buildDef, const springai::AIFloat3& position);
+
 	struct SScriptInfo {
 		asIScriptFunction* taskAssigned = nullptr;
 		asIScriptFunction* findEnergyTaskSite = nullptr;

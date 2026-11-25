@@ -389,48 +389,42 @@ class Manager {
 		return bestRegion;
 	}
 
-	IBuilderTask@ FindEnergyTaskSite(CCircuitDef@ buildDef, CCircuitUnit@ unit, const AIFloat3& in pos) {
+	private IBuilderTask@ FindTaskSiteUnit(CCircuitDef@ buildDef, CCircuitUnit@ unit, const AIFloat3& in pos) {
 		Mask buildMask = aiTerrainMgr.GetStructMask(buildDef.id);
 		ConditionClosure closure(buildDef, unit);
 		BaseRegion@ region = GetNearestBaseRegion(pos, buildMask, Condition(closure.canBuild));
 		if (region is null)
 			return null;
 		IUnitTask@ task = aiBuilderMgr.Enqueue(Builder::MakeBuildRecord(buildDef.id, region.poly.center));
-		taskToRegion.insert(task.id, @region);
+		taskToRegion.insert(task.id, region);
 		return cast<IBuilderTask>(task);
 	}
 
-	IBuilderTask@ FindStorageTaskSite(CCircuitDef@ buildDef, const AIFloat3& in pos) {
+	private IBuilderTask@ FindTaskSite(CCircuitDef@ buildDef, const AIFloat3& in pos) {
 		Mask buildMask = aiTerrainMgr.GetStructMask(buildDef.id);
 		Condition @passthrough = function(const AIFloat3& in) { return true; };
 		BaseRegion@ region = GetNearestBaseRegion(pos, buildMask, passthrough);
 		if (region is null)
 			return null;
 		IUnitTask@ task = aiBuilderMgr.Enqueue(Builder::MakeBuildRecord(buildDef.id, region.poly.center));
-		taskToRegion.insert(task.id, @region);
+		taskToRegion.insert(task.id, region);
 		return cast<IBuilderTask>(task);
+	}
+
+	IBuilderTask@ FindEnergyTaskSite(CCircuitDef@ buildDef, CCircuitUnit@ unit, const AIFloat3& in pos) {
+		return FindTaskSiteUnit(buildDef, unit, pos);
+	}
+
+	IBuilderTask@ FindStorageTaskSite(CCircuitDef@ buildDef, const AIFloat3& in pos) {
+		return FindTaskSite(buildDef, pos);
 	}
 
 	IBuilderTask@ FindAirpadTaskSite(CCircuitDef@ buildDef, CCircuitUnit@ unit, const AIFloat3& in pos) {
-		Mask buildMask = aiTerrainMgr.GetStructMask(buildDef.id);
-		ConditionClosure closure(buildDef, unit);
-		BaseRegion@ region = GetNearestBaseRegion(pos, buildMask, Condition(closure.canBuild));
-		if (region is null)
-			return null;
-		IUnitTask@ task = aiBuilderMgr.Enqueue(Builder::MakeBuildRecord(buildDef.id, region.poly.center));
-		taskToRegion.insert(task.id, @region);
-		return cast<IBuilderTask>(task);
+		return FindTaskSiteUnit(buildDef, unit, pos);
 	}
 
 	IBuilderTask@ FindAssistTaskSite(CCircuitDef@ buildDef, CCircuitUnit@ unit, const AIFloat3& in pos) {
-		Mask buildMask = aiTerrainMgr.GetStructMask(buildDef.id);
-		ConditionClosure closure(buildDef, unit);
-		BaseRegion@ region = GetNearestBaseRegion(pos, buildMask, Condition(closure.canBuild));
-		if (region is null)
-			return null;
-		IUnitTask@ task = aiBuilderMgr.Enqueue(Builder::MakeBuildRecord(buildDef.id, region.poly.center));
-		taskToRegion.insert(task.id, @region);
-		return cast<IBuilderTask>(task);
+		return FindTaskSiteUnit(buildDef, unit, pos);
 	}
 
 	bool FindFactoryTaskSite(IBuilderTask@ task, CCircuitUnit@ unit, const AIFloat3& in pos) {
@@ -440,20 +434,13 @@ class Manager {
 		BaseRegion@ region = GetNearestBaseRegion(pos, buildMask, Condition(closure.canBuild));
 		if (region is null)
 			return false;
-		task.SetPosition(region.poly.center);
+		task.SetBuildPos(region.poly.center);
 		taskToRegion.insert(task.id, @region);
 		return true;
 	}
 
 	IBuilderTask@ FindConvertTaskSite(CCircuitDef@ buildDef, const AIFloat3& in pos) {
-		Mask buildMask = aiTerrainMgr.GetStructMask(buildDef.id);
-		Condition @passthrough = function(const AIFloat3& in) { return true; };
-		BaseRegion@ region = GetNearestBaseRegion(pos, buildMask, passthrough);
-		if (region is null)
-			return null;
-		IUnitTask@ task = aiBuilderMgr.Enqueue(Builder::MakeBuildRecord(buildDef.id, region.poly.center));
-		taskToRegion.insert(task.id, @region);
-		return cast<IBuilderTask>(task);
+		return FindTaskSite(buildDef, pos);
 	}
 
 	bool MarkRegionFull(IBuilderTask@ task) {

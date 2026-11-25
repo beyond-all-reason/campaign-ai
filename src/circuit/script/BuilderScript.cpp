@@ -126,13 +126,7 @@ IBuilderTask* CBuilderScript::FindEnergyTaskSite(CCircuitDef* buildDef, CCircuit
 	if (builderInfo.findEnergyTaskSite == nullptr) {
 		return static_cast<CBuilderManager*>(manager)->DefaultFindEnergyTaskSite(buildDef, unit, position);
 	}
-	asIScriptContext* ctx = script->PrepareContext(builderInfo.findEnergyTaskSite);
-	ctx->SetArgObject(0, buildDef);
-	ctx->SetArgObject(1, unit);
-	ctx->SetArgAddress(2, &const_cast<AIFloat3&>(position));
-	IBuilderTask* result = script->Exec(ctx) ? (IBuilderTask*)ctx->GetReturnObject() : nullptr;
-	script->ReturnContext(ctx);
-	return result;
+	return FindTaskSiteUnit(builderInfo.findEnergyTaskSite, buildDef, unit, position);
 }
 
 IBuilderTask* CBuilderScript::FindStorageTaskSite(CCircuitDef* buildDef, const AIFloat3& position)
@@ -140,12 +134,7 @@ IBuilderTask* CBuilderScript::FindStorageTaskSite(CCircuitDef* buildDef, const A
 	if (builderInfo.findStorageTaskSite == nullptr) {
 		return static_cast<CBuilderManager*>(manager)->DefaultFindStorageTaskSite(buildDef, position);
 	}
-	asIScriptContext* ctx = script->PrepareContext(builderInfo.findEnergyTaskSite);
-	ctx->SetArgObject(0, buildDef);
-	ctx->SetArgAddress(1, &const_cast<AIFloat3&>(position));
-	IBuilderTask* result = script->Exec(ctx) ? (IBuilderTask*)ctx->GetReturnObject() : nullptr;
-	script->ReturnContext(ctx);
-	return result;
+	return FindTaskSite(builderInfo.findStorageTaskSite, buildDef, position);
 }
 
 IBuilderTask* CBuilderScript::FindAirpadTaskSite(CCircuitDef* buildDef, CCircuitUnit* unit, const AIFloat3& position)
@@ -153,13 +142,7 @@ IBuilderTask* CBuilderScript::FindAirpadTaskSite(CCircuitDef* buildDef, CCircuit
 	if (builderInfo.findAirpadTaskSite == nullptr) {
 		return static_cast<CBuilderManager*>(manager)->DefaultFindAirpadTaskSite(buildDef, unit, position);
 	}
-	asIScriptContext* ctx = script->PrepareContext(builderInfo.findAirpadTaskSite);
-	ctx->SetArgObject(0, buildDef);
-	ctx->SetArgObject(1, unit);
-	ctx->SetArgAddress(2, &const_cast<AIFloat3&>(position));
-	IBuilderTask* result = script->Exec(ctx) ? (IBuilderTask*)ctx->GetReturnObject() : nullptr;
-	script->ReturnContext(ctx);
-	return result;
+	return FindTaskSiteUnit(builderInfo.findAirpadTaskSite, buildDef, unit, position);
 }
 
 IBuilderTask* CBuilderScript::FindAssistTaskSite(CCircuitDef* buildDef, CCircuitUnit* unit, const AIFloat3& position)
@@ -167,13 +150,7 @@ IBuilderTask* CBuilderScript::FindAssistTaskSite(CCircuitDef* buildDef, CCircuit
 	if (builderInfo.findAssistTaskSite == nullptr) {
 		return static_cast<CBuilderManager*>(manager)->DefaultFindAssistTaskSite(buildDef, unit, position);
 	}
-	asIScriptContext* ctx = script->PrepareContext(builderInfo.findAssistTaskSite);
-	ctx->SetArgObject(0, buildDef);
-	ctx->SetArgObject(1, unit);
-	ctx->SetArgAddress(2, &const_cast<AIFloat3&>(position));
-	IBuilderTask* result = script->Exec(ctx) ? (IBuilderTask*)ctx->GetReturnObject() : nullptr;
-	script->ReturnContext(ctx);
-	return result;
+	return FindTaskSiteUnit(builderInfo.findAssistTaskSite, buildDef, unit, position);
 }
 
 bool CBuilderScript::FindFactoryTaskSite(IBuilderTask* task, CCircuitUnit* unit, const AIFloat3& position)
@@ -195,12 +172,7 @@ IBuilderTask* CBuilderScript::FindConvertTaskSite(CCircuitDef* buildDef, const A
 	if (builderInfo.findConvertTaskSite == nullptr) {
 		return static_cast<CBuilderManager*>(manager)->DefaultFindConvertTaskSite(buildDef, position);
 	}
-	asIScriptContext* ctx = script->PrepareContext(builderInfo.findConvertTaskSite);
-	ctx->SetArgObject(0, buildDef);
-	ctx->SetArgAddress(1, &const_cast<AIFloat3&>(position));
-	IBuilderTask* result = script->Exec(ctx) ? (IBuilderTask*)ctx->GetReturnObject() : nullptr;
-	script->ReturnContext(ctx);
-	return result;
+	return FindTaskSite(builderInfo.findConvertTaskSite, buildDef, position);
 }
 
 bool CBuilderScript::SigNoFreeSpace(IBuilderTask* task)
@@ -212,6 +184,29 @@ bool CBuilderScript::SigNoFreeSpace(IBuilderTask* task)
 	ctx->SetArgObject(0, task);
 	script->Exec(ctx);
 	const bool result = script->Exec(ctx) ? ctx->GetReturnByte() : false;
+	script->ReturnContext(ctx);
+	return result;
+}
+
+IBuilderTask* CBuilderScript::FindTaskSiteUnit(asIScriptFunction* func,
+		CCircuitDef* buildDef, CCircuitUnit* unit, const AIFloat3& position)
+{
+	asIScriptContext* ctx = script->PrepareContext(func);
+	ctx->SetArgObject(0, buildDef);
+	ctx->SetArgObject(1, unit);
+	ctx->SetArgAddress(2, &const_cast<AIFloat3&>(position));
+	IBuilderTask* result = script->Exec(ctx) ? (IBuilderTask*)ctx->GetReturnObject() : nullptr;
+	script->ReturnContext(ctx);
+	return result;
+}
+
+IBuilderTask* CBuilderScript::FindTaskSite(asIScriptFunction* func,
+		CCircuitDef* buildDef, const AIFloat3& position)
+{
+	asIScriptContext* ctx = script->PrepareContext(func);
+	ctx->SetArgObject(0, buildDef);
+	ctx->SetArgAddress(1, &const_cast<AIFloat3&>(position));
+	IBuilderTask* result = script->Exec(ctx) ? (IBuilderTask*)ctx->GetReturnObject() : nullptr;
 	script->ReturnContext(ctx);
 	return result;
 }

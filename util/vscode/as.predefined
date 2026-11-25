@@ -641,6 +641,7 @@ class IBuilderTask{
 	const IUnitTask@ opImplCast() const;
 	int GetBuildType() const;
 	const AIFloat3& GetBuildPos() const;
+	void SetBuildPos(const AIFloat3&in);
 	CRecruitTask@ opCast();
 	const CRecruitTask@ opCast() const;
 	const int id;
@@ -661,6 +662,7 @@ class CRecruitTask{
 	const IUnitTask@ opImplCast() const;
 	int GetBuildType() const;
 	const AIFloat3& GetBuildPos() const;
+	void SetBuildPos(const AIFloat3&in);
 	IBuilderTask@ opImplCast();
 	const IBuilderTask@ opImplCast() const;
 	const int id;
@@ -941,6 +943,11 @@ class CBuilderManager{
 	void AddAllowedZone(int, CPolygon@, uint);
 	void DelAllowedZone(int);
 	IBuilderTask@ DefaultFindEnergyTaskSite(CCircuitDef@, CCircuitUnit@, const AIFloat3&in);
+	IBuilderTask@ DefaultFindStorageTaskSite(CCircuitDef@, const AIFloat3&in);
+	IBuilderTask@ DefaultFindAirpadTaskSite(CCircuitDef@, CCircuitUnit@, const AIFloat3&in);
+	IBuilderTask@ DefaultFindAssistTaskSite(CCircuitDef@, CCircuitUnit@, const AIFloat3&in);
+	bool DefaultFindFactoryTaskSite(IBuilderTask@, CCircuitUnit@, const AIFloat3&in);
+	IBuilderTask@ DefaultFindConvertTaskSite(CCircuitDef@, const AIFloat3&in);
 	int dangerHysteresis;
 }
 class SFightTask{
