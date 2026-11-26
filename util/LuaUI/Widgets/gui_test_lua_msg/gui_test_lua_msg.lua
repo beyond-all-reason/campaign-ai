@@ -822,18 +822,15 @@ function widget:EndBaseRegion()
         local msg = aiMsg.MsgBuilder.new()
             :cmdValue(aiMsg.Topic.BASE_REGION_ID, baseID1)
             :cmdDictArray(aiMsg.Topic.BASE_REGION_ZONE, aiMsg.Base.REGION_ZONE, newRegion)
+            :paramArray(aiMsg.Base.REGION_MASK, {
+                nameToDefID["armlab"],
+                nameToDefID["armnanotc"],
+                nameToDefID["armsolar"],
+            })
             :toString()
         Spring.SendSkirmishAIMessage(teamID0, msg)
     end
     newRegion = false
-end
-
-function widget:SendBaseAllowedUnitMask()
-    local msg = aiMsg.MsgBuilder.new()
-        :cmdValue(aiMsg.Topic.BASE_REGION_ID, baseID1)
-        :cmdDictArray(aiMsg.Topic.BASE_REGION_ZONE, aiMsg.Base.REGION_MASK, {nameToDefID["armlab"], nameToDefID["armnanotc"]})
-        :toString()
-    Spring.SendSkirmishAIMessage(teamID0, msg)
 end
 
 function widget:StartBaseSnapshot()
