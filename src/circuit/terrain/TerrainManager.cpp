@@ -8,6 +8,7 @@
 #include "terrain/TerrainManager.h"
 #include "terrain/BlockRectangle.h"
 #include "terrain/BlockCircle.h"
+#include "terrain/BlockingMap.h"
 #include "terrain/GridRegion.h"
 #include "terrain/path/PathFinder.h"
 #include "terrain/path/QueryPathWide.h"
@@ -57,7 +58,7 @@ CTerrainManager::CTerrainManager(CCircuitAI* circuit, CTerrainData* terrainData)
 	SBlockingMap::SBlockCell cell = {0};
 	blockingMap.grid.resize(blockingMap.columns * blockingMap.rows, cell);
 	blockingMap.gridZone.resize(blockingMap.columns * blockingMap.rows, NULL_ZONE);
-	blockingMap.gridAllow.resize(blockingMap.columns * blockingMap.rows, STRUCT_BIT(ALL));
+	blockingMap.gridAllow.resize(blockingMap.columns * blockingMap.rows, STRUCT_BIT(NONE));
 
 	blockingMap.columnsLow = mapWidth / (GRID_RATIO_LOW * 2);
 	blockingMap.rowsLow = mapHeight / (GRID_RATIO_LOW * 2);
@@ -1675,7 +1676,7 @@ bool CTerrainManager::IsZoneAllowed(const AIFloat3& pos, SBlockingMap::SM mask) 
 	const int z = int(pos.z + 0.5f) / (SQUARE_SIZE * 2);
 
 	// TODO: Check blockingMap.IsStructed, blockingMap.IsBlocked?
-	return blockingMap.IsAllowed(x, z, mask);
+	return blockingMap.IsAllowed(x, z, mask) && !blockingMap.IsBlocked(x, z, STRUCT_BIT(RESERVED));
 }
 
 void CTerrainManager::MarkTriggerZone(const CGridRegion& region, CGridRegion::Id zoneId)

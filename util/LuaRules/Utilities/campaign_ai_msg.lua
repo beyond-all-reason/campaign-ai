@@ -36,6 +36,9 @@ local topic = { -- Message topic
 	BASE_DEL_BUILDTASK = 104,
 	BASE_PLAN_CANCEL = 105,
 	BASE_PARAMS = 106,
+	BASE_REGION_ZONE = 107,
+	BASE_ZONE_CANCEL = 108,
+	BASE_REGION_SNAPSHOT = 109,
 
 	-- Squad Request starts at 200
 	SQUAD_REQUEST_ID = 201,
@@ -117,6 +120,9 @@ local base = {
 	RECLAIM_ENERGY = 12, -- efficiency ratio threshold
 
 	REGION_STATE = 21, -- active, inactive, maintenance
+
+	REGION_ZONE = 22, -- define polygon zone
+	REGION_MASK = 23, -- list of UnitDefIDs to form SBlockingMap::StructMask
 }
 
 local baseState = {

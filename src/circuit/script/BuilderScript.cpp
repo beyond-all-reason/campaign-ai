@@ -182,7 +182,6 @@ bool CBuilderScript::SigNoFreeSpace(IBuilderTask* task)
 	}
 	asIScriptContext* ctx = script->PrepareContext(builderInfo.sigNoFreeSpace);
 	ctx->SetArgObject(0, task);
-	script->Exec(ctx);
 	const bool result = script->Exec(ctx) ? ctx->GetReturnByte() : false;
 	script->ReturnContext(ctx);
 	return result;

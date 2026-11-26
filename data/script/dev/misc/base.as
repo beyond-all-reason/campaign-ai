@@ -54,6 +54,14 @@ class BaseRegion {
 		ClearZone();
 	}
 
+	// Required by AATC set<MyClass@> and map<MyClass@, V>
+	int opCmp(const BaseRegion &in other) const {
+		if (this is @other) return 0;
+		if (this.id < other.id) return -1;
+		if (this.id > other.id) return 1;
+		return 0;
+	}
+
 	Id id;
 	EBaseState state;
 	// optional plan
@@ -303,7 +311,7 @@ class Manager {
 			bt.plan.isDone = false;
 			++bt.plan.unfinishedCount;
 			if (selBaseRegion.state != EBaseState::INACTIVE)
-				unfinishedPlans.insert(@bt.plan.region);
+				unfinishedPlans.insert(bt.plan.region);
 		}
 
 		BaseRegion@ region = unitToRegion.find(unit.id, success);
