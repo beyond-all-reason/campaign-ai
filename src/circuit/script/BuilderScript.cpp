@@ -81,6 +81,7 @@ CBuilderScript::CBuilderScript(CScriptManager* scr, CBuilderManager* mgr)
 	r = engine->RegisterObjectMethod("CBuilderManager", "void AddReservedZone(Id, CPolygon@+)", asMETHOD(CBuilderManager, AddReservedZone), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CBuilderManager", "void DelReservedZone(Id)", asMETHOD(CBuilderManager, DelReservedZone), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CBuilderManager", "void AddAllowedZone(Id, CPolygon@+, Mask)", asMETHOD(CBuilderManager, AddAllowedZone), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CBuilderManager", "void SetAllowedMask(Id, Mask)", asMETHOD(CBuilderManager, SetAllowedMask), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CBuilderManager", "void DelAllowedZone(Id)", asMETHOD(CBuilderManager, DelAllowedZone), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CBuilderManager", "IBuilderTask@+ DefaultFindEnergyTaskSite(CCircuitDef@, CCircuitUnit@, const AIFloat3& in)", asMETHOD(CBuilderManager, DefaultFindEnergyTaskSite), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CBuilderManager", "IBuilderTask@+ DefaultFindStorageTaskSite(CCircuitDef@, const AIFloat3& in)", asMETHOD(CBuilderManager, DefaultFindStorageTaskSite), asCALL_THISCALL); ASSERT(r >= 0);

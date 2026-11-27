@@ -704,8 +704,11 @@ void IBuilderTask::ExecuteChain(SBuildChain* chain)
 				isValid = (index >= 0) && (circuit->GetMetalManager()->GetSpots()[index].income * buildDef->GetExtractsM() > energyMake * 0.8f);
 			}
 			if (isValid) {
-				circuit->GetBuilderManager()->Enqueue(TaskB::Common(IBuilderTask::BuildType::ENERGY,
-						IBuilderTask::Priority::NORMAL, energyDef, buildPos, SQUARE_SIZE * 8.0f, true));
+				SBlockingMap::SM mask = static_cast<SBlockingMap::SM>(terrainMgr->GetStructMask(energyDef->GetId()));
+				if (terrainMgr->IsZoneAllowed(buildPos, mask)) {
+					circuit->GetBuilderManager()->Enqueue(TaskB::Common(IBuilderTask::BuildType::ENERGY,
+							IBuilderTask::Priority::NORMAL, energyDef, buildPos, SQUARE_SIZE * 8.0f, true));
+				}
 			}
 		}
 	}
@@ -750,7 +753,10 @@ void IBuilderTask::ExecuteChain(SBuildChain* chain)
 						pos += dir.Normalize2D() * (ourRange + pylonRange) * 0.9f;
 					}
 				}
-				circuit->GetBuilderManager()->Enqueue(TaskB::Pylon(IBuilderTask::Priority::HIGH, pylonDef, pos, nullptr, 1.0f));
+				SBlockingMap::SM mask = static_cast<SBlockingMap::SM>(terrainMgr->GetStructMask(pylonDef->GetId()));
+				if (terrainMgr->IsZoneAllowed(pos, mask)) {
+					circuit->GetBuilderManager()->Enqueue(TaskB::Pylon(IBuilderTask::Priority::HIGH, pylonDef, pos, nullptr, 1.0f));
+				}
 			}
 		}
 	}
@@ -837,6 +843,10 @@ void IBuilderTask::ExecuteChain(SBuildChain* chain)
 					default: break;
 				}
 				if (!isValid) {
+					continue;
+				}
+				SBlockingMap::SM mask = static_cast<SBlockingMap::SM>(terrainMgr->GetStructMask(bi.cdef->GetId()));
+				if (!terrainMgr->IsZoneAllowed(buildPos, mask)) {
 					continue;
 				}
 

@@ -335,6 +335,7 @@ public:
 	void AddReservedZone(CGridRegion::Id zoneId, geom::CPolygon* poly);
 	void DelReservedZone(CGridRegion::Id zoneId);
 	void AddAllowedZone(CGridRegion::Id zoneId, geom::CPolygon* poly, int mask);
+	void SetAllowedMask(CGridRegion::Id zoneId, int mask);
 	void DelAllowedZone(CGridRegion::Id zoneId);
 	// Script hooks
 	IBuilderTask* FindEnergyTaskSite(CCircuitDef* buildDef, CCircuitUnit* unit, const springai::AIFloat3& position);

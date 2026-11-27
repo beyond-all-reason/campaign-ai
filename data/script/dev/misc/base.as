@@ -55,8 +55,7 @@ class BaseRegion {
 	}
 
 	// Required by AATC set<MyClass@> and map<MyClass@, V>
-	int opCmp(const BaseRegion &in other) const {
-		if (this is @other) return 0;
+	int opCmp(const BaseRegion& in other) const {
 		if (this.id < other.id) return -1;
 		if (this.id > other.id) return 1;
 		return 0;
@@ -81,7 +80,7 @@ class BuildPlan {
 
 	array<BuildTask@> buildTasks;
 	AIFloat3 center;  // nominal center
-	BaseRegion@ region;
+	weakref<BaseRegion> region;
 	int unfinishedCount = 0;
 	bool isDone = true;  // Manager::unfinishedPlans.contains(region) shortcut
 }
@@ -101,7 +100,7 @@ class BuildTask {
 
 	Id unitDefId = -1;
 	AIFloat3 pos;
-	BuildPlan@ plan = null;
+	weakref<BuildPlan> plan;
 	IBuilderTask@ task = null;
 	bool isDone = false;
 	bool isRebuild = false;
@@ -189,6 +188,7 @@ class Manager {
 		BuildPlan@ plan = selBaseRegion.plan;
 		for (uint i = 0; i < plan.buildTasks.length(); ++i)
 			if (plan.buildTasks[i] == bt) {
+				@plan.buildTasks[i].plan = null;
 				plan.buildTasks.removeAt(i);
 				if (!plan.isDone)
 					AdjustPlanFinished(plan);
@@ -240,11 +240,16 @@ class Manager {
 		return null;
 	}
 
-	private void AdjustPlanFinished(BuildPlan @plan) {
+	private void AdjustPlanFinished(BuildPlan@ plan) {
 		if (--plan.unfinishedCount == 0) {
-			unfinishedPlans.erase(plan.region);
-			plan.isDone = true;
-			LuaMsg::mgr.SigBasePlanFinished(plan.region.id);
+			BaseRegion@ reg = plan.region.get();
+			if (reg !is null) {
+				unfinishedPlans.erase(reg);
+				plan.isDone = true;
+				LuaMsg::mgr.SigBasePlanFinished(reg.id);
+			} else {
+				plan.isDone = true;
+			}
 		}
 	}
 
@@ -253,7 +258,9 @@ class Manager {
 		bool success;
 		BuildTask@ bt = taskToBuildTask.find(task.id, success);
 		if (success) {
-			AdjustPlanFinished(bt.plan);
+			BuildPlan@ plan = bt.plan.get();
+			if (plan !is null)
+				AdjustPlanFinished(plan);
 
 			taskToBuildTask.erase(task.id);
 			if (bt.isRebuild) {
@@ -263,8 +270,12 @@ class Manager {
 				return;
 			}
 
-			const int idx = bt.plan.buildTasks.findByRef(bt);
-			bt.plan.buildTasks.removeAt(idx);
+			if (plan !is null) {
+				const int idx = plan.buildTasks.findByRef(bt);
+				if (idx >= 0)
+					plan.buildTasks.removeAt(idx);
+			}
+			@bt.plan = null;
 		}
 
 		BaseRegion@ region = taskToRegion.find(task.id, success);
@@ -284,7 +295,9 @@ class Manager {
 				taskToBuildTask.insert(newTask.id, @bt);
 				@bt.task = cast<IBuilderTask>(newTask);
 			} else {
-				AdjustPlanFinished(bt.plan);
+				BuildPlan@ plan = bt.plan.get();
+				if (plan !is null)
+					AdjustPlanFinished(plan);
 				@bt.task = null;
 			}
 			taskToBuildTask.erase(task.id);
@@ -308,10 +321,14 @@ class Manager {
 			unitToBuildTask.erase(unit.id);
 
 			bt.isDone = false;
-			bt.plan.isDone = false;
-			++bt.plan.unfinishedCount;
-			if (selBaseRegion.state != EBaseState::INACTIVE)
-				unfinishedPlans.insert(bt.plan.region);
+			BuildPlan@ plan = bt.plan.get();
+			if (plan !is null) {
+				plan.isDone = false;
+				++plan.unfinishedCount;
+				BaseRegion@ reg = plan.region.get();
+				if (reg !is null && reg.state != EBaseState::INACTIVE)
+					unfinishedPlans.insert(reg);
+			}
 		}
 
 		BaseRegion@ region = unitToRegion.find(unit.id, success);
@@ -322,18 +339,30 @@ class Manager {
 	}
 
 	private void ClearBuildPlan(BuildPlan@ plan) {
+		// Break circular references for ALL tasks in the plan, not just active ones
+		for (uint i = 0; i < plan.buildTasks.length(); ++i) {
+			@plan.buildTasks[i].plan = null;
+			@plan.buildTasks[i].task = null;
+		}
+		plan.buildTasks.resize(0);
+		plan.unfinishedCount = 0;
+
 		array<Id> remTasks;
 		for (auto it = taskToBuildTask.begin(); it++;) {
 			BuildTask@ bt = it.current_value();
-			if (bt.plan is plan) {
+			BuildPlan@ btPlan = bt.plan.get();
+			if (btPlan is null/* || btPlan is plan*/) {  // Already nulled above
 				@bt.plan = null;
 				remTasks.insertLast(it.current_key());
 			}
 		}
 		foreach (Id taskId : remTasks)
 			taskToBuildTask.erase(taskId);
+
 		plan.isDone = true;
-		unfinishedPlans.erase(plan.region);
+		BaseRegion@ reg = plan.region.get();
+		if (reg !is null)
+			unfinishedPlans.erase(reg);
 	}
 
 	// Invoked by LuaMsg::Manager::BuildPlanCancel
@@ -419,13 +448,14 @@ class Manager {
 		if (selBaseRegion is null)
 			return;
 
+		CPolygon@ poly = null;
 		for (uint i = 0; i < params.length(); ++i) {
 			// params contains "<EBaseParam>=<values>" pairs
 			const array<string>@ kv = params[i].split(LuaMsg::SEP_KEY_VALUE);
 			switch (parseInt(kv[0])) {
 			case EBaseParam::REGION_ZONE: {  // kv[1]="<x1>,<z1>,<x2>,<z2>,<x3>,<z3>"
 				const array<AIFloat3>@ verts = Region::mgr.ParseStrVerts(kv[1]);
-				@selBaseRegion.poly = CPolygon(verts);
+				@poly = CPolygon(verts);
 			} break;
 			case EBaseParam::REGION_MASK: {  // kv[1]="<UnitDefID1>,<UnitDefID2>,<UnitDefID3>"
 				Mask mask = 0;
@@ -442,7 +472,11 @@ class Manager {
 			}
 		}
 
-		aiBuilderMgr.AddAllowedZone(selBaseRegion.id, selBaseRegion.poly, selBaseRegion.allowedMask);
+		if (poly !is null) {
+			@selBaseRegion.poly = poly;
+			aiBuilderMgr.AddAllowedZone(selBaseRegion.id, selBaseRegion.poly, selBaseRegion.allowedMask);
+		} else
+			aiBuilderMgr.SetAllowedMask(selBaseRegion.id, selBaseRegion.allowedMask);
 	}
 
 	// Invoked by LuaMsg::Manager::BaseZoneCancel
@@ -466,17 +500,18 @@ class Manager {
 		const array<AIFloat3>@ verts = Region::mgr.ParseVerts(params);
 		CPolygon@ zone = CPolygon(verts);
 		const array<CCircuitUnit@>@ buildings = ai.GetUnits(false);
-		if (!buildings.isEmpty()) {
-			foreach (CCircuitUnit@ unit : buildings) {
-				if (!zone.ContainsPoint(unit.GetPos(ai.frame)))
-					continue;
+		if (buildings.isEmpty())
+			return;
 
-				BuildTask bt(unit.circuitDef.id, unit.GetPos(ai.frame), true);
+		foreach (CCircuitUnit@ unit : buildings) {
+			if (!zone.ContainsPoint(unit.GetPos(ai.frame)))
+				continue;
 
-				@bt.plan = plan;
-				plan.buildTasks.insertLast(@bt);
-				plan.adjustCenter(bt.pos);
-			}
+			BuildTask bt(unit.circuitDef.id, unit.GetPos(ai.frame), true);
+
+			@bt.plan = plan;
+			plan.buildTasks.insertLast(@bt);
+			plan.adjustCenter(bt.pos);
 		}
 	}
 

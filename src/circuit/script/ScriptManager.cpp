@@ -27,6 +27,7 @@
 #include "angelscript/add_on/scriptdictionary/scriptdictionary.h"
 #include "angelscript/add_on/scriptmath/scriptmath.h"
 #include "angelscript/add_on/scriptbuilder/scriptbuilder.h"
+#include "angelscript/add_on/weakref/weakref.h"
 #include "angelscript/add_on/aatc/aatc.hpp"
 
 namespace circuit {
@@ -141,6 +142,7 @@ void CScriptManager::Init()
 	RegisterStdStringUtils(engine);  // optional
 	RegisterScriptDictionary(engine);
 	RegisterScriptMath(engine);
+	RegisterScriptWeakRef(engine);
 	aatc::RegisterAllContainers(engine);
 	RegisterTracyProfiler();
 

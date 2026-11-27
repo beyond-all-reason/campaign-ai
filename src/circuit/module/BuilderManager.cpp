@@ -1082,6 +1082,16 @@ void CBuilderManager::AddAllowedZone(CGridRegion::Id zoneId, geom::CPolygon* pol
 	circuit->GetTerrainManager()->MarkAllowedZone(region, static_cast<SBlockingMap::SM>(mask));
 }
 
+void CBuilderManager::SetAllowedMask(CGridRegion::Id zoneId, int mask)
+{
+	auto it = allowedZones.find(zoneId);
+	if (it == allowedZones.end()) {
+		return;
+	}
+	CGridRegion& region = it->second;
+	circuit->GetTerrainManager()->MarkAllowedZone(region, static_cast<SBlockingMap::SM>(mask));
+}
+
 void CBuilderManager::DelAllowedZone(CGridRegion::Id zoneId)
 {
 	auto it = allowedZones.find(zoneId);
@@ -1089,7 +1099,7 @@ void CBuilderManager::DelAllowedZone(CGridRegion::Id zoneId)
 		return;
 	}
 	CGridRegion& region = it->second;
-	circuit->GetTerrainManager()->MarkAllowedZone(region, STRUCT_BIT(ALL));
+	circuit->GetTerrainManager()->MarkAllowedZone(region, STRUCT_BIT(NONE));
 	allowedZones.erase(it);
 }
 
