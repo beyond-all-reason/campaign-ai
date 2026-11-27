@@ -289,7 +289,10 @@ bool IBuilderTask::Execute(CCircuitUnit* unit)
 	CTerrainManager::CorrectPosition(pos);
 
 	const float searchRadius = 200 * SQUARE_SIZE;
-	FindBuildSite(unit, pos, searchRadius);
+	if (!FindBuildSite(unit, pos, searchRadius)) {
+		Abort();
+		return false;  // Script said Stop
+	}
 
 	if (geom::is_valid(buildPos)) {
 		TRY_UNIT(circuit, unit,
@@ -653,7 +656,7 @@ CAllyUnit* IBuilderTask::FindSameAlly(CCircuitUnit* builder, const std::vector<U
 	return nullptr;
 }
 
-void IBuilderTask::FindBuildSite(CCircuitUnit* builder, const AIFloat3& pos, float searchRadius)
+bool IBuilderTask::FindBuildSite(CCircuitUnit* builder, const AIFloat3& pos, float searchRadius)
 {
 	FindFacing(pos);
 
@@ -662,9 +665,12 @@ void IBuilderTask::FindBuildSite(CCircuitUnit* builder, const AIFloat3& pos, flo
 		return terrainMgr->CanReachAtSafe(builder, p, builder->GetCircuitDef()->GetBuildDistance());
 	};
 	SetBuildPos(terrainMgr->FindBuildSite(buildDef, pos, searchRadius, facing, predicate));
+
+	return geom::is_valid(buildPos) ? true
+			: static_cast<CBuilderManager*>(manager)->SigNoFreeSpace(this);
 }
 
-void IBuilderTask::FindFacing(const springai::AIFloat3& pos)
+void IBuilderTask::FindFacing(const AIFloat3& pos)
 {
 	CTerrainManager* terrainMgr = manager->GetCircuit()->GetTerrainManager();
 
@@ -698,8 +704,11 @@ void IBuilderTask::ExecuteChain(SBuildChain* chain)
 				isValid = (index >= 0) && (circuit->GetMetalManager()->GetSpots()[index].income * buildDef->GetExtractsM() > energyMake * 0.8f);
 			}
 			if (isValid) {
-				circuit->GetBuilderManager()->Enqueue(TaskB::Common(IBuilderTask::BuildType::ENERGY,
-						IBuilderTask::Priority::NORMAL, energyDef, buildPos, SQUARE_SIZE * 8.0f, true));
+				SBlockingMap::SM mask = static_cast<SBlockingMap::SM>(terrainMgr->GetStructMask(energyDef->GetId()));
+				if (terrainMgr->IsZoneAllowed(buildPos, mask)) {
+					circuit->GetBuilderManager()->Enqueue(TaskB::Common(IBuilderTask::BuildType::ENERGY,
+							IBuilderTask::Priority::NORMAL, energyDef, buildPos, SQUARE_SIZE * 8.0f, true));
+				}
 			}
 		}
 	}
@@ -744,7 +753,10 @@ void IBuilderTask::ExecuteChain(SBuildChain* chain)
 						pos += dir.Normalize2D() * (ourRange + pylonRange) * 0.9f;
 					}
 				}
-				circuit->GetBuilderManager()->Enqueue(TaskB::Pylon(IBuilderTask::Priority::HIGH, pylonDef, pos, nullptr, 1.0f));
+				SBlockingMap::SM mask = static_cast<SBlockingMap::SM>(terrainMgr->GetStructMask(pylonDef->GetId()));
+				if (terrainMgr->IsZoneAllowed(pos, mask)) {
+					circuit->GetBuilderManager()->Enqueue(TaskB::Pylon(IBuilderTask::Priority::HIGH, pylonDef, pos, nullptr, 1.0f));
+				}
 			}
 		}
 	}
@@ -831,6 +843,10 @@ void IBuilderTask::ExecuteChain(SBuildChain* chain)
 					default: break;
 				}
 				if (!isValid) {
+					continue;
+				}
+				SBlockingMap::SM mask = static_cast<SBlockingMap::SM>(terrainMgr->GetStructMask(bi.cdef->GetId()));
+				if (!terrainMgr->IsZoneAllowed(buildPos, mask)) {
 					continue;
 				}
 

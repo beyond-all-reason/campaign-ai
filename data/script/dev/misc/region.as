@@ -10,8 +10,7 @@ enum ERegionParam {
 }
 
 class Manager {
-	private array<AIFloat3>@ ParseVerts(const string& in strPoints) {
-		const array<string>@ points = strPoints.split(LuaMsg::SEP_SUBPARAM);
+	array<AIFloat3>@ ParseVerts(const array<string>& in points) {
 		array<AIFloat3>@ verts = array<AIFloat3>();
 		for (uint i = 0; i < points.length() / 2; ++i) {
 			const float x = parseFloat(points[i * 2 + 0]);
@@ -19,6 +18,11 @@ class Manager {
 			verts.insertLast(AIFloat3(x, 0.f, z));
 		}
 		return verts;
+	}
+
+	array<AIFloat3>@ ParseStrVerts(const string& in strPoints) {
+		const array<string>@ points = strPoints.split(LuaMsg::SEP_SUBPARAM);
+		return ParseVerts(points);
 	}
 
 	bool AddBuildZone(const array<string>& in params) {
@@ -29,7 +33,7 @@ class Manager {
 			return false;
 
 		buildZones.insert(regionId);
-		const array<AIFloat3>@ verts = ParseVerts(region_points[1]);
+		const array<AIFloat3>@ verts = ParseStrVerts(region_points[1]);
 		Id unitDefId = parseInt(params[1]);
 		int facing = parseInt(params[2]);
 		aiBuilderMgr.AddBuildZone(regionId, CPolygon(verts), Builder::MakeBuildRecord(unitDefId), facing);
@@ -102,7 +106,7 @@ class Manager {
 			return false;
 
 		reservedZones.insert(regionId);
-		const array<AIFloat3>@ verts = ParseVerts(region_points[1]);
+		const array<AIFloat3>@ verts = ParseStrVerts(region_points[1]);
 		aiBuilderMgr.AddReservedZone(regionId, CPolygon(verts));
 
 		return true;
@@ -132,9 +136,9 @@ class Manager {
 			return false;
 
 		allowedZones.insert(regionId);
-		const array<AIFloat3>@ verts = ParseVerts(region_points[1]);
+		const array<AIFloat3>@ verts = ParseStrVerts(region_points[1]);
 
-		int mask = 0;
+		Mask mask = 0;
 		if (params.length() > 1) {
 			// params[1] contains "UNITDEF_ID=<id1>,<id2>,<id3>" or "STRUCT_MASK=<mask>"
 			const array<string>@ paramType_values = params[1].split(LuaMsg::SEP_KEY_VALUE);
@@ -186,7 +190,7 @@ class Manager {
 			return false;
 
 		triggerZones.insert(regionId);
-		const array<AIFloat3>@ verts = ParseVerts(region_points[1]);
+		const array<AIFloat3>@ verts = ParseStrVerts(region_points[1]);
 		aiMilitaryMgr.AddTriggerZone(regionId, CPolygon(verts));
 
 		return true;

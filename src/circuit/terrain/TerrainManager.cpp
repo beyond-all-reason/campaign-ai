@@ -8,6 +8,7 @@
 #include "terrain/TerrainManager.h"
 #include "terrain/BlockRectangle.h"
 #include "terrain/BlockCircle.h"
+#include "terrain/BlockingMap.h"
 #include "terrain/GridRegion.h"
 #include "terrain/path/PathFinder.h"
 #include "terrain/path/QueryPathWide.h"
@@ -57,7 +58,7 @@ CTerrainManager::CTerrainManager(CCircuitAI* circuit, CTerrainData* terrainData)
 	SBlockingMap::SBlockCell cell = {0};
 	blockingMap.grid.resize(blockingMap.columns * blockingMap.rows, cell);
 	blockingMap.gridZone.resize(blockingMap.columns * blockingMap.rows, NULL_ZONE);
-	blockingMap.gridAllow.resize(blockingMap.columns * blockingMap.rows, STRUCT_BIT(ALL));
+	blockingMap.gridAllow.resize(blockingMap.columns * blockingMap.rows, STRUCT_BIT(NONE));
 
 	blockingMap.columnsLow = mapWidth / (GRID_RATIO_LOW * 2);
 	blockingMap.rowsLow = mapHeight / (GRID_RATIO_LOW * 2);
@@ -1669,6 +1670,15 @@ void CTerrainManager::FillAllowedGrid(SBlockingMap::SM mask)
 	blockingMap.gridAllow.assign(blockingMap.gridAllow.size(), mask);
 }
 
+bool CTerrainManager::IsZoneAllowed(const AIFloat3& pos, SBlockingMap::SM mask) const
+{
+	const int x = int(pos.x + 0.5f) / (SQUARE_SIZE * 2);
+	const int z = int(pos.z + 0.5f) / (SQUARE_SIZE * 2);
+
+	// TODO: Check blockingMap.IsStructed, blockingMap.IsBlocked?
+	return blockingMap.IsAllowed(x, z, mask) && !blockingMap.IsBlocked(x, z, STRUCT_BIT(RESERVED));
+}
+
 void CTerrainManager::MarkTriggerZone(const CGridRegion& region, CGridRegion::Id zoneId)
 {
 	region.ProcessRegion([this, zoneId](short x, short z) {
@@ -1715,6 +1725,12 @@ SBlockingMap::StructType CTerrainManager::GetStructType(CCircuitDef::Id unitDefI
 SBlockingMap::StructMask CTerrainManager::GetStructMask(CCircuitDef::Id unitDefId)
 {
 	return SBlockingMap::GetStructMask(GetStructType(unitDefId));
+}
+
+bool CTerrainManager::CanBuildAt(CCircuitUnit* unit, CCircuitDef* buildDef, const AIFloat3& pos)
+{
+	return CanBeBuiltAtSafe(buildDef, pos) &&
+		((unit == nullptr) || CanReachAtSafe(unit, pos, unit->GetCircuitDef()->GetBuildDistance()));
 }
 
 void CTerrainManager::SnapPosition(AIFloat3& position)

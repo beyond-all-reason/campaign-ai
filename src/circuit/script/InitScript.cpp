@@ -249,6 +249,21 @@ static CCircuitUnit* CCircuitAI_GetUnitInRange(CCircuitAI* circuit,
 	return nullptr;
 }
 
+static CScriptArray* CCircuitAI_GetUnits(CCircuitAI* circuit, bool isMobile)
+{
+	asIScriptEngine* engine = asGetActiveContext()->GetEngine();
+	auto cache = static_cast<CScriptManager::STypeInfoCache*>(engine->GetUserData());
+	CScriptArray* arr = CScriptArray::Create(cache->unitArray);
+	arr->Reserve(circuit->GetTeamUnits().size());
+	for (auto& kv : circuit->GetTeamUnits()) {
+		CCircuitUnit* unit = kv.second;
+		if (isMobile == unit->GetCircuitDef()->IsMobile()) {
+			arr->InsertLast(&unit);
+		}
+	}
+	return arr;
+}
+
 static std::string CCircuitAI_CallRules(CCircuitAI* circuit, const std::string& data)
 {
 	return circuit->GetLua()->CallRules(data.c_str(), data.size());
@@ -590,6 +605,8 @@ void CInitScript::RegisterCore()
 	r = engine->RegisterObjectBehaviour("CPolygon", asBEHAVE_FACTORY, "CPolygon@ f(const array<AIFloat3>@+)", asFUNCTION(FactoryCPolygon), asCALL_CDECL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CPolygon", "array<AIFloat3>@ GetVerts() const", asFUNCTION(CPolygon_GetVerts), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CPolygon", "const float area", asOFFSET(geom::CPolygon, area)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("CPolygon", "const float radius", asOFFSET(geom::CPolygon, radius)); ASSERT(r >= 0);
+	r = engine->RegisterObjectProperty("CPolygon", "const AIFloat3 center", asOFFSET(geom::CPolygon, center)); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CPolygon", "bool ContainsPoint(const AIFloat3& in) const", asMETHOD(geom::CPolygon, ContainsPoint), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CPolygon", "AIFloat3 Random() const", asMETHOD(geom::CPolygon, Random), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CPolygon", "void Scale(float)", asMETHOD(geom::CPolygon, Scale), asCALL_THISCALL); ASSERT(r >= 0);
@@ -689,6 +706,7 @@ void CInitScript::RegisterCore()
 	r = engine->RegisterObjectMethod("CCircuitAI", "bool UnitControl(CCircuitUnit@, bool)", asMETHODPR(CCircuitAI, UnitControl, (CCircuitUnit*, bool), bool), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CCircuitAI", "bool UnitControl(Id, bool)", asMETHODPR(CCircuitAI, UnitControl, (ICoreUnit::Id, bool), bool), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CCircuitAI", "CCircuitUnit@ GetUnitInRange(const AIFloat3& in, float, Id, Type, int)", asFUNCTION(CCircuitAI_GetUnitInRange), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CCircuitAI", "array<CCircuitUnit@>@ GetUnits(bool isMobile) const", asFUNCTION(CCircuitAI_GetUnits), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CCircuitAI", "bool isScriptUpdateEnabled", asOFFSET(CCircuitAI, isScriptUpdateEnabled)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("CCircuitAI", "bool isUnitActionsEnabled", asOFFSET(CCircuitAI, isUnitActionsEnabled)); ASSERT(r >= 0);
 	// Lua<-->AI communications [in Spring 0.83+]
@@ -792,6 +810,7 @@ void CInitScript::RegisterMgr()
 	r = engine->RegisterObjectMethod("CTerrainManager", "void FillAllowedGrid(uint16)", asMETHOD(CTerrainManager, FillAllowedGrid), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CTerrainManager", "uint16 GetStructType(Id)", asMETHOD(CTerrainManager, GetStructType), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CTerrainManager", "uint16 GetStructMask(Id)", asMETHOD(CTerrainManager, GetStructMask), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("CTerrainManager", "bool CanBuildAt(CCircuitUnit@, CCircuitDef@, const AIFloat3& in)", asMETHOD(CTerrainManager, CanBuildAt), asCALL_THISCALL); ASSERT(r >= 0);
 
 	r = engine->RegisterObjectProperty("CSetupManager", "const CCircuitDef@ commChoice", asOFFSET(CSetupManager, commChoice)); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CSetupManager", "void SetBasePos(const AIFloat3& in)", asMETHOD(CSetupManager, SetBasePos), asCALL_THISCALL); ASSERT(r >= 0);
@@ -905,6 +924,7 @@ void CInitScript::RegisterIBuilderTask(asIScriptEngine* engine, const char* cls)
 	int r;
 	r = engine->RegisterObjectMethod(cls, "Type GetBuildType() const", asMETHODPR(T, GetBuildType, () const, IBuilderTask::BuildType), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod(cls, "const AIFloat3& GetBuildPos() const", asMETHODPR(T, GetPosition, () const, const AIFloat3&), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod(cls, "void SetBuildPos(const AIFloat3& in)", asMETHOD(T, SetTaskPos), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty(cls, "CCircuitDef@ const buildDef", asOFFSET(T, buildDef)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty(cls, "CCircuitUnit@ const target", asOFFSET(T, target)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty(cls, "bool canAutoAbort", asOFFSET(T, canAutoAbort)); ASSERT(r >= 0);

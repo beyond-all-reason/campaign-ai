@@ -144,6 +144,15 @@
                     <button onclick="widget:SendMexCap(0.5, true)">mex 0.5</button>
                     <button onclick="widget:SendMexCap(2.0, false)">mex 2.0</button>
                 </div>
+                <div class="grid commands">
+                    <button onclick="widget:StartBaseRegion()">start region</button>
+                    <button onclick="widget:EndBaseRegion()">end region</button>
+                    <button onclick="widget:StartBaseSnapshot()">start maintain</button>
+                    <button onclick="widget:EndBaseSnapshot()">end maintain</button>
+                    <button onclick="widget:CancelBaseRegion()">cancel region</button>
+                    <button onclick="widget:SendBaseState('active')">region active</button>
+                    <button onclick="widget:SendBaseState('inactive')">region inactive</button>
+                </div>
                 </panel>
 
                 <tab>AI State</tab>

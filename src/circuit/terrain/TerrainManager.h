@@ -179,11 +179,13 @@ public:
 	void UnmarkReservedZone(const CGridRegion& region);
 	void MarkAllowedZone(const CGridRegion& region, SBlockingMap::SM mask);
 	void FillAllowedGrid(SBlockingMap::SM mask);
+	bool IsZoneAllowed(const springai::AIFloat3& pos, SBlockingMap::SM mask) const;
 	void MarkTriggerZone(const CGridRegion& region, CGridRegion::Id zoneId);
 	CGridRegion::Id GetTriggerZoneId(const springai::AIFloat3& pos, CGridRegion::Id lastZoneId) const;
 	// Script API
 	SBlockingMap::StructType GetStructType(CCircuitDef::Id unitDefId);
 	SBlockingMap::StructMask GetStructMask(CCircuitDef::Id unitDefId);
+	bool CanBuildAt(CCircuitUnit* unit, CCircuitDef* buildDef, const springai::AIFloat3& pos);
 
 	int GetConvertStoP() const { return terrainData->convertStoP; }
 	int GetSectorXSize() const { return terrainData->sectorXSize; }

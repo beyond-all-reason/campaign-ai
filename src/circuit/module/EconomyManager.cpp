@@ -1148,8 +1148,12 @@ IBuilderTask* CEconomyManager::UpdateMetalTasks(const AIFloat3& position, CCircu
 					}
 					for (const auto& pair : mexDefs) {
 						if ((curExtract < pair.second) && terrainMgr->CanBeBuiltAt(pair.first, pos)) {
-							mexDef = pair.first;
-							return true;
+							// TODO: Optimize mask query: all mexes should have same mask
+							SBlockingMap::SM mask = static_cast<SBlockingMap::SM>(terrainMgr->GetStructMask(pair.first->GetId()));
+							if (terrainMgr->IsZoneAllowed(pos, mask)) {
+								mexDef = pair.first;
+								return true;
+							}
 						}
 					}
 				}
@@ -1194,8 +1198,12 @@ IBuilderTask* CEconomyManager::UpdateMetalTasks(const AIFloat3& position, CCircu
 						if (terrainMgr->CanBeBuiltAt(mDef, pos)
 							&& map->IsPossibleToBuildAt(mDef->GetDef(), pos, UNIT_NO_FACING))
 						{
-							mexDef = mDef;
-							return true;
+							// TODO: Optimize mask query: all mexes should have same mask
+							SBlockingMap::SM mask = static_cast<SBlockingMap::SM>(terrainMgr->GetStructMask(mDef->GetId()));
+							if (terrainMgr->IsZoneAllowed(pos, mask)) {
+								mexDef = mDef;
+								return true;
+							}
 						}
 					}
 				}
@@ -1220,14 +1228,10 @@ IBuilderTask* CEconomyManager::UpdateMetalTasks(const AIFloat3& position, CCircu
 			return !data.isOld && cdef->IsAvailable(frame) && terrainMgr->CanBeBuiltAt(cdef, pos);
 		});
 		if (convertDef != nullptr) {
-			// NOTE: Next check may prevent converters even when open mex-spot is far
-			//       away in unknown territory.
-//			const SConvertExt* convertExt = convertDefs.GetAvailInfo(convertDef);
-//			if ((mexDef == nullptr) || (convertExt->make / convertDef->GetCostM() >= metalMgr->GetSpotAvgIncome() * mexDef->GetExtractsM() / mexDef->GetCostM())) {
-				task = builderMgr->Enqueue(TaskB::Common(IBuilderTask::BuildType::CONVERT,
-										   IBuilderTask::Priority::NORMAL, convertDef, pos, 0.f, true));
+			task = builderMgr->FindConvertTaskSite(convertDef, position);
+			if (task != nullptr) {
 				return task;
-//			}
+			}
 		}
 	}
 
@@ -1424,44 +1428,7 @@ IBuilderTask* CEconomyManager::UpdateEnergyTasks(const AIFloat3& position, CCirc
 		return UpdateGeoTasks(position, unit);
 	}
 
-	// Find place to build
-	// TODO: Add place finder
-	// 1) at very this position
-	// 2) near mex
-	// 3) at resource base (separate metal / energy)
-	// 4) at production base
-	CSetupManager* setupMgr = circuit->GetSetupManager();
-	AIFloat3 buildPos = -RgtVector;
-	if (bestDef->IsAttrBase()) {
-		buildPos = (bestDef->GetCostM() < 1000.0f) ? setupMgr->GetEnergyBase() : setupMgr->GetEnergyBase2();
-		CCircuitDef* bdef = (unit == nullptr) ? bestDef : unit->GetCircuitDef();
-		buildPos = circuit->GetTerrainManager()->GetBuildPosition(bdef, buildPos);
-	} else {
-		if (terrainMgr->IsZoneAlly(position)
-			|| ((circuit->GetFactoryManager()->GetFactoryCount() > 0) && (position.SqDistance2D(setupMgr->GetSmallEnergyPos()) < SQUARE(600.f))
-				&& ((unit == nullptr) || !unit->GetCircuitDef()->IsRoleComm())))  // TODO: instead of isComm check isFast
-		{
-			buildPos = setupMgr->GetSmallEnergyPos();
-		} else {
-			buildPos = position + (position - terrainMgr->GetTerrainCenter()).Normalize2D() * (bestDef->GetRadius() + SQUARE_SIZE * 6);  // geom::get_radial_pos(position, bestDef->GetRadius() + SQUARE_SIZE * 6);
-		}
-		CTerrainManager::CorrectPosition(buildPos);
-	}
-
-	if (geom::is_valid(buildPos) && terrainMgr->CanBeBuiltAtSafe(bestDef, buildPos) &&
-		((unit == nullptr) || terrainMgr->CanReachAtSafe(unit, buildPos, unit->GetCircuitDef()->GetBuildDistance())))
-	{
-		IBuilderTask::Priority priority = isEnergyStalling
-				? (IsEnergyEmpty() ? IBuilderTask::Priority::NOW : IBuilderTask::Priority::HIGH)
-				: IBuilderTask::Priority::NORMAL;
-		IBuilderTask* task = builderMgr->Enqueue(TaskB::Common(IBuilderTask::BuildType::ENERGY,
-												 priority, bestDef, buildPos, 0.f, true));
-		if ((unit == nullptr) || unit->GetCircuitDef()->CanBuild(bestDef)) {
-			return task;
-		}
-	}
-
-	return nullptr;
+	return builderMgr->FindEnergyTaskSite(bestDef, unit, position);
 }
 
 IBuilderTask* CEconomyManager::UpdateGeoTasks(const AIFloat3& position, CCircuitUnit* unit)
@@ -1479,13 +1446,16 @@ IBuilderTask* CEconomyManager::UpdateGeoTasks(const AIFloat3& position, CCircuit
 	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
 	CMap* map = circuit->GetMap();
 	CCircuitDef* geoDef = geoDefs.GetFirstDef();
+	SBlockingMap::SM mask = static_cast<SBlockingMap::SM>(terrainMgr->GetStructMask(geoDef->GetId()));
 	const CEnergyData::Geos& geos = circuit->GetEnergyManager()->GetSpots();
 	float minDistSq = std::numeric_limits<float>::max();
 	int index = -1;
 	for (unsigned i = 0; i < geoSpots.size(); ++i) {
 		const float distSq = geos[i].SqDistance2D(position);
 		if (IsOpenGeoSpot(i) && (minDistSq > distSq)
-			&& !terrainMgr->IsZoneAlly(geos[i]) && terrainMgr->CanBeBuiltAtSafe(geoDef, geos[i])
+			&& !terrainMgr->IsZoneAlly(geos[i])
+			&& terrainMgr->IsZoneAllowed(geos[i], mask)
+			&& terrainMgr->CanBeBuiltAtSafe(geoDef, geos[i])
 			&& map->IsPossibleToBuildAt(geoDef->GetDef(), geos[i], UNIT_NO_FACING))  // lazy check for allies
 		{
 			minDistSq = distSq;
@@ -1662,27 +1632,16 @@ IBuilderTask* CEconomyManager::UpdateFactoryTasks(const AIFloat3& position, CCir
 
 	factoryTask->SetPosition(buildPos);
 
-	if (factoryTask->IsPlop()
-		|| (terrainMgr->CanBeBuiltAtSafe(facDef, buildPos)
-			&& ((unit == nullptr) || terrainMgr->CanReachAtSafe(unit, buildPos, unit->GetCircuitDef()->GetBuildDistance()))))
-	{
-//		if (factoryMgr->GetNoT1FacCount() == 0) {  // FIXME
-//			CCircuitUnit* reclFac = factoryMgr->GetClosestFactory(buildPos);
-//			if (reclFac != nullptr) {
-////				factoryMgr->DisableFactory(reclFac);
-//				builderMgr->EnqueueTask(TaskB::Reclaim(IBuilderTask::Priority::NOW, reclFac));
-//			}
-//		}
-		builderMgr->ActivateTask(factoryTask);
-		IBuilderTask* task = factoryTask;
-		factoryTask = nullptr;
-		return task;
-	} else {
+	bool isOK = builderMgr->FindFactoryTaskSite(factoryTask, unit, buildPos);
+	if (!isOK) {
 		delete factoryTask;
 		factoryTask = nullptr;
+		return nullptr;
 	}
-
-	return nullptr;
+	builderMgr->ActivateTask(factoryTask);
+	IBuilderTask* task = factoryTask;
+	factoryTask = nullptr;
+	return task;
 }
 
 IBuilderTask* CEconomyManager::UpdateFactoryTasks()
@@ -1703,7 +1662,7 @@ IBuilderTask* CEconomyManager::UpdateStorageTasks()
 	}
 
 	if (!builderMgr->GetTasks(IBuilderTask::BuildType::STORE).empty()) {
-		return UpdatePylonTasks();
+		return nullptr;
 	}
 
 	CCircuitDef* storeDef = nullptr;
@@ -1729,18 +1688,17 @@ IBuilderTask* CEconomyManager::UpdateStorageTasks()
 		}
 	}
 
-	if (storeDef != nullptr) {
-		AIFloat3 buildPos = circuit->GetSetupManager()->GetBasePos();
-		return builderMgr->Enqueue(TaskB::Common(IBuilderTask::BuildType::STORE,
-								   IBuilderTask::Priority::HIGH, storeDef, buildPos));
+	if (storeDef == nullptr) {
+		return nullptr;
 	}
 
-	return UpdatePylonTasks();
+	return builderMgr->FindStorageTaskSite(storeDef, circuit->GetSetupManager()->GetBasePos());
 }
 
+// TODO: This is Zero-K energy pylons, that aren't present in BAR at the moment.
+//       Was invoked from UpdateStorageTasks. Clean up required.
 IBuilderTask* CEconomyManager::UpdatePylonTasks()
 {
-	return nullptr;
 	CBuilderManager* builderMgr = circuit->GetBuilderManager();
 	if (!builderMgr->CanEnqueueTask()) {
 		return nullptr;
@@ -1984,28 +1942,8 @@ bool CEconomyManager::CheckAirpadRequired(const AIFloat3& position, CCircuitUnit
 		return false;
 	}
 
-	CFactoryManager* factoryMgr = circuit->GetFactoryManager();
-	CCircuitDef* bdef;
-	if (unit == nullptr) {
-		bdef = airpadDef;
-		buildPos = factoryMgr->GetClosestHaven(circuit->GetSetupManager()->GetBasePos());
-	} else {
-		bdef = unit->GetCircuitDef();
-		buildPos = factoryMgr->GetClosestHaven(unit);
-	}
-	if (!geom::is_valid(buildPos)) {
-		buildPos = circuit->GetSetupManager()->GetBasePos();
-	}
-	buildPos = terrainMgr->GetBuildPosition(bdef, buildPos);
-
-	if (terrainMgr->CanBeBuiltAtSafe(airpadDef, buildPos) &&
-		((unit == nullptr) || terrainMgr->CanReachAtSafe(unit, buildPos, unit->GetCircuitDef()->GetBuildDistance())))
-	{
-		outTask = builderMgr->Enqueue(TaskB::Factory(IBuilderTask::Priority::NORMAL, airpadDef, buildPos, nullptr));
-		return true;
-	}
-
-	return false;
+	outTask = builderMgr->FindAirpadTaskSite(airpadDef, unit, buildPos);
+	return outTask != nullptr;
 }
 
 bool CEconomyManager::CheckAssistRequired(const AIFloat3& position, CCircuitUnit* unit, IBuilderTask*& outTask)
@@ -2081,14 +2019,8 @@ bool CEconomyManager::CheckAssistRequired(const AIFloat3& position, CCircuitUnit
 	CCircuitDef* bdef = (unit == nullptr) ? facDef : unit->GetCircuitDef();
 	buildPos = terrainMgr->GetBuildPosition(bdef, buildPos);
 
-	if (terrainMgr->CanBeBuiltAtSafe(assistDef, buildPos)
-		&& ((unit == nullptr) || terrainMgr->CanReachAtSafe(unit, buildPos, unit->GetCircuitDef()->GetBuildDistance())))
-	{
-		outTask = builderMgr->Enqueue(TaskB::Common(IBuilderTask::BuildType::NANO, IBuilderTask::Priority::HIGH,
-									  assistDef, buildPos, SQUARE_SIZE * 8, true));
-		return true;
-	}
-	return false;
+	outTask = builderMgr->FindAssistTaskSite(assistDef, unit, buildPos);
+	return outTask != nullptr;
 }
 
 float CEconomyManager::GetStorage(Resource* res)

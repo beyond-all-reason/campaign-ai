@@ -68,11 +68,15 @@ class Manager {
 			{formatInt(ELuaMsg::AI_CONSTRUCTION_PARAMS), LuaMsgFunc(this.SetConstructionParams)},
 			{formatInt(ELuaMsg::AI_MILITARY_PARAMS), LuaMsgFunc(this.SetMilitaryParams)},
 
-			{formatInt(ELuaMsg::BASE_PLAN_ID), LuaMsgFunc(this.SelectBuildPlanId)},
+			{formatInt(ELuaMsg::BASE_REGION_ID), LuaMsgFunc(this.SelectBaseRegionId)},
+			{formatInt(ELuaMsg::BASE_REGION_CANCEL), LuaMsgFunc(this.BaseRegionCancel)},
 			{formatInt(ELuaMsg::BASE_ADD_BUILDTASK), LuaMsgFunc(this.AddBuildTask)},
 			{formatInt(ELuaMsg::BASE_DEL_BUILDTASK), LuaMsgFunc(this.DelBuildTask)},
 			{formatInt(ELuaMsg::BASE_PLAN_CANCEL), LuaMsgFunc(this.BuildPlanCancel)},
 			{formatInt(ELuaMsg::BASE_PARAMS), LuaMsgFunc(this.BaseParams)},
+			{formatInt(ELuaMsg::BASE_REGION_ZONE), LuaMsgFunc(this.BaseRegionZone)},
+			{formatInt(ELuaMsg::BASE_ZONE_CANCEL), LuaMsgFunc(this.BaseZoneCancel)},
+			{formatInt(ELuaMsg::BASE_REGION_SNAPSHOT), LuaMsgFunc(this.BaseRegionSnapshot)},
 
 			{formatInt(ELuaMsg::SQUAD_REQUEST_ID), LuaMsgFunc(this.SelectSquadRequestId)},
 			{formatInt(ELuaMsg::SQUAD_REQUEST_COMPOSE), LuaMsgFunc(this.SquadRequestCompose)},
@@ -167,7 +171,7 @@ class Manager {
 		case EAIStateParam::DEFENSIVE: {
 			BatchSetUpdateLoopEnabled(true);
 
-			Factory::isRecruitScripted = false;
+			Factory::isRecruitScripted = true;
 			Builder::isConstructionScripted = false;
 			aiEconomyMgr.isScriptFactory = true;
 			aiEconomyMgr.isScriptStorage = false;
@@ -185,7 +189,7 @@ class Manager {
 		case EAIStateParam::NORMAL: {
 			BatchSetUpdateLoopEnabled(true);
 
-			Factory::isRecruitScripted = false;
+			Factory::isRecruitScripted = true;
 			Builder::isConstructionScripted = false;
 			aiEconomyMgr.isScriptFactory = false;
 			aiEconomyMgr.isScriptStorage = false;
@@ -203,7 +207,7 @@ class Manager {
 		case EAIStateParam::AGGRESSIVE: {
 			BatchSetUpdateLoopEnabled(true);
 
-			Factory::isRecruitScripted = false;
+			Factory::isRecruitScripted = true;
 			Builder::isConstructionScripted = false;
 			aiEconomyMgr.isScriptFactory = false;
 			aiEconomyMgr.isScriptStorage = false;
@@ -355,8 +359,12 @@ class Manager {
 	}
 
 	// Base
-	void SelectBuildPlanId(const array<string>& in params) {
-		Base::mgr.SelectBuildPlan(parseInt(params[0]));
+	void SelectBaseRegionId(const array<string>& in params) {
+		Base::mgr.SelectBaseRegion(parseInt(params[0]));
+	}
+
+	void BaseRegionCancel(const array<string>& in params) {
+		Base::mgr.FreeBaseRegion(parseInt(params[0]));
 	}
 
 	void AddBuildTask(const array<string>& in params) {
@@ -375,6 +383,18 @@ class Manager {
 		Base::mgr.SetBaseParams(params);
 	}
 
+	void BaseRegionZone(const array<string>& in params) {
+		Base::mgr.MakeRegionZone(params);
+	}
+
+	void BaseZoneCancel(const array<string>& in params) {
+		Base::mgr.FreeBaseZone(parseInt(params[0]));
+	}
+
+	void BaseRegionSnapshot(const array<string>& in params) {
+		Base::mgr.MakeBuildPlanSnapshot(params);
+	}
+
 	// Squad Request
 	void SelectSquadRequestId(const array<string>& in params) {
 		Squad::mgr.SelectSquadRequest(parseInt(params[0]));
@@ -385,7 +405,7 @@ class Manager {
 	}
 
 	void SquadRequestCancel(const array<string>& in params) {
-		Squad::mgr.DestroyRequest(parseInt(params[0]));
+		Squad::mgr.DestroyRequestId(parseInt(params[0]));
 	}
 
 	void SquadRequestParams(const array<string>& in params) {
@@ -457,6 +477,10 @@ class Manager {
 	/*
 	 * Signals
 	 */
+	void SigBasePlanFinished(Id regionId) {
+		Signal(ESignal::BASE_PLAN_FINISHED, regionId);
+	}
+
 	void SigSquadFinished(Id squadId) {
 		Signal(ESignal::SQUAD_FINISHED, squadId);
 	}

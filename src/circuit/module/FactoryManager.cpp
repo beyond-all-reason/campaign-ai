@@ -58,7 +58,6 @@ CFactoryManager::CFactoryManager(CCircuitAI* circuit)
 {
 	circuit->GetScheduler()->RunOnInit(CScheduler::GameJob(&CFactoryManager::Init, this));
 
-
 	for (CCircuitDef& cdef : circuit->GetCircuitDefs()) {
 		// Auto-assign roles
 		auto setRoles = [circuit, &cdef](CCircuitDef::RoleT type) {

@@ -732,7 +732,7 @@ end
 
 function widget:SendNewBase()
     local msg = aiMsg.MsgBuilder.new()
-        :cmdValue(aiMsg.Topic.BASE_PLAN_ID, baseID1)
+        :cmdValue(aiMsg.Topic.BASE_REGION_ID, baseID1)
         :cmdDict(aiMsg.Topic.BASE_ADD_BUILDTASK, {
             [aiMsg.Plan.UNITDEF] = nameToDefID["armmex"],
         })
@@ -794,6 +794,64 @@ end
 function widget:SendMexCap(percent, isAllyTeam)
     local msg = aiMsg.MsgBuilder.new()
         :cmdArray(aiMsg.Topic.SET_MEX_CAP, {percent, isAllyTeam and 1 or 0})
+        :toString()
+    Spring.SendSkirmishAIMessage(teamID0, msg)
+end
+
+function widget:SendBaseState(state)
+    local msg = ""
+    if state == 'active' then
+        msg = aiMsg.MsgBuilder.new()
+            :cmdValue(aiMsg.Topic.BASE_REGION_ID, baseID1)
+            :cmdDict(aiMsg.Topic.BASE_PARAMS, {[aiMsg.Base.REGION_STATE] = aiMsg.BaseState.ACTIVE})
+            :toString()
+    elseif state == 'inactive' then
+        msg = aiMsg.MsgBuilder.new()
+            :cmdValue(aiMsg.Topic.BASE_REGION_ID, baseID1)
+            :cmdDict(aiMsg.Topic.BASE_PARAMS, {[aiMsg.Base.REGION_STATE] = aiMsg.BaseState.INACTIVE})
+            :toString()
+        end
+    Spring.SendSkirmishAIMessage(teamID0, msg)
+end
+
+function widget:StartBaseRegion()
+    newRegion = {}
+end
+function widget:EndBaseRegion()
+    if newRegion and #newRegion >= 6 then
+        local msg = aiMsg.MsgBuilder.new()
+            :cmdValue(aiMsg.Topic.BASE_REGION_ID, baseID1)
+            :cmdDictArray(aiMsg.Topic.BASE_REGION_ZONE, aiMsg.Base.REGION_ZONE, newRegion)
+            :paramArray(aiMsg.Base.REGION_MASK, {
+                nameToDefID["armlab"],
+                nameToDefID["armnanotc"],
+                nameToDefID["armsolar"],
+                nameToDefID["armmex"],
+                nameToDefID["armllt"],
+            })
+            :toString()
+        Spring.SendSkirmishAIMessage(teamID0, msg)
+    end
+    newRegion = false
+end
+
+function widget:StartBaseSnapshot()
+    newRegion = {}
+end
+function widget:EndBaseSnapshot()
+    if newRegion and #newRegion >= 6 then
+        local msg = aiMsg.MsgBuilder.new()
+            :cmdValue(aiMsg.Topic.BASE_REGION_ID, baseID1)
+            :cmdArray(aiMsg.Topic.BASE_REGION_SNAPSHOT, newRegion)
+            :toString()
+        Spring.SendSkirmishAIMessage(teamID0, msg)
+    end
+    newRegion = false
+end
+
+function widget:CancelBaseRegion()
+    local msg = aiMsg.MsgBuilder.new()
+        :cmdValue(aiMsg.Topic.BASE_ZONE_CANCEL, baseID1)
         :toString()
     Spring.SendSkirmishAIMessage(teamID0, msg)
 end

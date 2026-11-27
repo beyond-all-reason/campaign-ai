@@ -13,6 +13,7 @@
 namespace circuit {
 
 class CBuilderManager;
+class IBuilderTask;
 
 class CBuilderScript final: public ITaskModuleScript {
 public:
@@ -23,10 +24,29 @@ public:
 
 public:
 	void TaskAssigned(CCircuitUnit* unit);
+	IBuilderTask* FindEnergyTaskSite(CCircuitDef* buildDef, CCircuitUnit* unit, const springai::AIFloat3& position);
+	IBuilderTask* FindStorageTaskSite(CCircuitDef* buildDef, const springai::AIFloat3& position);
+	IBuilderTask* FindAirpadTaskSite(CCircuitDef* buildDef, CCircuitUnit* unit, const springai::AIFloat3& position);
+	IBuilderTask* FindAssistTaskSite(CCircuitDef* buildDef, CCircuitUnit* unit, const springai::AIFloat3& position);
+	bool FindFactoryTaskSite(IBuilderTask* task, CCircuitUnit* unit, const springai::AIFloat3& position);
+	IBuilderTask* FindConvertTaskSite(CCircuitDef* buildDef, const springai::AIFloat3& position);
+	bool SigNoFreeSpace(IBuilderTask* task);
 
 private:
+	IBuilderTask* FindTaskSiteUnit(asIScriptFunction* func,
+			CCircuitDef* buildDef, CCircuitUnit* unit, const springai::AIFloat3& position);
+	IBuilderTask* FindTaskSite(asIScriptFunction* func,
+			CCircuitDef* buildDef, const springai::AIFloat3& position);
+
 	struct SScriptInfo {
 		asIScriptFunction* taskAssigned = nullptr;
+		asIScriptFunction* findEnergyTaskSite = nullptr;
+		asIScriptFunction* findStorageTaskSite = nullptr;
+		asIScriptFunction* findAirpadTaskSite = nullptr;
+		asIScriptFunction* findAssistTaskSite = nullptr;
+		asIScriptFunction* findFactoryTaskSite = nullptr;
+		asIScriptFunction* findConvertTaskSite = nullptr;
+		asIScriptFunction* sigNoFreeSpace = nullptr;
 	} builderInfo;
 };
 

@@ -1,6 +1,7 @@
 #include "../../task.as"
 #include "../../lua_msg.as"
 #include "../manager/builder.as"
+#include "lua_msg_manager.as"
 
 
 namespace Base {
@@ -15,6 +16,11 @@ enum EBaseParam {
 
 	RECLAIM_CONVERT      = 11,
 	RECLAIM_ENERGY       = 12,
+
+	REGION_STATE         = 21,
+
+	REGION_ZONE          = 22,
+	REGION_MASK          = 23,
 }
 
 enum EPlanParam {
@@ -23,33 +29,96 @@ enum EPlanParam {
 	REBUILD  = 3,
 }
 
-class BuildPlan {
-	BuildPlan(Id p_id) {
+enum EBaseState {
+	ACTIVE = 1,
+	INACTIVE = 2,
+	MAINTENANCE = 3,
+}
+
+class BaseRegion {
+	BaseRegion(Id p_id) {
 		id = p_id;
+		@plan.region = this;
 	}
 
+	void ClearZone() {
+		if (poly !is null) {
+			aiBuilderMgr.DelAllowedZone(id);
+			allowedMask = 0;
+			isFull = false;
+		}
+	}
+
+	void Clear() {
+		@plan.region = null;
+		ClearZone();
+	}
+
+	// Required by AATC set<MyClass@> and map<MyClass@, V>
+	int opCmp(const BaseRegion& in other) const {
+		if (this.id < other.id) return -1;
+		if (this.id > other.id) return 1;
+		return 0;
+	}
+
+	Id id;
+	EBaseState state;
+	// optional plan
+	BuildPlan plan;
+	// optional region config
+	CPolygon@ poly;  // border
+	uint16 allowedMask = 0;  // allowed struct types within border
+	bool isFull = true;  // when not full: poly is not null
+	bool isNoSpaceSig = false;  // for BuildTaskCanceled processing after MarkRegionFull
+}
+
+class BuildPlan {
 	void adjustCenter(const AIFloat3& in pos) {
 		const float weight = 1.0 / buildTasks.length();
 		center += (pos - center) * weight;
 	}
 
-	Id id;
-
 	array<BuildTask@> buildTasks;
 	AIFloat3 center;  // nominal center
+	weakref<BaseRegion> region;
+	int unfinishedCount = 0;
+	bool isDone = true;  // Manager::unfinishedPlans.contains(region) shortcut
 }
 
 class BuildTask {
+	BuildTask() {}
+
+	BuildTask(Id udId, const AIFloat3& in p, bool isRepeat) {
+		unitDefId = udId;
+		pos = p;
+		isRebuild = isRepeat;
+	}
+
 	bool opEquals(const BuildTask& in other) const {
 		return (this.unitDefId == other.unitDefId && this.pos == other.pos);
 	}
 
 	Id unitDefId = -1;
 	AIFloat3 pos;
-	BuildPlan@ plan = null;
+	weakref<BuildPlan> plan;
 	IBuilderTask@ task = null;
 	bool isDone = false;
 	bool isRebuild = false;
+}
+
+funcdef bool Condition(const AIFloat3& in);
+class ConditionClosure {
+	ConditionClosure(CCircuitDef@ cdef, CCircuitUnit@ u) {
+		@buildDef = cdef;
+		@unit = u;
+	}
+
+	bool canBuild(const AIFloat3& in pos) {
+		return aiTerrainMgr.CanBuildAt(unit, buildDef, pos);
+	}
+
+	CCircuitDef@ buildDef;
+	CCircuitUnit@ unit;
 }
 
 class Manager {
@@ -80,38 +149,49 @@ class Manager {
 		return @bt;
 	}
 
-	// Invoked by LuaMsg::Manager::SelectBuildPlanId
-	void SelectBuildPlan(Id planId) {
+	// Invoked by LuaMsg::Manager::SelectBaseRegionId
+	void SelectBaseRegion(Id regionId) {
 		bool success;
-		BuildPlan@ plan = plans.find(planId, success);
+		BaseRegion@ region = regions.find(regionId, success);
 		if (!success) {
-			@plan = BuildPlan(planId);
-			plans.insert(plan.id, @plan);
+			@region = BaseRegion(regionId);
+			regions.insert(region.id, @region);
 		}
-		@selBuildPlan = plan;
+		@selBaseRegion = region;
 	}
 
 	// Invoked by LuaMsg::Manager::AddBuildTask
 	bool AddToBuildPlan(const array<string>& in params) {
-		if (selBuildPlan is null)
+		if (selBaseRegion is null)
 			return false;
 
 		BuildTask@ bt = ParseBuildTaskParams(params);
-		@bt.plan = selBuildPlan;
-		selBuildPlan.buildTasks.insertLast(@bt);
-		selBuildPlan.adjustCenter(bt.pos);
+		BuildPlan@ plan = selBaseRegion.plan;
+		@bt.plan = plan;
+		plan.buildTasks.insertLast(@bt);
+		plan.adjustCenter(bt.pos);
+		++plan.unfinishedCount;
+		if (plan.isDone) {
+			plan.isDone = false;
+			if (selBaseRegion.state != EBaseState::INACTIVE)
+				unfinishedPlans.insert(selBaseRegion);
+		}
 		return true;
 	}
 
 	// Invoked by LuaMsg::Manager::DelBuildTask
 	bool RemoveFromBuildPlan(const array<string>& in params) {
-		if (selBuildPlan is null)
+		if (selBaseRegion is null)
 			return false;
 
 		BuildTask@ bt = ParseBuildTaskParams(params);
-		for (uint i = 0; i < selBuildPlan.buildTasks.length(); ++i)
-			if (selBuildPlan.buildTasks[i] == bt) {
-				selBuildPlan.buildTasks.removeAt(i);
+		BuildPlan@ plan = selBaseRegion.plan;
+		for (uint i = 0; i < plan.buildTasks.length(); ++i)
+			if (plan.buildTasks[i] == bt) {
+				@plan.buildTasks[i].plan = null;
+				plan.buildTasks.removeAt(i);
+				if (!plan.isDone)
+					AdjustPlanFinished(plan);
 				return true;
 			}
 		return false;
@@ -120,10 +200,10 @@ class Manager {
 	private BuildPlan@ GetNearestBuildPlan(const AIFloat3& in pos) {
 		BuildPlan@ plan = null;
 		float sqLeastDist = BIG_FLOAT;
-		for (auto it = plans.begin(); it++;) {
-			BuildPlan@ checkPlan = it.current_value();
-			if (checkPlan.buildTasks.isEmpty())
-				continue;
+		// NOTE: unfinishedPlans has only ACTIVE regions with non-empty plan.buildTasks
+		for (auto it = unfinishedPlans.begin(); it++;) {
+			BaseRegion@ region = it.current();
+			BuildPlan@ checkPlan = region.plan;
 			float sqDist = pos.SqDistance2D(checkPlan.center);
 			if (sqLeastDist <= sqDist)
 				continue;
@@ -160,69 +240,171 @@ class Manager {
 		return null;
 	}
 
+	private void AdjustPlanFinished(BuildPlan@ plan) {
+		if (--plan.unfinishedCount == 0) {
+			BaseRegion@ reg = plan.region.get();
+			if (reg !is null) {
+				unfinishedPlans.erase(reg);
+				plan.isDone = true;
+				LuaMsg::mgr.SigBasePlanFinished(reg.id);
+			} else {
+				plan.isDone = true;
+			}
+		}
+	}
+
 	// Invoked by Builder::AiTaskRemoved done=true
 	void BuildTaskFinished(IBuilderTask@ task) {
 		bool success;
 		BuildTask@ bt = taskToBuildTask.find(task.id, success);
-		if (!success)
-			return;
+		if (success) {
+			BuildPlan@ plan = bt.plan.get();
+			if (plan !is null)
+				AdjustPlanFinished(plan);
 
-		taskToBuildTask.erase(task.id);
-		if (bt.isRebuild) {
-			unitToBuildTask.insert(task.target.id, @bt);
-			bt.isDone = true;
-			@bt.task = null;
-			return;
+			taskToBuildTask.erase(task.id);
+			if (bt.isRebuild) {
+				unitToBuildTask.insert(task.target.id, @bt);
+				bt.isDone = true;
+				@bt.task = null;
+				return;
+			}
+
+			if (plan !is null) {
+				const int idx = plan.buildTasks.findByRef(bt);
+				if (idx >= 0)
+					plan.buildTasks.removeAt(idx);
+			}
+			@bt.plan = null;
 		}
 
-		const int idx = bt.plan.buildTasks.findByRef(bt);
-		bt.plan.buildTasks.removeAt(idx);
+		BaseRegion@ region = taskToRegion.find(task.id, success);
+		if (success) {
+			taskToRegion.erase(task.id);
+			unitToRegion.insert(task.target.id, region);
+		}
 	}
 
 	// Invoked by Builder::AiTaskRemoved done=false
 	void BuildTaskCanceled(IBuilderTask@ task) {
 		bool success;
 		BuildTask@ bt = taskToBuildTask.find(task.id, success);
-		if (!success)
-			return;
+		if (success) {
+			if (bt.isRebuild) {
+				IUnitTask@ newTask = aiBuilderMgr.Enqueue(Builder::MakeBuildRecord(bt.unitDefId, bt.pos));
+				taskToBuildTask.insert(newTask.id, @bt);
+				@bt.task = cast<IBuilderTask>(newTask);
+			} else {
+				BuildPlan@ plan = bt.plan.get();
+				if (plan !is null)
+					AdjustPlanFinished(plan);
+				@bt.task = null;
+			}
+			taskToBuildTask.erase(task.id);
+		}
 
-		taskToBuildTask.erase(task.id);
-		@bt.task = null;
+		BaseRegion@ region = taskToRegion.find(task.id, success);
+		if (success) {
+			if (region.isNoSpaceSig)
+				region.isNoSpaceSig = false;  // no free space
+			else
+				region.isFull = false;  // task canceled by enemy or economy
+			taskToRegion.erase(task.id);
+		}
 	}
 
 	// Invoked by Main::AiUnitDestroyed
 	void OnUnitDestroyed(CCircuitUnit@ unit) {
 		bool success;
 		BuildTask@ bt = unitToBuildTask.find(unit.id, success);
-		if (!success)
-			return;
+		if (success) {
+			unitToBuildTask.erase(unit.id);
 
-		bt.isDone = false;
+			bt.isDone = false;
+			BuildPlan@ plan = bt.plan.get();
+			if (plan !is null) {
+				plan.isDone = false;
+				++plan.unfinishedCount;
+				BaseRegion@ reg = plan.region.get();
+				if (reg !is null && reg.state != EBaseState::INACTIVE)
+					unfinishedPlans.insert(reg);
+			}
+		}
+
+		BaseRegion@ region = unitToRegion.find(unit.id, success);
+		if (success) {
+			unitToRegion.erase(unit.id);
+			region.isFull = false;
+		}
 	}
 
 	private void ClearBuildPlan(BuildPlan@ plan) {
+		// Break circular references for ALL tasks in the plan, not just active ones
+		for (uint i = 0; i < plan.buildTasks.length(); ++i) {
+			@plan.buildTasks[i].plan = null;
+			@plan.buildTasks[i].task = null;
+		}
+		plan.buildTasks.resize(0);
+		plan.unfinishedCount = 0;
+
 		array<Id> remTasks;
 		for (auto it = taskToBuildTask.begin(); it++;) {
 			BuildTask@ bt = it.current_value();
-			if (bt.plan is plan) {
+			BuildPlan@ btPlan = bt.plan.get();
+			if (btPlan is null/* || btPlan is plan*/) {  // Already nulled above
 				@bt.plan = null;
 				remTasks.insertLast(it.current_key());
 			}
 		}
 		foreach (Id taskId : remTasks)
 			taskToBuildTask.erase(taskId);
+
+		plan.isDone = true;
+		BaseRegion@ reg = plan.region.get();
+		if (reg !is null)
+			unfinishedPlans.erase(reg);
 	}
 
 	// Invoked by LuaMsg::Manager::BuildPlanCancel
-	void FreeBuildPlan(Id buildPlanId) {
+	void FreeBuildPlan(Id regionId) {
 		bool success;
-		BuildPlan@ plan = plans.find(buildPlanId, success);
+		BaseRegion@ region = regions.find(regionId, success);
 		if (!success)
 			return;
 
-		ClearBuildPlan(plan);
+		ClearBuildPlan(region.plan);
+	}
 
-		plans.erase(buildPlanId);
+	// Invoked by LuaMsg::Manager::BaseRegionCancel
+	void FreeBaseRegion(Id regionId) {
+		bool success;
+		BaseRegion@ region = regions.find(regionId, success);
+		if (!success)
+			return;
+
+		ClearBuildPlan(region.plan);
+		region.Clear();
+		regions.erase(regionId);
+	}
+
+	private void SetRegionState(EBaseState state) {
+		switch (state) {
+		case EBaseState::ACTIVE: {
+			selBaseRegion.state = state;
+			if (!selBaseRegion.plan.isDone)
+				unfinishedPlans.insert(selBaseRegion);
+		} break;
+		case EBaseState::INACTIVE: {
+			selBaseRegion.state = state;
+			unfinishedPlans.erase(selBaseRegion);
+		} break;
+		case EBaseState::MAINTENANCE: {
+			selBaseRegion.state = state;
+			if (!selBaseRegion.plan.isDone)
+				unfinishedPlans.insert(selBaseRegion);
+		} break;
+		default: break;
+		}
 	}
 
 	// Invoked by LuaMsg::Manager::BaseParams
@@ -252,16 +434,183 @@ class Manager {
 			case EBaseParam::RECLAIM_ENERGY: {  // kv[1]="<ratio>"
 				aiEconomyMgr.reclEnergyEff = parseFloat(kv[1]);
 			} break;
+			case EBaseParam::REGION_STATE: {  // kv[1]="<EBaseState>"
+				if (selBaseRegion !is null)
+					SetRegionState(EBaseState(parseInt(kv[1])));
+			} break;
 			default: break;
 			}
 		}
 	}
 
-	private map<Id, BuildPlan@> plans;  // owner
+	// Invoked by LuaMsg::Manager::BaseRegionZone
+	void MakeRegionZone(const array<string>& in params) {
+		if (selBaseRegion is null)
+			return;
+
+		CPolygon@ poly = null;
+		for (uint i = 0; i < params.length(); ++i) {
+			// params contains "<EBaseParam>=<values>" pairs
+			const array<string>@ kv = params[i].split(LuaMsg::SEP_KEY_VALUE);
+			switch (parseInt(kv[0])) {
+			case EBaseParam::REGION_ZONE: {  // kv[1]="<x1>,<z1>,<x2>,<z2>,<x3>,<z3>"
+				const array<AIFloat3>@ verts = Region::mgr.ParseStrVerts(kv[1]);
+				@poly = CPolygon(verts);
+			} break;
+			case EBaseParam::REGION_MASK: {  // kv[1]="<UnitDefID1>,<UnitDefID2>,<UnitDefID3>"
+				Mask mask = 0;
+				if (kv[1].length() > 1) {
+					const array<string>@ buildMaskTypes = kv[1].split(LuaMsg::SEP_SUBPARAM);
+					for (uint j = 0; j < buildMaskTypes.length(); ++j) {
+						const int unitDefId = parseInt(buildMaskTypes[j]);
+						mask |= aiTerrainMgr.GetStructMask(unitDefId);
+					}
+				}
+				selBaseRegion.allowedMask = mask;
+			} break;
+			default: break;
+			}
+		}
+
+		if (poly !is null) {
+			@selBaseRegion.poly = poly;
+			aiBuilderMgr.AddAllowedZone(selBaseRegion.id, selBaseRegion.poly, selBaseRegion.allowedMask);
+		} else
+			aiBuilderMgr.SetAllowedMask(selBaseRegion.id, selBaseRegion.allowedMask);
+	}
+
+	// Invoked by LuaMsg::Manager::BaseZoneCancel
+	void FreeBaseZone(Id regionId) {
+		bool success;
+		BaseRegion@ region = regions.find(regionId, success);
+		if (!success)
+			return;
+
+		region.ClearZone();
+	}
+
+	// Invoked by LuaMsg::Manager::BaseRegionSnapshot
+	void MakeBuildPlanSnapshot(const array<string>& in params) {
+		if (selBaseRegion is null)
+			return;
+
+		BuildPlan@ plan = selBaseRegion.plan;
+		ClearBuildPlan(plan);
+		// params contains "<x1>","<z1>","<x2>","<z2>","<x3>","<z3>"
+		const array<AIFloat3>@ verts = Region::mgr.ParseVerts(params);
+		CPolygon@ zone = CPolygon(verts);
+		const array<CCircuitUnit@>@ buildings = ai.GetUnits(false);
+		if (buildings.isEmpty())
+			return;
+
+		foreach (CCircuitUnit@ unit : buildings) {
+			if (!zone.ContainsPoint(unit.GetPos(ai.frame)))
+				continue;
+
+			BuildTask bt(unit.circuitDef.id, unit.GetPos(ai.frame), true);
+
+			@bt.plan = plan;
+			plan.buildTasks.insertLast(@bt);
+			plan.adjustCenter(bt.pos);
+		}
+	}
+
+	private BaseRegion@ GetNearestBaseRegion(const AIFloat3& in pos, Mask buildMask, Condition @cond) {
+		BaseRegion@ bestRegion = null;
+		float sqLeastDist = BIG_FLOAT;
+		for (auto it = regions.begin(); it++;) {
+			BaseRegion@ region = it.current_value();
+			if (region.state != EBaseState::ACTIVE || region.isFull
+				|| region.allowedMask & buildMask != 0
+				|| !cond(region.poly.center))  // || !aiTerrainMgr.CanBuildAt(unit, buildDef, region.poly.center))
+			{
+				continue;
+			}
+			float sqDist = pos.SqDistance2D(region.poly.center);
+			if (sqLeastDist <= sqDist)
+				continue;
+			sqLeastDist = sqDist;
+			@bestRegion = region;
+		}
+		return bestRegion;
+	}
+
+	private IBuilderTask@ FindTaskSiteUnit(CCircuitDef@ buildDef, CCircuitUnit@ unit, const AIFloat3& in pos) {
+		Mask buildMask = aiTerrainMgr.GetStructMask(buildDef.id);
+		ConditionClosure closure(buildDef, unit);
+		BaseRegion@ region = GetNearestBaseRegion(pos, buildMask, Condition(closure.canBuild));
+		if (region is null)
+			return null;
+		IUnitTask@ task = aiBuilderMgr.Enqueue(Builder::MakeBuildRecord(buildDef.id, region.poly.center));
+		taskToRegion.insert(task.id, region);
+		return cast<IBuilderTask>(task);
+	}
+
+	private IBuilderTask@ FindTaskSite(CCircuitDef@ buildDef, const AIFloat3& in pos) {
+		Mask buildMask = aiTerrainMgr.GetStructMask(buildDef.id);
+		Condition @passthrough = function(const AIFloat3& in) { return true; };
+		BaseRegion@ region = GetNearestBaseRegion(pos, buildMask, passthrough);
+		if (region is null)
+			return null;
+		IUnitTask@ task = aiBuilderMgr.Enqueue(Builder::MakeBuildRecord(buildDef.id, region.poly.center));
+		taskToRegion.insert(task.id, region);
+		return cast<IBuilderTask>(task);
+	}
+
+	IBuilderTask@ FindEnergyTaskSite(CCircuitDef@ buildDef, CCircuitUnit@ unit, const AIFloat3& in pos) {
+		return FindTaskSiteUnit(buildDef, unit, pos);
+	}
+
+	IBuilderTask@ FindStorageTaskSite(CCircuitDef@ buildDef, const AIFloat3& in pos) {
+		return FindTaskSite(buildDef, pos);
+	}
+
+	IBuilderTask@ FindAirpadTaskSite(CCircuitDef@ buildDef, CCircuitUnit@ unit, const AIFloat3& in pos) {
+		return FindTaskSiteUnit(buildDef, unit, pos);
+	}
+
+	IBuilderTask@ FindAssistTaskSite(CCircuitDef@ buildDef, CCircuitUnit@ unit, const AIFloat3& in pos) {
+		return FindTaskSiteUnit(buildDef, unit, pos);
+	}
+
+	bool FindFactoryTaskSite(IBuilderTask@ task, CCircuitUnit@ unit, const AIFloat3& in pos) {
+		CCircuitDef@ buildDef = task.buildDef;
+		Mask buildMask = aiTerrainMgr.GetStructMask(buildDef.id);
+		ConditionClosure closure(buildDef, unit);
+		BaseRegion@ region = GetNearestBaseRegion(pos, buildMask, Condition(closure.canBuild));
+		if (region is null)
+			return false;
+		task.SetBuildPos(region.poly.center);
+		taskToRegion.insert(task.id, @region);
+		return true;
+	}
+
+	IBuilderTask@ FindConvertTaskSite(CCircuitDef@ buildDef, const AIFloat3& in pos) {
+		return FindTaskSite(buildDef, pos);
+	}
+
+	bool MarkRegionFull(IBuilderTask@ task) {
+		bool success;
+		BaseRegion@ region = taskToRegion.find(task.id, success);
+		if (!success)
+			return true;
+
+		region.isFull = true;
+		region.isNoSpaceSig = true;
+		return false;  // return false to abort task
+	}
+
+	private map<Id, BaseRegion@> regions;  // owner
+	private set<BaseRegion@> unfinishedPlans;  // regions with unfinished BuildPlan
 	private map<Id, BuildTask@> taskToBuildTask;  // IBuilderTask.id => BuildTask
 	private map<Id, BuildTask@> unitToBuildTask;  // CCircuitUnit.id => BuildTask
 
-	private BuildPlan@ selBuildPlan = null;  // Selected state
+	private map<Id, BaseRegion@> taskToRegion;  // IBuilderTask.id => BaseRegion
+	private map<Id, BaseRegion@> unitToRegion;  // CCircuitUnit.id => BaseRegion
+
+	private BaseRegion@ selBaseRegion = null;  // Selected state
+	// FIXME: handle unitToBuildTask when BuildPlan overwritten
+	// FIXME: handle unitToRegion when Zone params overwritten
 }
 
 Manager mgr;

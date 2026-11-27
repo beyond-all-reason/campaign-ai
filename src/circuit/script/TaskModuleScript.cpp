@@ -25,9 +25,9 @@ ITaskModuleScript::~ITaskModuleScript()
 void ITaskModuleScript::InitModule(asIScriptModule* mod)
 {
 	IModuleScript::InitModule(mod);
-	umInfo.makeTask = script->GetFunc(mod, "IUnitTask@ AiMakeTask(CCircuitUnit@)");
-	umInfo.taskAdded = script->GetFunc(mod, "void AiTaskAdded(IUnitTask@)");
-	umInfo.taskRemoved = script->GetFunc(mod, "void AiTaskRemoved(IUnitTask@, bool)");
+	umInfo.makeTask = script->GetFunc(mod, "IUnitTask@+ AiMakeTask(CCircuitUnit@)");
+	umInfo.taskAdded = script->GetFunc(mod, "void AiTaskAdded(IUnitTask@+)");
+	umInfo.taskRemoved = script->GetFunc(mod, "void AiTaskRemoved(IUnitTask@+, bool)");
 }
 
 IUnitTask* ITaskModuleScript::MakeTask(CCircuitUnit* unit)

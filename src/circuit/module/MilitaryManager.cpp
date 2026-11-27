@@ -730,56 +730,6 @@ void CMilitaryManager::DefaultMakeDefence(int cluster, const AIFloat3& pos)
 		return;
 	}
 
-	// FIXME: New choke defences
-//	const CArea* area = terrainMgr->GetTAArea(pos);
-//	if (area == nullptr) {
-//		return;
-//	}
-//	const std::vector<const CChokePoint*>& chokes = area->GetChokePoints();
-//	constexpr float TEST_SIZE = 64;
-//	for (const CChokePoint* ch : chokes) {
-//		const CArea* opArea = (ch->GetAreas().first == area) ? ch->GetAreas().second : ch->GetAreas().first;
-//		if (((int)opArea->GetChokePoints().size() == opArea->GetNumSmallChokes()) || (opArea->GetAccessibleNeighbours().size() < 2)) {
-//			continue;
-//		}
-//		const AIFloat3& middle = ch->GetCenter();
-//		bool isDefIn = false;
-//		for (auto task : builderMgr->GetTasks(IBuilderTask::BuildType::DEFENCE)) {
-//			if (static_cast<CBDefenceTask*>(task)->GetPosition().SqDistance2D(middle) < SQUARE(TEST_SIZE)) {
-//				isDefIn = true;
-//				break;
-//			}
-//		}
-//		if (!isDefIn
-//			&& !circuit->GetCallback()->IsFriendlyUnitsIn(middle, TEST_SIZE, false)
-//			&& !circuit->GetCallback()->IsNeutralUnitsIn(middle, TEST_SIZE, false))
-//		{
-//			auto selectDef = [terrainMgr, frame, &middle](const std::vector<CCircuitDef*>& defs) -> CCircuitDef* {
-//				for (CCircuitDef* cdef : defs) {
-//					if (cdef->IsAvailable(frame) && terrainMgr->CanBeBuiltAt(cdef, middle)) {
-//						return cdef;
-//					}
-//				}
-//				return nullptr;
-//			};
-//			if (ch->IsSmall()) {
-//				CCircuitDef* bd = selectDef(GetSideInfo().wallDefs);
-//				if (bd != nullptr) {
-//					terrainMgr->DoLineOfDef(ch->GetEnd1(), ch->GetEnd2(), bd, [builderMgr](const AIFloat3& pos, CCircuitDef* buildDef) {
-//						builderMgr->EnqueueTask(IBuilderTask::Priority::NORMAL, buildDef, pos,
-//								IBuilderTask::BuildType::DEFENCE, buildDef->GetCostM(), 0.f, true);
-//					});
-//				}
-//			} else {
-//				CCircuitDef* bd = selectDef(GetSideInfo().chokeDefs);
-//				if (bd != nullptr) {
-//					builderMgr->EnqueueTask(IBuilderTask::Priority::NORMAL, bd, middle,
-//							IBuilderTask::BuildType::DEFENCE, bd->GetCostM(), 0.f, true);
-//				}
-//			}
-//		}
-//	}
-
 	CEconomyManager* em = circuit->GetEconomyManager();
 	const float metalIncome = std::min(em->GetAvgMetalIncome(), em->GetAvgEnergyIncome()) * em->GetEcoFactor();
 	float maxCost = amountFactor * metalIncome;
@@ -874,6 +824,10 @@ void CMilitaryManager::DefaultMakeDefence(int cluster, const AIFloat3& pos)
 		if (!defDef->IsAvailable(frame) || (defDef->IsRoleAA() && (enemyMgr->GetEnemyCost(ROLE_TYPE(AIR)) < 1.f))) {
 			continue;
 		}
+		SBlockingMap::SM mask = static_cast<SBlockingMap::SM>(terrainMgr->GetStructMask(defDef->GetId()));
+		if (!terrainMgr->IsZoneAllowed(closestPoint->position, mask)) {
+			continue;
+		}
 		totalCost += defDef->GetCostM();
 		if (skip(defDef)) {
 			continue;
@@ -903,6 +857,10 @@ void CMilitaryManager::DefaultMakeDefence(int cluster, const AIFloat3& pos)
 			CCircuitDef* cdef, float range, std::function<bool (CCircuitDef*)> isSensor)
 	{
 		if (!cdef->IsAvailable(frame) || (cdef->GetCostM() > maxCost) || !terrainMgr->CanBeBuiltAt(cdef, backPos)) {
+			return false;
+		}
+		SBlockingMap::SM mask = static_cast<SBlockingMap::SM>(terrainMgr->GetStructMask(cdef->GetId()));
+		if (!terrainMgr->IsZoneAllowed(backPos, mask)) {
 			return false;
 		}
 		COOAICallback* clb = circuit->GetCallback();
@@ -1443,14 +1401,18 @@ void CMilitaryManager::UpdateDefence()
 	ZoneScoped;
 
 	const int frame = circuit->GetLastFrame();
+	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
 	decltype(buildDefence)::iterator ibd = buildDefence.begin();
 	while (ibd != buildDefence.end()) {
 		const auto& defElem = ibd->second.back();
 		if (frame >= defElem.second) {
 			CCircuitDef* buildDef = defElem.first;
 			if (buildDef->IsAvailable(frame)) {
-				circuit->GetBuilderManager()->Enqueue(TaskB::Common(IBuilderTask::BuildType::DEFENCE,
-						IBuilderTask::Priority::NORMAL, buildDef, ibd->first, 0.f, true, 0));
+				SBlockingMap::SM mask = static_cast<SBlockingMap::SM>(terrainMgr->GetStructMask(buildDef->GetId()));
+				if (terrainMgr->IsZoneAllowed(ibd->first, mask)) {
+					circuit->GetBuilderManager()->Enqueue(TaskB::Common(IBuilderTask::BuildType::DEFENCE,
+							IBuilderTask::Priority::NORMAL, buildDef, ibd->first, 0.f, true, 0));
+				}
 			}
 			ibd->second.pop_back();
 		}
